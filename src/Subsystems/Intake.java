@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Intake {
 
-	private static Intake instance = null;
+	private static Intake instance = new Intake();
 	public CANTalon intakeMotor;
 	private double currentAngle = 0.0;
     private PigeonImu _pidgey;
@@ -36,8 +36,6 @@ public class Intake {
 		}
 	}
 	public static Intake getInstance(){
-		if(instance == null)
-			instance = new Intake();
 		return instance;
 	}
 	public void pigeonUpdate(){

@@ -4,6 +4,7 @@ import com.ctre.CANTalon;
 import com.ctre.CANTalon.FeedbackDevice;
 import com.ctre.CANTalon.TalonControlMode;
 
+import Loops.Loop;
 import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
@@ -37,13 +38,10 @@ public class Swerve extends Subsystem{
 		public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
 			rotationMotor = new CANTalon(rotationMotorPort);
 			rotationMotor.setPID(2, 0.0, 30, 0.0, 0, 0.0, 0);
-			driveMotor = new CANTalon(driveMotorPort);	    	
-//	    	driveMotor.changeControlMode(TalonControlMode.);
-//	    	driveMotor.set(driveMotor.getPosition());
+			driveMotor = new CANTalon(driveMotorPort);
 			loadProperties();
 			moduleID = moduleNum;  
 			offSet = _offSet;
-			double targetAngle = 0;
 		}
 		public final void loadProperties(){
 	    	absolutePosition = rotationMotor.getPulseWidthPosition() & 0xFFF;
@@ -105,6 +103,23 @@ public class Swerve extends Subsystem{
 		}
 		rotateInput = rotate;
 	}
+	private final Loop swerveLoop = new Loop(){
+		@Override
+		public void onStart(){
+			
+		}
+		@Override
+		public void onLoop(){
+			update();
+		}
+		@Override
+		public void onStop(){
+			
+		}
+	};
+	public Loop getLoop(){
+		return swerveLoop;
+	}
 	public void update(){
 		double A = xInput - rotateInput * (Constants.WHEELBASE_LENGTH / Constants.SWERVE_R);
 	    double B = xInput + rotateInput * (Constants.WHEELBASE_LENGTH / Constants.SWERVE_R);
@@ -140,6 +155,7 @@ public class Swerve extends Subsystem{
 	    frontLeft.setDriveSpeed(frontLeftWheelSpeed);
 	    rearLeft.setDriveSpeed(rearLeftWheelSpeed);
 	    rearRight.setDriveSpeed(rearRightWheelSpeed);
+		
 	}
 	@Override
 	public synchronized void stop(){

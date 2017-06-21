@@ -1,5 +1,7 @@
 package org.usfirst.frc.team1323.robot;
 
+import IO.Controller;
+import Loops.Looper;
 import Subsystems.RoboSystem;
 import edu.wpi.first.wpilibj.IterativeRobot;
 
@@ -12,31 +14,58 @@ import edu.wpi.first.wpilibj.IterativeRobot;
  */
 public class Robot extends IterativeRobot {
 	RoboSystem robot = RoboSystem.getInstance();
+	public Controller driver, coDriver;
+	Looper enabledLooper = new Looper();
+	Looper disabledLooper = new Looper();
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
 	 */
 	@Override
 	public void robotInit() {
-		
+		driver = new Controller(0);
+        driver.start();
+        coDriver = new Controller(1);
+        coDriver.start();
+        zeroAllSensors();
+        enabledLooper.register(robot.swerve.getLoop());
+        enabledLooper.register(robot.intake.getLoop());
 	}
-
-	/**
-	 * This autonomous (along with the chooser code above) shows how to select
-	 * between different autonomous modes using the dashboard. The sendable
-	 * chooser code works with the Java SmartDashboard. If you prefer the
-	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-	 * getString line to get the auto name from the text box below the Gyro
-	 *
-	 * You can add additional auto modes by adding additional comparisons to the
-	 * switch structure below with additional strings. If using the
-	 * SendableChooser make sure to add them to the chooser code above as well.
-	 */
+	public void zeroAllSensors(){
+		robot.swerve.zeroSensors();
+		robot.intake.zeroSensors();
+	}
+	public void outputAllToSmartDashboard(){
+		robot.swerve.outputToSmartDashboard();
+		robot.intake.outputToSmartDashboard();
+	}
+	public void stopAll(){
+		robot.swerve.stop();
+		robot.intake.stop();
+	}
+	public void coDriverStop(){
+		robot.intake.stop();
+	}
+	@Override
+	public void disabledInit(){
+		enabledLooper.stop();
+		disabledLooper.start();
+		stopAll();
+	}
 	@Override
 	public void autonomousInit() {
 		
 	}
-
+	@Override
+	public void teleopInit(){
+		disabledLooper.stop();
+		enabledLooper.start();
+	}
+	@Override
+	public void disabledPeriodic(){
+		stopAll();
+		outputAllToSmartDashboard();
+	}
 	/**
 	 * This function is called periodically during autonomous
 	 */
@@ -50,15 +79,17 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
+		robot.swerve.sendInput(driver.getButtonAxis(Controller.LEFT_STICK_X), driver.getButtonAxis(Controller.LEFT_STICK_Y), driver.getButtonAxis(Controller.RIGHT_STICK_X), false);
+		if(coDriver.rightBumper.isPressed()){
+    		robot.intake.intakeForward();
+    	}else if(coDriver.leftBumper.isPressed()){
+    		robot.intake.intakeReverse();
+    	}
+		if(coDriver.backButton.isPressed()){
+			coDriverStop();
+		}
 		
-	}
-
-	/**
-	 * This function is called periodically during test mode
-	 */
-	@Override
-	public void testPeriodic() {
-		
+		outputAllToSmartDashboard();
 	}
 }
 

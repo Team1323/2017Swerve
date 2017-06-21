@@ -5,11 +5,11 @@ import com.ctre.CANTalon.TalonControlMode;
 import com.ctre.PigeonImu;
 import com.ctre.PigeonImu.PigeonState;
 
+import Loops.Loop;
 import Utilities.Ports;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public class Intake {
+public class Intake extends Subsystem{
 
 	private static Intake instance = new Intake();
 	public CANTalon intakeMotor;
@@ -38,7 +38,7 @@ public class Intake {
 	public static Intake getInstance(){
 		return instance;
 	}
-	public void pigeonUpdate(){
+	public void pidgeonUpdate(){
 		try{
 			PigeonImu.GeneralStatus genStatus = new PigeonImu.GeneralStatus();
 			PigeonImu.FusionStatus fusionStatus = new PigeonImu.FusionStatus();
@@ -48,9 +48,6 @@ public class Intake {
 			_pidgey.GetRawGyro(xyz_dps);
 			angleIsGood = (_pidgey.GetState() == PigeonState.Ready) ? true : false;
 			currentAngularRate = -xyz_dps[2];
-			SmartDashboard.putNumber(" Heading Angle ", currentAngle); // moved to Swerve.update()
-			SmartDashboard.putNumber(" Pigeon Rate ", currentAngularRate);
-			SmartDashboard.putBoolean(" Pigeon Good ", angleIsGood);
 			
 			short [] ba_xyz = new short [3];
 			_pidgey.GetBiasedAccelerometer(ba_xyz);
@@ -81,23 +78,46 @@ public class Intake {
 	public void intakeReverse(){
 		intakeMotor.set(0.7);
 	}
-	public void intakeStop(){
-		intakeMotor.set(0);
-	}
-	public void debugValues(){
-		SmartDashboard.putNumber(" Intake Current ", intakeMotor.getOutputCurrent());
-		SmartDashboard.putNumber("Intake Error", intakeMotor.getSetpoint()-intakeMotor.getOutputCurrent());
-		SmartDashboard.putNumber("Intake Voltage", intakeMotor.getOutputVoltage());
-	}
-	public void update(){
-		pigeonUpdate();
-		debugValues();
-	}
-	public void setPresetAngles(double i){
+	public void setPidgeonAngle(double i){
 		if(i != 0.0){
 			_pidgey.SetFusedHeading(360.0-i);
 		}else{
 			_pidgey.SetFusedHeading(i);
 		}
+	}
+	private final Loop intakeLoop = new Loop(){
+		@Override
+		public void onStart(){
+			
+		}
+		@Override
+		public void onLoop(){
+			pidgeonUpdate();
+		}
+		@Override
+		public void onStop(){
+			
+		}
+	};
+	public Loop getLoop(){
+		return intakeLoop;
+	}
+	@Override
+	public synchronized void stop(){
+		intakeMotor.set(0);
+	}
+	@Override
+	public synchronized void zeroSensors(){
+		setPidgeonAngle(0);
+	}
+	@Override
+	public void outputToSmartDashboard(){
+		SmartDashboard.putNumber(" Intake Current ", intakeMotor.getOutputCurrent());
+		SmartDashboard.putNumber("Intake Error", intakeMotor.getSetpoint()-intakeMotor.getOutputCurrent());
+		SmartDashboard.putNumber("Intake Voltage", intakeMotor.getOutputVoltage());
+		
+		SmartDashboard.putNumber(" Heading Angle ", currentAngle);
+		SmartDashboard.putNumber(" Pigeon Rate ", currentAngularRate);
+		SmartDashboard.putBoolean(" Pigeon Good ", angleIsGood);
 	}
 }

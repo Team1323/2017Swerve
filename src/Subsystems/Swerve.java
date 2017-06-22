@@ -9,6 +9,9 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import jaci.pathfinder.Pathfinder;
+import jaci.pathfinder.Trajectory;
+import jaci.pathfinder.Waypoint;
 
 public class Swerve extends Subsystem{
 	private static Swerve instance = new Swerve();
@@ -37,7 +40,6 @@ public class Swerve extends Subsystem{
 		private double offSet = 0.0;
 		public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
 			rotationMotor = new CANTalon(rotationMotorPort);
-			rotationMotor.setPID(2, 0.0, 30, 0.0, 0, 0.0, 0);
 			driveMotor = new CANTalon(driveMotorPort);
 			loadProperties();
 			moduleID = moduleNum;  
@@ -91,7 +93,7 @@ public class Swerve extends Subsystem{
 	}
 	
 	public void sendInput(double x, double y, double rotate, boolean robotCentric){
-		double angle = intake.getCurrentAngle()/180.0*Math.PI;
+		double angle = intake.pidgey.getAngle()/180.0*Math.PI;
 		if(robotCentric){
 			xInput = x;
 			yInput = y;
@@ -179,4 +181,5 @@ public class Swerve extends Subsystem{
 		rearLeft.outputToSmartDashboard();
 		rearRight.outputToSmartDashboard();
 	}
+	
 }

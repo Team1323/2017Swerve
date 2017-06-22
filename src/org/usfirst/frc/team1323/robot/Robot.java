@@ -29,7 +29,8 @@ public class Robot extends IterativeRobot {
         coDriver.start();
         zeroAllSensors();
         enabledLooper.register(robot.swerve.getLoop());
-        enabledLooper.register(robot.intake.getLoop());
+        enabledLooper.register(robot.intake.getPidgeonLoop());
+        disabledLooper.register(robot.intake.getPidgeonLoop());
 	}
 	public void zeroAllSensors(){
 		robot.swerve.zeroSensors();

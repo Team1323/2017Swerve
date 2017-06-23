@@ -186,7 +186,7 @@ public class Controller extends Joystick
     public class buttonCheck{
     	private int buttonState = 0;
     	private double buttonStartTime = 0;
-    	private boolean buttonCheck = false;;
+    	private boolean buttonCheck = false;
     	private int buttonNumber = 0;
     	private static final int NOT_PRESSED = 0;
     	private static final int FIRST_PRESS = 1;

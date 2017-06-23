@@ -9,13 +9,11 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import jaci.pathfinder.Pathfinder;
-import jaci.pathfinder.Trajectory;
-import jaci.pathfinder.Waypoint;
 
 public class Swerve extends Subsystem{
 	private static Swerve instance = new Swerve();
 	private Intake intake = Intake.getInstance();
+	private SwerveKinematics kinematics = new SwerveKinematics();
 	private double xInput;
 	private double yInput;
 	private double rotateInput;
@@ -123,40 +121,17 @@ public class Swerve extends Subsystem{
 		return swerveLoop;
 	}
 	public void update(){
-		double A = xInput - rotateInput * (Constants.WHEELBASE_LENGTH / Constants.SWERVE_R);
-	    double B = xInput + rotateInput * (Constants.WHEELBASE_LENGTH / Constants.SWERVE_R);
-	    double C = yInput - rotateInput * (Constants.WHEELBASE_WIDTH / Constants.SWERVE_R);
-	    double D = yInput + rotateInput * (Constants.WHEELBASE_WIDTH / Constants.SWERVE_R);
+		kinematics.calculate(xInput, yInput, rotateInput);
 	    
-	    double frontRightWheelSpeed = Math.sqrt((B * B) + (C * C));
-	    double frontLeftWheelSpeed  = Math.sqrt((B * B) + (D * D));
-	    double rearLeftWheelSpeed   = Math.sqrt((A * A) + (D * D));
-	    double rearRightWheelSpeed  = Math.sqrt((A * A) + (C * C));
-	    double max = frontRightWheelSpeed;
-	    max = Util.normalize(max, frontLeftWheelSpeed);
-	    max = Util.normalize(max, rearLeftWheelSpeed);
-	    max = Util.normalize(max, rearRightWheelSpeed);
-	    if(max > 1.0){
-	    	frontRightWheelSpeed /= max;
-	        frontLeftWheelSpeed /= max;
-	        rearLeftWheelSpeed /= max;
-	        rearRightWheelSpeed /= max;
-	    }
+	    frontRight.setModuleAngle(kinematics.frSteeringAngle());
+	    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
+	    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
+	    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
 	    
-	    double frontRightSteeringAngle = Math.atan2(B, C)*180/Math.PI; 
-	    double frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
-	    double rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
-	    double rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
-	    
-	    frontRight.setModuleAngle(frontRightSteeringAngle);
-	    frontLeft.setModuleAngle(frontLeftSteeringAngle);
-	    rearLeft.setModuleAngle(rearLeftSteeringAngle);
-	    rearRight.setModuleAngle(rearRightSteeringAngle);
-	    
-	    frontRight.setDriveSpeed(frontRightWheelSpeed);
-	    frontLeft.setDriveSpeed(frontLeftWheelSpeed);
-	    rearLeft.setDriveSpeed(rearLeftWheelSpeed);
-	    rearRight.setDriveSpeed(rearRightWheelSpeed);
+	    frontRight.setDriveSpeed(kinematics.frWheelSpeed());
+	    frontLeft.setDriveSpeed(kinematics.flWheelSpeed());
+	    rearLeft.setDriveSpeed(kinematics.rlWheelSpeed());
+	    rearRight.setDriveSpeed(kinematics.rrWheelSpeed());
 		
 	}
 	@Override

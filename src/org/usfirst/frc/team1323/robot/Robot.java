@@ -3,6 +3,7 @@ package org.usfirst.frc.team1323.robot;
 import IO.Controller;
 import Loops.Looper;
 import Subsystems.RoboSystem;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 
 /**
@@ -80,7 +81,7 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		robot.swerve.sendInput(driver.getButtonAxis(Controller.LEFT_STICK_X), driver.getButtonAxis(Controller.LEFT_STICK_Y), driver.getButtonAxis(Controller.RIGHT_STICK_X), false);
+		robot.swerve.sendInput(driver.getX(Hand.kLeft), driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
 		if(coDriver.rightBumper.isPressed()){
     		robot.intake.intakeForward();
     	}else if(coDriver.leftBumper.isPressed()){

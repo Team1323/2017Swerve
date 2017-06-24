@@ -141,22 +141,6 @@ public class Util {
     		return Math.atan2(y, x)*180.0/Math.PI;
     	}
     }
-    public static double controlSmoother(double input){
-       double val = Math.abs(input);
-       double p1 =     0.0369;
-       double p2 =     0.1511;
-       double p3 =     0.263;
-       double p4 =     0.3577;
-       double result = (p1*Math.pow(val, 3)) + (p2*Math.pow(val, 2))  + (p3*val) + p4;
-       return input;
-       /*
-       if(input > 0.2)
-    	   return result;
-       if(input < -0.2)
-    	   return -result;
-       else
-    	   return 0;*/
-    }
     
     double t,k1,k2,k3,m;
     public void setTime(double acceleration, double distance){

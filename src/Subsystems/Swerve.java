@@ -106,7 +106,7 @@ public class Swerve extends Subsystem{
 	private final Loop swerveLoop = new Loop(){
 		@Override
 		public void onStart(){
-			
+			stop();
 		}
 		@Override
 		public void onLoop(){
@@ -114,7 +114,7 @@ public class Swerve extends Subsystem{
 		}
 		@Override
 		public void onStop(){
-			
+			stop();
 		}
 	};
 	public Loop getLoop(){
@@ -132,7 +132,6 @@ public class Swerve extends Subsystem{
 	    frontLeft.setDriveSpeed(kinematics.flWheelSpeed());
 	    rearLeft.setDriveSpeed(kinematics.rlWheelSpeed());
 	    rearRight.setDriveSpeed(kinematics.rrWheelSpeed());
-		
 	}
 	@Override
 	public synchronized void stop(){

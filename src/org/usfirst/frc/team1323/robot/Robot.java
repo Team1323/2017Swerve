@@ -36,14 +36,17 @@ public class Robot extends IterativeRobot {
 	public void zeroAllSensors(){
 		robot.swerve.zeroSensors();
 		robot.intake.zeroSensors();
+		robot.turret.zeroSensors();
 	}
 	public void outputAllToSmartDashboard(){
 		robot.swerve.outputToSmartDashboard();
 		robot.intake.outputToSmartDashboard();
+		robot.turret.outputToSmartDashboard();
 	}
 	public void stopAll(){
 		robot.swerve.stop();
 		robot.intake.stop();
+		robot.turret.stop();
 	}
 	public void coDriverStop(){
 		robot.intake.stop();

@@ -16,13 +16,12 @@ public class Turret extends Subsystem{
 	private double lockedTurretAngle = 0.0;
 	private int onTargetCheck = 0;
 	private double angleOffset = 0;
-//	private int absolutePosition;
 	public Turret(){
 		motor = new CANTalon(Ports.TURRET);
     	motor.setEncPosition(0);
     	motor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
     	motor.reverseSensor(false);
-    	motor.reverseOutput(true);
+    	motor.reverseOutput(false);
     	motor.configEncoderCodesPerRev(360);
     	motor.configNominalOutputVoltage(+0f, -0f);
     	motor.configPeakOutputVoltage(+5f, -5f);
@@ -34,6 +33,10 @@ public class Turret extends Subsystem{
     	motor.setProfile(0);
 		motor.enableBrakeMode(true);
 		motor.setNominalClosedLoopVoltage(12);
+		motor.enableForwardSoftLimit(true);
+		motor.enableReverseSoftLimit(true);
+		motor.setForwardSoftLimit((Constants.TURRET_MAX_ANGLE/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV);
+		motor.setReverseSoftLimit((-Constants.TURRET_MAX_ANGLE/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV);
 		if(motor.isSensorPresent(CANTalon.FeedbackDevice.QuadEncoder) != CANTalon.FeedbackDeviceStatus.FeedbackStatusPresent){
 			DriverStation.reportError("Could not detect turret encoder!", false);
 		}
@@ -57,18 +60,13 @@ public class Turret extends Subsystem{
 		lockedTurretAngle = turretAngle;
 	}
 	
-	public void manualControl(double input){
-		double newAngle = (motor.getSetpoint() * Constants.TURRET_CLICKS_TO_ANGLE) + (input * 2);
-		setAngle(newAngle);		
-		onTargetCheck = Constants.TURRET_ONTARGET_THRESH;
-	}
 	public void setAngle(double angle){
 		motor.changeControlMode(TalonControlMode.Position);
 		if(angle > Constants.TURRET_MAX_ANGLE)
 			angle = Constants.TURRET_MAX_ANGLE;
 		if(angle < -Constants.TURRET_MAX_ANGLE)
 			angle = -Constants.TURRET_MAX_ANGLE;
-		motor.set(angle/Constants.TURRET_CLICKS_TO_ANGLE);
+		motor.set(angle*Constants.TURRET_REVS_PER_DEGREE);
 		onTargetCheck = Constants.TURRET_ONTARGET_THRESH;
 	}
 	public void moveDegrees(double degree){
@@ -76,10 +74,10 @@ public class Turret extends Subsystem{
 		setAngle(newAngle);
 	}
 	public double getAngle(){
-		return (motor.getPosition() * Constants.TURRET_CLICKS_TO_ANGLE);
+		return ((motor.getPosition()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
 	}
 	public double getGoal(){
-		return (motor.getSetpoint() * Constants.TURRET_CLICKS_TO_ANGLE);
+		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
 	}
 	public void update(double heading){
 		if(Math.abs(getError()) < Constants.TURRET_SMALL_PID_THRESH && currentState != State.VisionTracking){
@@ -115,9 +113,8 @@ public class Turret extends Subsystem{
 		}
 		return onTargetCheck <= 0;
 	}
-	public void resetAngle(double a){
-		motor.setEncPosition((int)a*Constants.TURRET_TICKS_PER_90);
-		motor.set(a/Constants.TURRET_CLICKS_TO_ANGLE);
+	public void resetAngle(double angle){
+		motor.setPosition((angle/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV);
 	}
 	public synchronized void setPercentVBus(double speed){
 		motor.changeControlMode(TalonControlMode.PercentVbus);
@@ -129,12 +126,13 @@ public class Turret extends Subsystem{
 	}
 	@Override 
 	public synchronized void zeroSensors(){
-		
+		resetAngle(0);
 	}
 	@Override
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber("Turret Angle", getAngle());
-		SmartDashboard.putNumber("Turret Encoder Position", motor.getPosition());
+		SmartDashboard.putNumber("Turret Position", motor.getPosition());
+		SmartDashboard.putNumber("Turret Encoder Position", motor.getEncPosition());
 		SmartDashboard.putNumber("Turret Goal", getGoal());
 		SmartDashboard.putNumber("Turret Error", getError());
 		SmartDashboard.putNumber("Turret Current", motor.getOutputCurrent());

@@ -84,7 +84,7 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		robot.swerve.sendInput(driver.getX(Hand.kLeft), driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
+		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
 		if(coDriver.rightBumper.isPressed()){
     		robot.intake.intakeForward();
     	}else if(coDriver.leftBumper.isPressed()){
@@ -93,7 +93,7 @@ public class Robot extends IterativeRobot {
 		if(coDriver.backButton.isPressed()){
 			coDriverStop();
 		}
-		
+		robot.turret.setPercentVBus(-coDriver.getX(Hand.kRight)*0.3);
 		outputAllToSmartDashboard();
 	}
 }

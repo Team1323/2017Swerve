@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.XboxController;
 
 public class Controller extends XboxController{
     private static final double PRESS_THRESHOLD = 0.3;
-    public static final double DEAD_BAND = 0.1;
+    public static final double DEAD_BAND = 0.15;
     private final Timer mTimer = new Timer();
     private static final int K_READING_RATE = 10;
     private boolean rumbling = false;

@@ -1,8 +1,11 @@
 package org.usfirst.frc.team1323.robot;
 
-import IO.Controller;
+import IO.FlightStick;
+import IO.SimpleXbox;
+import IO.Xbox;
 import Loops.Looper;
 import Subsystems.RoboSystem;
+import Subsystems.Turret;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 
@@ -15,7 +18,8 @@ import edu.wpi.first.wpilibj.IterativeRobot;
  */
 public class Robot extends IterativeRobot {
 	RoboSystem robot = RoboSystem.getInstance();
-	public Controller driver, coDriver;
+	public Xbox driver, coDriver;
+	public FlightStick leftDriver, rightDriver;
 	Looper enabledLooper = new Looper();
 	Looper disabledLooper = new Looper();
 	/**
@@ -24,10 +28,14 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-		driver = new Controller(0);
-        driver.start();
-        coDriver = new Controller(1);
+		/*driver = new Xbox(0);
+        driver.start();*/
+        coDriver = new Xbox(1);
+        leftDriver = new FlightStick(2);
+        rightDriver = new FlightStick(3);
         coDriver.start();
+        leftDriver.start();
+        rightDriver.start();
         zeroAllSensors();
         enabledLooper.register(robot.swerve.getLoop());
         enabledLooper.register(robot.intake.getPidgeonLoop());
@@ -84,16 +92,24 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
-		if(coDriver.rightBumper.isPressed()){
+		//robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
+		robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getXAxis(), false);
+		if(coDriver.getBumper(Hand.kRight)){
     		robot.intake.intakeForward();
-    	}else if(coDriver.leftBumper.isPressed()){
+    	}else if(coDriver.getBumper(Hand.kLeft)){
     		robot.intake.intakeReverse();
     	}
-		if(coDriver.backButton.isPressed()){
+		if(coDriver.getBackButton()){
 			coDriverStop();
 		}
-		robot.turret.setPercentVBus(-coDriver.getX(Hand.kRight)*0.3);
+		if(Math.abs(coDriver.getX(Hand.kRight)) > 0){
+			robot.turret.setState(Turret.ControlState.Manual);
+			robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.3);
+		}else{
+			if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
+				robot.turret.setState(Turret.ControlState.Locked);
+			}
+		}
 		outputAllToSmartDashboard();
 	}
 }

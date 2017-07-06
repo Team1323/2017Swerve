@@ -41,24 +41,21 @@ public class Turret extends Subsystem{
 			DriverStation.reportError("Could not detect turret encoder!", false);
 		}
 	}
-	public enum State{
-		Off, VisionTracking, CalculatedTracking, Manual, GyroComp, TeleopGyroComp
+	public enum ControlState{
+		Off, VisionTracking, Manual, GyroComp, Locked
 	}
-	public State currentState = State.Manual;
+	public ControlState currentState = ControlState.Locked;
 	public static Turret getInstance(){
 		return instance;
 	}	
-	public void setState(State newState){
+	public void setState(ControlState newState){
 		currentState = newState;
 	}
-	public State getCurrentState(){
+	public ControlState getCurrentState(){
 		return currentState;
 	}
 	
-	public void lockAngle(double newAngle,double turretAngle){
-		lockedAngle = newAngle;
-		lockedTurretAngle = turretAngle;
-	}
+	
 	
 	public void setAngle(double angle){
 		motor.changeControlMode(TalonControlMode.Position);
@@ -80,27 +77,15 @@ public class Turret extends Subsystem{
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
 	}
 	public void update(double heading){
-		if(Math.abs(getError()) < Constants.TURRET_SMALL_PID_THRESH && currentState != State.VisionTracking){
+		if(Math.abs(getError()) < Constants.TURRET_SMALL_PID_THRESH && currentState != ControlState.VisionTracking){
 			motor.setProfile(1);
 		}else{
 			motor.setProfile(0);
 		}
 		switch(currentState){
-		case GyroComp:
-			setAngle(lockedTurretAngle + (lockedAngle - heading));
-			//System.out.println("Turret Goal: " + Double.toString(getGoal()));
-			break;
-		case TeleopGyroComp:
-			setAngle(lockedTurretAngle + (lockedAngle - Util.BoundPigeonAngle(heading)));
-			//System.out.println("Turret Goal: " + Double.toString(getGoal()));
-		default:
-			break;
+			case Locked:
+				setAngle(getAngle());
 		}
-		
-		if(motor.getOutputCurrent() > 30){
-			motor.setSetpoint(motor.getPosition());
-		}
-		
 	}
 	public double getError(){
 		return (getGoal() - getAngle());

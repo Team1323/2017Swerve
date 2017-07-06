@@ -65,12 +65,20 @@ public class Swerve extends Subsystem{
 	    	driveMotor.setAllowableClosedLoopErr(0);
 	    	driveMotor.changeControlMode(TalonControlMode.PercentVbus);
 	    	driveMotor.reverseOutput(false);
+	    	driveMotor.enableBrakeMode(false);
+		}
+		public double getRawAngle(){
+			return rotationMotor.get();
 		}
 		public double getModuleAngle(){
 			return Util.boundAngle0to360Degrees(rotationMotor.get() - offSet);
 		}
 		public void setModuleAngle(double goalAngle){
-			double newAngle = Util.continousAngle(goalAngle-(360-offSet),getModuleAngle());
+			double newAngle = Util.continousAngle(goalAngle-(360-offSet),getRawAngle());
+			rotationMotor.set(newAngle);
+		}
+		public double getGoal(){
+			return Util.boundAngle0to360Degrees(rotationMotor.getSetpoint() - offSet);
 		}
 		public void setDriveSpeed(double power){
 			driveMotor.set(power);
@@ -87,6 +95,7 @@ public class Swerve extends Subsystem{
 		@Override
 		public void outputToSmartDashboard(){
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle());
+			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", getGoal());
 		}
 	}
 	
@@ -129,8 +138,8 @@ public class Swerve extends Subsystem{
 	    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
 	    
 	    frontRight.setDriveSpeed(kinematics.frWheelSpeed());
-	    frontLeft.setDriveSpeed(kinematics.flWheelSpeed());
-	    rearLeft.setDriveSpeed(kinematics.rlWheelSpeed());
+	    frontLeft.setDriveSpeed(-kinematics.flWheelSpeed());
+	    rearLeft.setDriveSpeed(-kinematics.rlWheelSpeed());
 	    rearRight.setDriveSpeed(kinematics.rrWheelSpeed());
 	}
 	@Override

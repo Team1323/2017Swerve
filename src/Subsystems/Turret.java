@@ -3,9 +3,10 @@ package Subsystems;
 import com.ctre.CANTalon;
 import com.ctre.CANTalon.FeedbackDevice;
 import com.ctre.CANTalon.TalonControlMode;
+
+import Loops.Loop;
 import Utilities.Constants;
 import Utilities.Ports;
-import Utilities.Util;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //added
 
@@ -42,9 +43,9 @@ public class Turret extends Subsystem{
 		}
 	}
 	public enum ControlState{
-		Off, VisionTracking, Manual, GyroComp, Locked
+		Off, VisionTracking, Manual, GyroComp, AngleSnap
 	}
-	public ControlState currentState = ControlState.Locked;
+	public ControlState currentState = ControlState.AngleSnap;
 	public static Turret getInstance(){
 		return instance;
 	}	
@@ -58,6 +59,7 @@ public class Turret extends Subsystem{
 	
 	
 	public void setAngle(double angle){
+		setState(ControlState.AngleSnap);
 		motor.changeControlMode(TalonControlMode.Position);
 		if(angle > Constants.TURRET_MAX_ANGLE)
 			angle = Constants.TURRET_MAX_ANGLE;
@@ -76,15 +78,21 @@ public class Turret extends Subsystem{
 	public double getGoal(){
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
 	}
-	public void update(double heading){
-		if(Math.abs(getError()) < Constants.TURRET_SMALL_PID_THRESH && currentState != ControlState.VisionTracking){
-			motor.setProfile(1);
-		}else{
-			motor.setProfile(0);
-		}
+	public void lock(){
+		setAngle(getAngle());
+	}
+	public void update(){
 		switch(currentState){
-			case Locked:
-				setAngle(getAngle());
+			case AngleSnap:
+				if(Math.abs(getError()) < Constants.TURRET_SMALL_PID_THRESH){
+					motor.setProfile(1);
+				}else{
+					motor.setProfile(0);
+				}
+				break;
+			default:
+				
+				break;
 		}
 	}
 	public double getError(){
@@ -104,6 +112,23 @@ public class Turret extends Subsystem{
 	public synchronized void setPercentVBus(double speed){
 		motor.changeControlMode(TalonControlMode.PercentVbus);
 		motor.set(speed);
+	}
+	private final Loop turretLoop = new Loop(){
+		@Override
+		public void onStart(){
+			lock();
+		}
+		@Override
+		public void onLoop(){
+			update();
+		}
+		@Override
+		public void onStop(){
+			stop();
+		}
+	};
+	public Loop getLoop(){
+		return turretLoop;
 	}
 	@Override
 	public synchronized void stop(){

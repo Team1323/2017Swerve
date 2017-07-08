@@ -28,17 +28,18 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-		/*driver = new Xbox(0);
-        driver.start();*/
+		driver = new Xbox(0);
+        driver.start();
         coDriver = new Xbox(1);
-        leftDriver = new FlightStick(2);
-        rightDriver = new FlightStick(3);
         coDriver.start();
+        /*leftDriver = new FlightStick(2);
+        rightDriver = new FlightStick(3);
         leftDriver.start();
-        rightDriver.start();
+        rightDriver.start();*/
         zeroAllSensors();
         enabledLooper.register(robot.swerve.getLoop());
         enabledLooper.register(robot.intake.getPidgeonLoop());
+        enabledLooper.register(robot.turret.getLoop());
         disabledLooper.register(robot.intake.getPidgeonLoop());
 	}
 	public void zeroAllSensors(){
@@ -92,8 +93,8 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		//robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
-		robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getXAxis(), false);
+		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
+		//robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getXAxis(), false);
 		if(coDriver.getBumper(Hand.kRight)){
     		robot.intake.intakeForward();
     	}else if(coDriver.getBumper(Hand.kLeft)){
@@ -107,7 +108,7 @@ public class Robot extends IterativeRobot {
 			robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.3);
 		}else{
 			if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
-				robot.turret.setState(Turret.ControlState.Locked);
+				robot.turret.lock();
 			}
 		}
 		outputAllToSmartDashboard();

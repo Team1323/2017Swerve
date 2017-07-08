@@ -47,10 +47,6 @@ public class Pidgeon {
 		return currentAngularRate;
 	}
 	public void setAngle(double i){
-		if(i != 0.0){
-			pidgey.SetFusedHeading(360.0-i);
-		}else{
-			pidgey.SetFusedHeading(i);
-		}
+		pidgey.SetFusedHeading(-i);
 	}
 }

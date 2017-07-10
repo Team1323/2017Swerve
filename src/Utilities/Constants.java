@@ -21,9 +21,8 @@ public class Constants {
     public static double kLooperDt = 0.01;
     
 	public static final double TURRET_MAX_ANGLE = 110;
-	public static final double TURRET_DEFAULT_P = 1.75;//1.75
-	public static final double TURRET_DEFAULT_D = 10;//25
-	
+	public static final double TURRET_DEFAULT_P = 1.75;
+	public static final double TURRET_DEFAULT_D = 10;
 	public static final double TURRET_SMALL_P = 10.0;
 	public static final double TURRET_SMALL_D = 10.0;
 	public static final double TURRET_SMALL_PID_THRESH = 5;
@@ -32,4 +31,10 @@ public class Constants {
 	public static final double TURRET_TICKS_PER_DEGREE = TURRET_TICKS_PER_REV/360;
 	public static final double TURRET_REVS_PER_DEGREE = TURRET_TICKS_PER_DEGREE/1440;
 	public static final double TURRET_ENC_REVS_PER_ACTUAL_REV = TURRET_TICKS_PER_REV/1440;
+	
+	public static final double HANG_CURRENT = 70;
+	public static final double HANG_CURRENT_THRESHOLD = 55;
+	
+	public static final double GEAR_DETECT_CURRENT = 23;
+	public static final double GEAR_PRESENT_CURRENT = 3.0;
 }

@@ -32,7 +32,7 @@ public class Ports {
     
     ///SOLENOIDS
     
-    public static final int INTAKE_ARM  		= 0;
+    public static final int GEAR_INTAKE_ARM  		= 0;
     public static final int BALL_FLAP			= 1;
     
     /*public static final int FRONT_RIGHT_ROTATION= 5; 

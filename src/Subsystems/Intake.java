@@ -60,7 +60,6 @@ public class Intake extends Subsystem{
 	@Override
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber(" Intake Current ", intakeMotor.getOutputCurrent());
-		SmartDashboard.putNumber("Intake Error", intakeMotor.getSetpoint()-intakeMotor.getOutputCurrent());
 		SmartDashboard.putNumber("Intake Voltage", intakeMotor.getOutputVoltage());
 		
 		SmartDashboard.putNumber(" Heading Angle ", pidgey.getAngle());

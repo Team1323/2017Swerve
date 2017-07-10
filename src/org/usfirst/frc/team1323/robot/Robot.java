@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj.IterativeRobot;
  */
 public class Robot extends IterativeRobot {
 	RoboSystem robot = RoboSystem.getInstance();
-	public Xbox driver, coDriver;
+	public SimpleXbox driver, coDriver;
 	public FlightStick leftDriver, rightDriver;
 	Looper enabledLooper = new Looper();
 	Looper disabledLooper = new Looper();
@@ -28,10 +28,10 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
-		driver = new Xbox(0);
-        driver.start();
-        coDriver = new Xbox(1);
-        coDriver.start();
+		driver = new SimpleXbox(0);
+        //driver.start();
+        coDriver = new SimpleXbox(1);
+        //coDriver.start();
         /*leftDriver = new FlightStick(2);
         rightDriver = new FlightStick(3);
         leftDriver.start();
@@ -40,6 +40,8 @@ public class Robot extends IterativeRobot {
         enabledLooper.register(robot.swerve.getLoop());
         enabledLooper.register(robot.intake.getPidgeonLoop());
         enabledLooper.register(robot.turret.getLoop());
+        enabledLooper.register(robot.hanger.getLoop());
+        enabledLooper.register(robot.gearIntake.getLoop());
         disabledLooper.register(robot.intake.getPidgeonLoop());
 	}
 	public void zeroAllSensors(){
@@ -51,14 +53,20 @@ public class Robot extends IterativeRobot {
 		robot.swerve.outputToSmartDashboard();
 		robot.intake.outputToSmartDashboard();
 		robot.turret.outputToSmartDashboard();
+		robot.hanger.outputToSmartDashboard();
+		robot.gearIntake.outputToSmartDashboard();
 	}
 	public void stopAll(){
 		robot.swerve.stop();
 		robot.intake.stop();
 		robot.turret.stop();
+		robot.hanger.stop();
+		robot.gearIntake.stop();
 	}
 	public void coDriverStop(){
 		robot.intake.stop();
+		robot.hanger.stop();
+		robot.gearIntake.coDriverStop();
 	}
 	@Override
 	public void disabledInit(){
@@ -95,6 +103,9 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
 		//robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getXAxis(), false);
+		if(driver.getBackButton()){
+			robot.intake.pidgey.setAngle(0);
+		}
 		if(coDriver.getBumper(Hand.kRight)){
     		robot.intake.intakeForward();
     	}else if(coDriver.getBumper(Hand.kLeft)){

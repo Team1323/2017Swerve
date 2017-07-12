@@ -4,8 +4,10 @@ import IO.FlightStick;
 import IO.SimpleXbox;
 import IO.Xbox;
 import Loops.Looper;
+import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
 import Subsystems.Turret;
+import Utilities.Constants;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 
@@ -22,6 +24,7 @@ public class Robot extends IterativeRobot {
 	public FlightStick leftDriver, rightDriver;
 	Looper enabledLooper = new Looper();
 	Looper disabledLooper = new Looper();
+	private boolean sweeperNeedsToStop = false;
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -37,6 +40,7 @@ public class Robot extends IterativeRobot {
         leftDriver.start();
         rightDriver.start();*/
         zeroAllSensors();
+        robot.turret.resetAngle(90);
         enabledLooper.register(robot.swerve.getLoop());
         enabledLooper.register(robot.intake.getPidgeonLoop());
         enabledLooper.register(robot.turret.getLoop());
@@ -55,6 +59,8 @@ public class Robot extends IterativeRobot {
 		robot.turret.outputToSmartDashboard();
 		robot.hanger.outputToSmartDashboard();
 		robot.gearIntake.outputToSmartDashboard();
+		robot.shooter.outputToSmartDashboard();
+		robot.sweeper.outputToSmartDashboard();
 	}
 	public void stopAll(){
 		robot.swerve.stop();
@@ -62,11 +68,15 @@ public class Robot extends IterativeRobot {
 		robot.turret.stop();
 		robot.hanger.stop();
 		robot.gearIntake.stop();
+		robot.shooter.stop();
+		robot.sweeper.stop();
 	}
 	public void coDriverStop(){
 		robot.intake.stop();
 		robot.hanger.stop();
 		robot.gearIntake.coDriverStop();
+		robot.shooter.stop();
+		robot.sweeper.stop();
 	}
 	@Override
 	public void disabledInit(){
@@ -101,27 +111,67 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false);
+		//Driver
+		//Swerve
+		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false, driver.getTriggerAxis(Hand.kLeft) > 0);
 		//robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getXAxis(), false);
 		if(driver.getBackButton()){
 			robot.intake.pidgey.setAngle(0);
 		}
+		//Gear Score
+		if(driver.getTriggerAxis(Hand.kRight) > 0){
+			robot.gearIntake.score();
+		}
+		
+		
+		
+		//Co Driver
+		
+		//Ball Intake
 		if(coDriver.getBumper(Hand.kRight)){
     		robot.intake.intakeForward();
     	}else if(coDriver.getBumper(Hand.kLeft)){
     		robot.intake.intakeReverse();
     	}
-		if(coDriver.getBackButton()){
-			coDriverStop();
-		}
+		//Turret
 		if(Math.abs(coDriver.getX(Hand.kRight)) > 0){
 			robot.turret.setState(Turret.ControlState.Manual);
 			robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.3);
-		}else{
-			if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
-				robot.turret.lock();
-			}
+		}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
+			robot.turret.setAngle(90);
+		}else if(coDriver.getPOV() == 180){
+			robot.turret.setAngle(-90);
+		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
+			robot.turret.lock();
 		}
+		//Shooter
+		if(coDriver.getTriggerAxis(Hand.kLeft) > 0){
+			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
+		}
+		//Sweeper
+		if(coDriver.getTriggerAxis(Hand.kRight) > 0 && robot.shooter.onTarget()){
+			robot.sweeper.startSweeper();
+		}
+		if(coDriver.getYButton()){
+			robot.sweeper.rollerReverse();
+			sweeperNeedsToStop = true;
+		}else if(sweeperNeedsToStop){
+			robot.sweeper.stop();
+			sweeperNeedsToStop = false;
+		}
+		//Gear Intake
+		if(coDriver.getAButton()){
+			robot.gearIntake.intakeGear();
+		}else if(coDriver.getBButton()){
+			robot.gearIntake.retract();
+		}else if(coDriver.getPOV() == 0){
+			robot.gearIntake.setState(GearIntake.State.REVERSED);
+		}
+		
+		if(coDriver.getBackButton()){
+			coDriverStop();
+		}
+		
 		outputAllToSmartDashboard();
 	}
 }

@@ -39,9 +39,9 @@ public class Swerve extends Subsystem{
 		public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
 			rotationMotor = new CANTalon(rotationMotorPort);
 			driveMotor = new CANTalon(driveMotorPort);
-			loadProperties();
 			moduleID = moduleNum;  
 			offSet = _offSet;
+			loadProperties();
 		}
 		public final void loadProperties(){
 	    	absolutePosition = rotationMotor.getPulseWidthPosition() & 0xFFF;
@@ -49,7 +49,11 @@ public class Swerve extends Subsystem{
 	    	rotationMotor.setFeedbackDevice(FeedbackDevice.AnalogEncoder);
 	    	rotationMotor.reverseSensor(false);
 	    	rotationMotor.reverseOutput(true);
-	    	rotationMotor.configPotentiometerTurns(360);
+	    	if(moduleID == 1){
+	    		rotationMotor.configPotentiometerTurns(358);
+	    	}else{
+	    		rotationMotor.configPotentiometerTurns(360);
+	    	}
 	    	rotationMotor.configNominalOutputVoltage(+0f, -0f);
 	    	rotationMotor.configPeakOutputVoltage(+7f, -7f);
 	    	rotationMotor.setAllowableClosedLoopErr(0); 
@@ -99,7 +103,7 @@ public class Swerve extends Subsystem{
 		}
 	}
 	
-	public void sendInput(double x, double y, double rotate, boolean robotCentric){
+	public void sendInput(double x, double y, double rotate, boolean robotCentric, boolean lowPower){
 		double angle = intake.pidgey.getAngle()/180.0*Math.PI;
 		if(robotCentric){
 			xInput = x;
@@ -109,6 +113,10 @@ public class Swerve extends Subsystem{
 			double tmp = (y* Math.cos(angle)) + (x * Math.sin(angle));
 			xInput = (-y * Math.sin(angle)) + (x * Math.cos(angle));
 			yInput = tmp;			
+		}
+		if(lowPower){
+			xInput *= 0.45;
+			yInput *= 0.45;
 		}
 		rotateInput = rotate;
 	}
@@ -144,7 +152,7 @@ public class Swerve extends Subsystem{
 	}
 	@Override
 	public synchronized void stop(){
-		sendInput(0.0, 0.0, 0.0, false);
+		sendInput(0.0, 0.0, 0.0, false, false);
 		frontRight.stop();
 		frontLeft.stop();
 		rearLeft.stop();

@@ -7,6 +7,8 @@ public class RoboSystem {
 	public Turret turret = Turret.getInstance();
 	public Hanger hanger = Hanger.getInstance();
 	public GearIntake gearIntake = GearIntake.getInstance();
+	public Shooter shooter = Shooter.getInstance();
+	public Sweeper sweeper = Sweeper.getInstance();
 	public static RoboSystem getInstance(){
 		return instance;
 	}

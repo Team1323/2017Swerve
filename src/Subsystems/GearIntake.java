@@ -21,6 +21,8 @@ public class GearIntake extends Subsystem{
 		intake.setProfile(0);
 		intake.reverseOutput(true);
 		intake.setCloseLoopRampRate(12);
+		intake.setCurrentLimit(15);
+		intake.EnableCurrentLimit(true);
 		cylinder = new Solenoid(20, Ports.GEAR_INTAKE_ARM);
 	}
 	private static GearIntake instance = new GearIntake();
@@ -33,7 +35,7 @@ public class GearIntake extends Subsystem{
 	
 	public enum State{
 		OFF,
-		TUCKED,
+		TUCKED, REVERSED,
 		EXTENDED_OFF, EXTENDED_INTAKING, EXTENDED_HOLDING, 
 		RETRACTED_OFF, RETRACTED_HOLDING,
 		SCORING
@@ -82,6 +84,9 @@ public class GearIntake extends Subsystem{
 				}
 				SmartDashboard.putString("Gear Intake Status", "RETRACTED HOLDING");
 				break;
+			case REVERSED:
+				reverse();
+				SmartDashboard.putString("Gear Intake Status", "REVERSED");
 			case SCORING:
 				SmartDashboard.putString("Gear Intake Status", "SCORING");
 				break;

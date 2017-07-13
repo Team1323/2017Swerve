@@ -2,7 +2,6 @@ package org.usfirst.frc.team1323.robot;
 
 import IO.FlightStick;
 import IO.SimpleXbox;
-import IO.Xbox;
 import Loops.Looper;
 import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
@@ -92,6 +91,7 @@ public class Robot extends IterativeRobot {
 	public void teleopInit(){
 		disabledLooper.stop();
 		enabledLooper.start();
+		robot.swerve.setTargetHeading(robot.intake.pidgey.getAngle());
 	}
 	@Override
 	public void disabledPeriodic(){
@@ -117,6 +117,7 @@ public class Robot extends IterativeRobot {
 		//robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getXAxis(), false);
 		if(driver.getBackButton()){
 			robot.intake.pidgey.setAngle(0);
+			robot.swerve.setTargetHeading(0.0);
 		}
 		//Gear Score
 		if(driver.getTriggerAxis(Hand.kRight) > 0){
@@ -168,8 +169,15 @@ public class Robot extends IterativeRobot {
 			robot.gearIntake.setState(GearIntake.State.REVERSED);
 		}
 		
+		//Hanger
+		if(coDriver.getStartButton() || driver.getStartButton()){
+			robot.hanger.startHang();
+			robot.swerve.setLowPower(true);
+		}
+		
 		if(coDriver.getBackButton()){
 			coDriverStop();
+			robot.swerve.setLowPower(false);
 		}
 		
 		outputAllToSmartDashboard();

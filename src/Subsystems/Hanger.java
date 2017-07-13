@@ -16,7 +16,7 @@ public class Hanger extends Subsystem{
 	}
 	public Hanger(){
 		motor = new CANTalon(Ports.HANGER);
-		motor.reverseOutput(false);
+		motor.reverseOutput(true);
 		motor.enableBrakeMode(true);
 	}
 	
@@ -70,6 +70,10 @@ public class Hanger extends Subsystem{
 	};
 	public Loop getLoop(){
 		return hangerLoop;
+	}
+	
+	public void startHang(){
+		setState(State.STARTING_HANG);
 	}
 	
 	public void on(){

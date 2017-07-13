@@ -7,6 +7,7 @@ import com.ctre.CANTalon.TalonControlMode;
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.Ports;
+import Utilities.SynchronousPID;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -21,6 +22,26 @@ public class Swerve extends Subsystem{
 	private SwerveDriveModule frontRight;
 	private SwerveDriveModule rearLeft;
 	private SwerveDriveModule rearRight;
+	
+	private boolean forcedLowPower = false;
+	public void setLowPower(boolean on){
+		forcedLowPower = on;
+	}
+	
+	public enum HeadingController{
+		Off, Stabilize, Snap
+	}
+	private HeadingController headingController = HeadingController.Stabilize;
+	public void setHeadingController(HeadingController h){
+		headingController = h;
+	}
+	private double targetHeadingAngle = 0.0;
+	public void setTargetHeading(double target){
+		targetHeadingAngle = target;
+	}
+	private SynchronousPID headingPID = new SynchronousPID(0.001, 0.0, 0.0007, 0.0);
+	private SynchronousPID strongHeadingPID = new SynchronousPID(0.008, 0.0, 0.0, 0.0);
+	
 	public Swerve(){
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2,Constants.FRONT_LEFT_TURN_OFFSET);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1,Constants.FRONT_RIGHT_TURN_OFFSET);
@@ -30,6 +51,7 @@ public class Swerve extends Subsystem{
 	public static Swerve getInstance(){
         return instance;
     }
+	
 	public class SwerveDriveModule extends Subsystem{
 		private CANTalon rotationMotor;
 		public CANTalon driveMotor;
@@ -75,7 +97,7 @@ public class Swerve extends Subsystem{
 			return rotationMotor.get();
 		}
 		public double getModuleAngle(){
-			return Util.boundAngle0to360Degrees(rotationMotor.get() - offSet);
+			return Util.boundAngle0to360Degrees(getRawAngle() - offSet);
 		}
 		public void setModuleAngle(double goalAngle){
 			double newAngle = Util.continousAngle(goalAngle-(360-offSet),getRawAngle());
@@ -114,11 +136,16 @@ public class Swerve extends Subsystem{
 			xInput = (-y * Math.sin(angle)) + (x * Math.cos(angle));
 			yInput = tmp;			
 		}
-		if(lowPower){
+		if(lowPower || forcedLowPower){
 			xInput *= 0.45;
 			yInput *= 0.45;
 		}
 		rotateInput = rotate;
+		if(rotateInput == 0){
+			setHeadingController(HeadingController.Stabilize);
+		}else{
+			setHeadingController(HeadingController.Off);
+		}
 	}
 	private final Loop swerveLoop = new Loop(){
 		@Override
@@ -137,13 +164,42 @@ public class Swerve extends Subsystem{
 	public Loop getLoop(){
 		return swerveLoop;
 	}
+	
+	public double getHeadingError(){
+		return intake.pidgey.getAngle() - targetHeadingAngle;
+	}
 	public void update(){
+		double rotationCorrection = 0.0;
+		switch(headingController){
+			case Off:
+				targetHeadingAngle = intake.pidgey.getAngle();
+				break;
+			case Stabilize:
+				if(Math.abs(getHeadingError()) > 5){
+					rotationCorrection = strongHeadingPID.calculate(getHeadingError());
+				}else if(Math.abs(getHeadingError()) > 0.5){
+					rotationCorrection = headingPID.calculate(getHeadingError());
+				}
+				break;
+			default:
+				break;
+		}
+		SmartDashboard.putNumber("Rotation Correction", rotationCorrection);
+		rotateInput += rotationCorrection;
+		
 		kinematics.calculate(xInput, yInput, rotateInput);
 	    
-	    frontRight.setModuleAngle(kinematics.frSteeringAngle());
-	    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
-	    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
-	    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
+		if(xInput == 0 && yInput == 0 && rotateInput == 0){
+			frontRight.setModuleAngle(frontRight.getModuleAngle());
+		    frontLeft.setModuleAngle(frontLeft.getModuleAngle());
+		    rearLeft.setModuleAngle(rearLeft.getModuleAngle());
+		    rearRight.setModuleAngle(rearRight.getModuleAngle());
+		}else{
+		    frontRight.setModuleAngle(kinematics.frSteeringAngle());
+		    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
+		    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
+		    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
+			}
 	    
 	    frontRight.setDriveSpeed(kinematics.frWheelSpeed());
 	    frontLeft.setDriveSpeed(-kinematics.flWheelSpeed());
@@ -171,6 +227,7 @@ public class Swerve extends Subsystem{
 		frontLeft.outputToSmartDashboard();
 		rearLeft.outputToSmartDashboard();
 		rearRight.outputToSmartDashboard();
+		SmartDashboard.putNumber("Target Heading", targetHeadingAngle);
 	}
 	
 }

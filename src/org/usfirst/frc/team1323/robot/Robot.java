@@ -5,6 +5,7 @@ import IO.SimpleXbox;
 import Loops.Looper;
 import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
+import Subsystems.Swerve.HeadingController;
 import Subsystems.Turret;
 import Utilities.Constants;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
@@ -118,6 +119,17 @@ public class Robot extends IterativeRobot {
 		if(driver.getBackButton()){
 			robot.intake.pidgey.setAngle(0);
 			robot.swerve.setTargetHeading(0.0);
+		}
+		if(driver.getAButton()){
+			robot.swerve.setSnapAngle(180);
+		}else if(driver.getBButton()){
+			robot.swerve.setSnapAngle(90);
+		}else if(driver.getXButton()){
+			robot.swerve.setSnapAngle(-90);
+		}else if(driver.getYButton()){
+			robot.swerve.setSnapAngle(0);
+		}else{
+			robot.swerve.setHeadingController(HeadingController.Stabilize);
 		}
 		//Gear Score
 		if(driver.getTriggerAxis(Hand.kRight) > 0){

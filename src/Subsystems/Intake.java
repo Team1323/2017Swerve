@@ -12,7 +12,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Intake extends Subsystem{
 
 	private static Intake instance = new Intake();
-	public CANTalon intakeMotor;
+	private CANTalon intakeMotor;
+	public CANTalon getTalon(){
+		return intakeMotor;
+	}
     public Pidgeon pidgey;
 	public Intake(){
 		intakeMotor = new CANTalon(Ports.INTAKE_MOTOR);

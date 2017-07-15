@@ -9,6 +9,7 @@ public class RoboSystem {
 	public GearIntake gearIntake = GearIntake.getInstance();
 	public Shooter shooter = Shooter.getInstance();
 	public Sweeper sweeper = Sweeper.getInstance();
+	public Pidgeon pidgey = Pidgeon.getInstance();
 	public static RoboSystem getInstance(){
 		return instance;
 	}

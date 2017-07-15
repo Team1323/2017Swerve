@@ -43,6 +43,23 @@ public class Pidgeon {
 			System.out.println(e);
 		}
 	}
+	private final Loop pidgeonLoop = new Loop(){
+		@Override
+		public void onStart(){
+			
+		}
+		@Override
+		public void onLoop(){
+			update();
+		}
+		@Override
+		public void onStop(){
+			
+		}
+	};
+	public Loop getLoop(){
+		return pidgeonLoop;
+	}
 	public boolean isGood(){
 		return pidgeonIsGood;
 	}
@@ -54,5 +71,10 @@ public class Pidgeon {
 	}
 	public void setAngle(double i){
 		pidgey.SetFusedHeading(-i);
+	}
+	public void outputToSmartDashboard{
+		SmartDashboard.putNumber(" Heading Angle ", pidgey.getAngle());
+		SmartDashboard.putNumber(" Pigeon Rate ", pidgey.getAngularRate());
+		SmartDashboard.putBoolean(" Pigeon Good ", pidgey.isGood());
 	}
 }

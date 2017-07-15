@@ -42,20 +42,21 @@ public class Robot extends IterativeRobot {
         zeroAllSensors();
         robot.turret.resetAngle(90);
         enabledLooper.register(robot.swerve.getLoop());
-        enabledLooper.register(robot.intake.getPidgeonLoop());
+        enabledLooper.register(robot.pidgey.getLoop());
         enabledLooper.register(robot.turret.getLoop());
         enabledLooper.register(robot.hanger.getLoop());
         enabledLooper.register(robot.gearIntake.getLoop());
-        disabledLooper.register(robot.intake.getPidgeonLoop());
+        disabledLooper.register(robot.pidgey.getLoop());
 	}
 	public void zeroAllSensors(){
 		robot.swerve.zeroSensors();
-		robot.intake.zeroSensors();
+		robot.pidgey.setAngle(0);
 		robot.turret.zeroSensors();
 	}
 	public void outputAllToSmartDashboard(){
 		robot.swerve.outputToSmartDashboard();
 		robot.intake.outputToSmartDashboard();
+		robot.pidgey.outputToSmartDashboard();
 		robot.turret.outputToSmartDashboard();
 		robot.hanger.outputToSmartDashboard();
 		robot.gearIntake.outputToSmartDashboard();
@@ -117,7 +118,7 @@ public class Robot extends IterativeRobot {
 		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false, driver.getTriggerAxis(Hand.kLeft) > 0);
 		//robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getXAxis(), false);
 		if(driver.getBackButton()){
-			robot.intake.pidgey.setAngle(0);
+			robot.pidgey.setAngle(0);
 			robot.swerve.setTargetHeading(0.0);
 		}
 		if(driver.getAButton()){

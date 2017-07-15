@@ -6,15 +6,21 @@ import com.ctre.PigeonImu.PigeonState;
 
 public class Pidgeon {
 	private PigeonImu pidgey;
+	private Intake intake;
     private double currentAngle = 0.0;
     boolean pidgeonIsGood = false;
     double currentAngularRate = 0.0;
-	public Pidgeon(CANTalon talon){
+	public Pidgeon(){
+		intake = Intake.getInstance();
 		try{
-			pidgey = new PigeonImu(talon);
+			pidgey = new PigeonImu(intake.getTalon());
 		}catch(Exception e){
 			System.out.println(e);
 		}
+	}
+	private Pidgeon instance = new Pidgeon();
+	public Pidgeon getInstance(){
+		return instance;
 	}
 	public void update(){
 		try{

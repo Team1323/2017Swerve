@@ -210,17 +210,22 @@ public class Util {
         double upperBound;
         double lowerOffset = pidgey % 360;
         if(lowerOffset >= 0){
-          lowerBound = pidgey - lowerOffset;
-          upperBound = pidgey + (360 - lowerOffset);
+        	lowerBound = pidgey - lowerOffset;
+        	upperBound = pidgey + (360 - lowerOffset);
         }else{
-         upperBound = pidgey - lowerOffset; 
-          lowerBound = pidgey - (360 + lowerOffset);
+        	upperBound = pidgey - lowerOffset; 
+        	lowerBound = pidgey - (360 + lowerOffset);
         }
         while(newAngle < lowerBound){
-         newAngle += 360; 
+        	newAngle += 360; 
         }
         while(newAngle > upperBound){
-         newAngle -= 360; 
+        	newAngle -= 360; 
+        }
+        if(newAngle - pidgey > 180){
+        	newAngle -= 360;
+        }else if(newAngle - pidgey < -180){
+        	newAngle += 360;
         }
         return newAngle;
     }

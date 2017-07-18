@@ -9,11 +9,12 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.SynchronousPID;
 import Utilities.Util;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Swerve extends Subsystem{
 	private static Swerve instance = new Swerve();
-	private Intake intake = Intake.getInstance();
+	private Pidgeon pidgey = Pidgeon.getInstance();
 	private SwerveKinematics kinematics = new SwerveKinematics();
 	private double xInput;
 	private double yInput;
@@ -32,13 +33,13 @@ public class Swerve extends Subsystem{
 		Off, Stabilize, Snap
 	}
 	private HeadingController headingController = HeadingController.Stabilize;
-	private HeadingController lastHeadingController = HeadingController.Stabilize;
 	public void setHeadingController(HeadingController h){
 		headingController = h;
 	}
 	private double targetHeadingAngle = 0.0;
 	public void setTargetHeading(double target){
 		targetHeadingAngle = target;
+		stabilizationTargetSet = true;
 	}
 	public void setSnapAngle(double target){
 		targetHeadingAngle = target;
@@ -48,6 +49,10 @@ public class Swerve extends Subsystem{
 	private SynchronousPID strongHeadingPID = new SynchronousPID(0.008, 0.0, 0.0, 0.0);
 	private SynchronousPID snapPID = new SynchronousPID(0.012, 0.0, 0.1, 0.2);
 	private int cyclesLeft = 5;
+	
+	private boolean isManuallyRotating = false;
+	private double manualRotationStopTime = 0.0;
+	private boolean stabilizationTargetSet = false;
 	
 	public Swerve(){
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2,Constants.FRONT_LEFT_TURN_OFFSET);
@@ -135,7 +140,7 @@ public class Swerve extends Subsystem{
 	}
 	
 	public void sendInput(double x, double y, double rotate, boolean robotCentric, boolean lowPower){
-		double angle = intake.pidgey.getAngle()/180.0*Math.PI;
+		double angle = pidgey.getAngle()/180.0*Math.PI;
 		if(robotCentric){
 			xInput = x;
 			yInput = y;
@@ -150,10 +155,19 @@ public class Swerve extends Subsystem{
 			yInput *= 0.45;
 		}
 		rotateInput = rotate*0.6;
-		if(rotateInput != 0){
+		
+		if(rotateInput == 0){
+			if(isManuallyRotating){
+				isManuallyRotating = false;
+				stabilizationTargetSet = false;
+				manualRotationStopTime = Timer.getFPGATimestamp();
+			}
+			if(headingController == HeadingController.Off){
+				setHeadingController(HeadingController.Stabilize);
+			}
+		}else{
 			setHeadingController(HeadingController.Off);
-		}else if(headingController == HeadingController.Off){
-			setHeadingController(HeadingController.Stabilize);
+			isManuallyRotating = true;
 		}
 	}
 	private final Loop swerveLoop = new Loop(){
@@ -175,23 +189,28 @@ public class Swerve extends Subsystem{
 	}
 	
 	public double getHeadingError(){
-		return intake.pidgey.getAngle() - targetHeadingAngle;
+		return pidgey.getAngle() - targetHeadingAngle;
 	}
 	public void update(){
 		double rotationCorrection = 0.0;
 		switch(headingController){
 			case Off:
-				targetHeadingAngle = intake.pidgey.getAngle();
+				targetHeadingAngle = pidgey.getAngle();
+				SmartDashboard.putString("Heading Controller", "Off");
 				break;
 			case Stabilize:
-				if(lastHeadingController == HeadingController.Off){
-					targetHeadingAngle = intake.pidgey.getAngle();
+				if(!stabilizationTargetSet && (Timer.getFPGATimestamp() - manualRotationStopTime >= 0.3)){
+					targetHeadingAngle = pidgey.getAngle();
+					stabilizationTargetSet = true;
 				}
-				if(Math.abs(getHeadingError()) > 5){
-					rotationCorrection = strongHeadingPID.calculate(getHeadingError());
-				}else if(Math.abs(getHeadingError()) > 0.5){
-					rotationCorrection = headingPID.calculate(getHeadingError());
+				if(stabilizationTargetSet){
+					if(Math.abs(getHeadingError()) > 5){
+						rotationCorrection = strongHeadingPID.calculate(getHeadingError());
+					}else if(Math.abs(getHeadingError()) > 0.5){
+						rotationCorrection = headingPID.calculate(getHeadingError());
+					}
 				}
+				SmartDashboard.putString("Heading Controller", "Stabilize");
 				break;
 			case Snap:
 				rotationCorrection = snapPID.calculate(getHeadingError());
@@ -204,12 +223,12 @@ public class Swerve extends Subsystem{
 					setHeadingController(HeadingController.Stabilize);
 					rotationCorrection = 0;
 				}
+				SmartDashboard.putString("Heading Controller", "Snap");
 				break;
 			default:
 				break;
 		}
 		SmartDashboard.putNumber("Rotation Correction", rotationCorrection);
-		lastHeadingController = headingController;
 		rotateInput += rotationCorrection;
 		
 		kinematics.calculate(xInput, yInput, rotateInput);

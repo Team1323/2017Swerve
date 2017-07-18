@@ -205,5 +205,24 @@ public class Util {
     	newAngle = 360.0 - newAngle;
     	return -newAngle;
     }
+    public static double placeInAppropriate0To360Scope(double pidgey, double newAngle){
+    	double lowerBound;
+        double upperBound;
+        double lowerOffset = pidgey % 360;
+        if(lowerOffset >= 0){
+          lowerBound = pidgey - lowerOffset;
+          upperBound = pidgey + (360 - lowerOffset);
+        }else{
+         upperBound = pidgey - lowerOffset; 
+          lowerBound = pidgey - (360 + lowerOffset);
+        }
+        while(newAngle < lowerBound){
+         newAngle += 360; 
+        }
+        while(newAngle > upperBound){
+         newAngle -= 360; 
+        }
+        return newAngle;
+    }
     
 }

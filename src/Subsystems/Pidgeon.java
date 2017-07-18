@@ -1,8 +1,10 @@
 package Subsystems;
 
-import com.ctre.CANTalon;
 import com.ctre.PigeonImu;
 import com.ctre.PigeonImu.PigeonState;
+
+import Loops.Loop;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Pidgeon {
 	private PigeonImu pidgey;
@@ -18,8 +20,11 @@ public class Pidgeon {
 			System.out.println(e);
 		}
 	}
-	private Pidgeon instance = new Pidgeon();
-	public Pidgeon getInstance(){
+	private static Pidgeon instance = null;
+	public static Pidgeon getInstance(){
+		if(instance == null){
+			instance = new Pidgeon();
+		}
 		return instance;
 	}
 	public void update(){
@@ -72,9 +77,9 @@ public class Pidgeon {
 	public void setAngle(double i){
 		pidgey.SetFusedHeading(-i);
 	}
-	public void outputToSmartDashboard{
-		SmartDashboard.putNumber(" Heading Angle ", pidgey.getAngle());
-		SmartDashboard.putNumber(" Pigeon Rate ", pidgey.getAngularRate());
-		SmartDashboard.putBoolean(" Pigeon Good ", pidgey.isGood());
+	public void outputToSmartDashboard(){
+		SmartDashboard.putNumber(" Heading Angle ", getAngle());
+		SmartDashboard.putNumber(" Pigeon Rate ", getAngularRate());
+		SmartDashboard.putBoolean(" Pigeon Good ", isGood());
 	}
 }

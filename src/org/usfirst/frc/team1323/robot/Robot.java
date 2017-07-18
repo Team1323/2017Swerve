@@ -8,6 +8,7 @@ import Subsystems.RoboSystem;
 import Subsystems.Swerve.HeadingController;
 import Subsystems.Turret;
 import Utilities.Constants;
+import Utilities.Util;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 
@@ -93,7 +94,7 @@ public class Robot extends IterativeRobot {
 	public void teleopInit(){
 		disabledLooper.stop();
 		enabledLooper.start();
-		robot.swerve.setTargetHeading(robot.intake.pidgey.getAngle());
+		robot.swerve.setTargetHeading(robot.pidgey.getAngle());
 	}
 	@Override
 	public void disabledPeriodic(){
@@ -122,15 +123,13 @@ public class Robot extends IterativeRobot {
 			robot.swerve.setTargetHeading(0.0);
 		}
 		if(driver.getAButton()){
-			robot.swerve.setSnapAngle(180);
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
 		}else if(driver.getBButton()){
-			robot.swerve.setSnapAngle(90);
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
 		}else if(driver.getXButton()){
-			robot.swerve.setSnapAngle(-90);
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
 		}else if(driver.getYButton()){
-			robot.swerve.setSnapAngle(0);
-		}else{
-			robot.swerve.setHeadingController(HeadingController.Stabilize);
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
 		}
 		//Gear Score
 		if(driver.getTriggerAxis(Hand.kRight) > 0){

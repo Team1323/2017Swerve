@@ -47,8 +47,8 @@ public class Swerve extends Subsystem{
 	}
 	private SynchronousPID headingPID = new SynchronousPID(0.001, 0.0, 0.0007, 0.0);
 	private SynchronousPID strongHeadingPID = new SynchronousPID(0.008, 0.0, 0.0, 0.0);
-	private SynchronousPID snapPID = new SynchronousPID(0.012, 0.0, 0.1, 0.2);
-	private int cyclesLeft = 5;
+	private SynchronousPID snapPID = new SynchronousPID(0.01, 0.0, 0.1, 0.2);
+	private int cyclesLeft = 2;
 	
 	private boolean isManuallyRotating = false;
 	private double manualRotationStopTime = 0.0;
@@ -217,7 +217,7 @@ public class Swerve extends Subsystem{
 				if(Math.abs(getHeadingError()) < 2){
 					cyclesLeft--;
 				}else{
-					cyclesLeft = 5;
+					cyclesLeft = 2;
 				}
 				if(cyclesLeft <= 0){
 					setHeadingController(HeadingController.Stabilize);

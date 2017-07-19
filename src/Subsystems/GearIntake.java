@@ -52,12 +52,12 @@ public class GearIntake extends Subsystem{
 		switch(currentState){
 			case EXTENDED_OFF:
 				stopRoller();
-				if(!extended)extendCylinder();
+				extendCylinder();
 				SmartDashboard.putString("Gear Intake Status", "EXTENDED OFF");
 				break;
 			case EXTENDED_INTAKING:
 				forward();
-				if(!extended)extendCylinder();
+				extendCylinder();
 				if(intake.getOutputCurrent() > Constants.GEAR_DETECT_CURRENT){
 					hasGear = true;
 					setState(State.EXTENDED_HOLDING);
@@ -88,6 +88,10 @@ public class GearIntake extends Subsystem{
 				reverse();
 				SmartDashboard.putString("Gear Intake Status", "REVERSED");
 			case SCORING:
+				if(!isScoring){
+					ScoreGear scoreAction = new ScoreGear();
+					scoreAction.start();
+				}
 				SmartDashboard.putString("Gear Intake Status", "SCORING");
 				break;
 			case OFF:
@@ -162,10 +166,7 @@ public class GearIntake extends Subsystem{
 	}
 	
 	public void score(){
-		if(!isScoring){
-			ScoreGear scoreAction = new ScoreGear();
-			scoreAction.start();
-		}
+		setState(State.SCORING);
 	}
 	public class ScoreGear extends Thread{
 		public void run(){

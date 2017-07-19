@@ -185,11 +185,13 @@ public class Robot extends IterativeRobot {
 		if(coDriver.getStartButton() || driver.getStartButton()){
 			robot.hanger.startHang();
 			robot.swerve.setLowPower(true);
+			robot.retractBallFlap();
 		}
 		
 		if(coDriver.getBackButton()){
 			coDriverStop();
 			robot.swerve.setLowPower(false);
+			robot.extendBallFlap();
 		}
 		
 		outputAllToSmartDashboard();

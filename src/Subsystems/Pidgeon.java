@@ -74,8 +74,8 @@ public class Pidgeon {
 	public double getAngularRate(){
 		return currentAngularRate;
 	}
-	public void setAngle(double i){
-		pidgey.SetFusedHeading(-i);
+	public void setAngle(int i){
+		pidgey.SetFusedHeading(-90);
 	}
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber(" Heading Angle ", getAngle());

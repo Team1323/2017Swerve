@@ -32,6 +32,13 @@ public class GearIntake extends Subsystem{
 	boolean extended = false;
 	boolean hasGear = false;
 	boolean isScoring = false;
+	public boolean isExtended(){
+		return extended;
+	}
+	public boolean hasGear(){
+		return hasGear;
+	}
+	int cyclesWithLostGear = 0;
 	
 	public enum State{
 		OFF,
@@ -67,7 +74,10 @@ public class GearIntake extends Subsystem{
 			case EXTENDED_HOLDING:
 				hold();
 				if(intake.getOutputCurrent() < Constants.GEAR_PRESENT_CURRENT){
-					hasGear = false;
+					cyclesWithLostGear++;
+					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR)hasGear = false;
+				}else{
+					cyclesWithLostGear = 0;
 				}
 				SmartDashboard.putString("Gear Intake Status", "EXTENDED HOLDING");
 				break;
@@ -79,8 +89,11 @@ public class GearIntake extends Subsystem{
 			case RETRACTED_HOLDING:
 				retractCylinder();
 				hold();
-				if(intake.getOutputCurrent() > Constants.GEAR_PRESENT_CURRENT){
-					hasGear = false;
+				if(intake.getOutputCurrent() < Constants.GEAR_PRESENT_CURRENT){
+					cyclesWithLostGear++;
+					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR)hasGear = false;
+				}else{
+					cyclesWithLostGear = 0;
 				}
 				SmartDashboard.putString("Gear Intake Status", "RETRACTED HOLDING");
 				break;
@@ -92,6 +105,7 @@ public class GearIntake extends Subsystem{
 					ScoreGear scoreAction = new ScoreGear();
 					scoreAction.start();
 				}
+				hasGear = false;
 				SmartDashboard.putString("Gear Intake Status", "SCORING");
 				break;
 			case OFF:
@@ -194,5 +208,6 @@ public class GearIntake extends Subsystem{
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber("Gear Intake Voltage" , intake.getOutputVoltage());
 		SmartDashboard.putNumber("Gear Intake Current", intake.getOutputCurrent());
+		SmartDashboard.putBoolean("Has Gear", hasGear);
 	}
 }

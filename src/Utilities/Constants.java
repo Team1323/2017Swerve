@@ -13,7 +13,7 @@ public class Constants {
 	public static final double ANGLE_FRONT_MODULE_CENTER = Math.atan(WHEELBASE_LENGTH/WHEELBASE_WIDTH);
 	
     // Swerve Module Wheel Offsets
-	public static final double FRONT_RIGHT_TURN_OFFSET = 155.8125;
+	public static final double FRONT_RIGHT_TURN_OFFSET = 0.0;
     public static final double FRONT_LEFT_TURN_OFFSET  = 97.73;
     public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
     public static final double REAR_RIGHT_TURN_OFFSET  = 355.43;
@@ -44,4 +44,5 @@ public class Constants {
 	
 	public static final double GEAR_DETECT_CURRENT = 15;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
+	public static final int CYCLES_FOR_LOST_GEAR = 7;
 }

@@ -1,16 +1,16 @@
 package org.usfirst.frc.team1323.robot;
 
-import IO.FlightStick;
+import IO.SimpleFlightStick;
 import IO.SimpleXbox;
 import Loops.Looper;
 import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
-import Subsystems.Swerve.HeadingController;
 import Subsystems.Turret;
 import Utilities.Constants;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 public class Robot extends IterativeRobot {
 	RoboSystem robot = RoboSystem.getInstance();
 	public SimpleXbox driver, coDriver;
-	public FlightStick leftDriver, rightDriver;
+	public SimpleFlightStick leftDriver, rightDriver;
 	Looper enabledLooper = new Looper();
 	Looper disabledLooper = new Looper();
 	private boolean sweeperNeedsToStop = false;
@@ -33,13 +33,9 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() {
 		driver = new SimpleXbox(0);
-        //driver.start();
         coDriver = new SimpleXbox(1);
-        //coDriver.start();
-        /*leftDriver = new FlightStick(2);
-        rightDriver = new FlightStick(3);
-        leftDriver.start();
-        rightDriver.start();*/
+        leftDriver = new SimpleFlightStick(2);
+        rightDriver = new SimpleFlightStick(3);
         zeroAllSensors();
         robot.turret.resetAngle(90);
         enabledLooper.register(robot.swerve.getLoop());
@@ -51,7 +47,7 @@ public class Robot extends IterativeRobot {
 	}
 	public void zeroAllSensors(){
 		robot.swerve.zeroSensors();
-		robot.pidgey.setAngle(0);
+		robot.pidgey.setAngle(90);
 		robot.turret.zeroSensors();
 	}
 	public void outputAllToSmartDashboard(){
@@ -63,6 +59,11 @@ public class Robot extends IterativeRobot {
 		robot.gearIntake.outputToSmartDashboard();
 		robot.shooter.outputToSmartDashboard();
 		robot.sweeper.outputToSmartDashboard();
+		
+		SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
+		SmartDashboard.putNumber("Left Joystick Y", leftDriver.getRawAxis(1));
+		SmartDashboard.putNumber("Right Joystick X", rightDriver.getRawAxis(0));
+		SmartDashboard.putNumber("Right Joystick Y", rightDriver.getRawAxis(1));
 	}
 	public void stopAll(){
 		robot.swerve.stop();
@@ -115,28 +116,8 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		//Driver
-		//Swerve
-		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false, driver.getTriggerAxis(Hand.kLeft) > 0);
-		//robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getXAxis(), false);
-		if(driver.getBackButton()){
-			robot.pidgey.setAngle(0);
-			robot.swerve.setTargetHeading(0.0);
-		}
-		if(driver.getAButton()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
-		}else if(driver.getBButton()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
-		}else if(driver.getXButton()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
-		}else if(driver.getYButton()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
-		}
-		//Gear Score
-		if(driver.getTriggerAxis(Hand.kRight) > 0){
-			robot.gearIntake.score();
-		}
-		
-		
+		//driverXboxControls();
+		driverFlightStickControls();
 		
 		//Co Driver
 		
@@ -166,6 +147,7 @@ public class Robot extends IterativeRobot {
 			robot.sweeper.startSweeper();
 		}
 		if(coDriver.getYButton()){
+			robot.sweeper.stop();
 			robot.sweeper.rollerReverse();
 			sweeperNeedsToStop = true;
 		}else if(sweeperNeedsToStop){
@@ -181,11 +163,9 @@ public class Robot extends IterativeRobot {
 			robot.gearIntake.setState(GearIntake.State.REVERSED);
 		}
 		
-		//Hanger
-		if(coDriver.getStartButton() || driver.getStartButton()){
-			robot.hanger.startHang();
-			robot.swerve.setLowPower(true);
-			robot.retractBallFlap();
+		if(robot.gearIntake.isExtended() && robot.gearIntake.hasGear()){
+			coDriver.rumble(3);
+			driver.rumble(3);
 		}
 		
 		if(coDriver.getBackButton()){
@@ -195,6 +175,64 @@ public class Robot extends IterativeRobot {
 		}
 		
 		outputAllToSmartDashboard();
+	}
+	public void driverXboxControls(){
+		//Swerve
+		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false, driver.getTriggerAxis(Hand.kLeft) > 0);
+		if(driver.getBackButton()){
+			robot.pidgey.setAngle(0);
+			robot.swerve.setTargetHeading(0.0);
+		}
+		if(driver.getAButton()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
+		}else if(driver.getBButton()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
+		}else if(driver.getXButton()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
+		}else if(driver.getYButton()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
+		}
+		//Gear Score
+		if(driver.getTriggerAxis(Hand.kRight) > 0){
+			robot.gearIntake.score();
+		}
+		//Hanger
+		if(coDriver.getStartButton() || driver.getStartButton()){
+			robot.hanger.startHang();
+			robot.swerve.setLowPower(true);
+			robot.retractBallFlap();
+		}
+	}
+	public void driverFlightStickControls(){
+		//Swerve
+		robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getX(), false, leftDriver.getTriggerButton());
+		if(leftDriver.getDownButton()){
+			robot.pidgey.setAngle(0);
+			robot.swerve.setTargetHeading(0.0);
+		}
+		if(rightDriver.getDownButton()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
+		}else if(rightDriver.getLeftButton()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
+		}else if(rightDriver.getRightButton()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
+		}else if(rightDriver.getPOV() == 0){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
+		}
+		if(leftDriver.getPOV() >= 0){
+			robot.pidgey.setAngle((leftDriver.getPOV()));
+			robot.swerve.setTargetHeading(leftDriver.getPOV());
+		}
+		//Gear Score
+		if(rightDriver.getTriggerButton()){
+			robot.gearIntake.score();
+		}
+		//Hanger
+		if(coDriver.getStartButton()){
+			robot.hanger.startHang();
+			robot.swerve.setLowPower(true);
+			robot.retractBallFlap();
+		}
 	}
 }
 

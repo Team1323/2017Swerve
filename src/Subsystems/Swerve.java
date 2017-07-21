@@ -232,11 +232,17 @@ public class Swerve extends Subsystem{
 		rotateInput += rotationCorrection;
 		
 		kinematics.calculate(xInput, yInput, rotateInput);
-	    
-	    frontRight.setModuleAngle(kinematics.frSteeringAngle());
-	    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
-	    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
-	    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
+	    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.01){
+	    	frontRight.setModuleAngle(0);
+		    frontLeft.setModuleAngle(0);
+		    rearLeft.setModuleAngle(0);
+		    rearRight.setModuleAngle(0);
+	    }else{
+		    frontRight.setModuleAngle(kinematics.frSteeringAngle());
+		    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
+		    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
+		    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
+	    }
 	    
 	    frontRight.setDriveSpeed(kinematics.frWheelSpeed());
 	    frontLeft.setDriveSpeed(-kinematics.flWheelSpeed());

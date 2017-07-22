@@ -32,7 +32,7 @@ public class Pidgeon {
 			PigeonImu.GeneralStatus genStatus = new PigeonImu.GeneralStatus();
 			PigeonImu.FusionStatus fusionStatus = new PigeonImu.FusionStatus();
 			double [] xyz_dps = new double [3];
-			currentAngle = -pidgey.GetFusedHeading(fusionStatus);
+			//currentAngle = -pidgey.GetFusedHeading(fusionStatus);
 			pidgey.GetGeneralStatus(genStatus);
 			pidgey.GetRawGyro(xyz_dps);
 			pidgeonIsGood = (pidgey.GetState() == PigeonState.Ready) ? true : false;
@@ -43,6 +43,10 @@ public class Pidgeon {
 			//SmartDashboard.putNumber("AccX", ba_xyz[0]);
 			//SmartDashboard.putNumber("AccY", ba_xyz[1]);
 			//SmartDashboard.putNumber("AccZ", ba_xyz[2]);
+			
+			double [] ypr = new double [3];
+			pidgey.GetYawPitchRoll(ypr);
+			currentAngle = -ypr[0];
 			
 		}catch(Exception e){
 			System.out.println(e);
@@ -75,7 +79,13 @@ public class Pidgeon {
 		return currentAngularRate;
 	}
 	public void setAngle(int i){
-		pidgey.SetFusedHeading(-90);
+		if(i == 0){
+			pidgey.SetFusedHeading(i);
+			pidgey.SetYaw(i);
+		}else{
+			pidgey.SetFusedHeading(360-i);
+			pidgey.SetYaw(360-i);
+		}
 	}
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber(" Heading Angle ", getAngle());

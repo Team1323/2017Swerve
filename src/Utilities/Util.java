@@ -63,8 +63,7 @@ public class Util {
     }
 
     public static double deadBand(double val, double deadband){
-        if (val < deadband && val > -deadband) return 0.0;
-        else return val;
+        return (Math.abs(val) > Math.abs(deadband)) ? val : 0.0;
     }
     public static double deadBandBump(double val, double deadband){
         	 if (val < deadband && val > 0) {return deadband;}

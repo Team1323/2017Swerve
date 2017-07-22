@@ -16,8 +16,11 @@ public class Hanger extends Subsystem{
 	}
 	public Hanger(){
 		motor = new CANTalon(Ports.HANGER);
-		motor.reverseOutput(true);
+		motor.reverseOutput(false);
 		motor.enableBrakeMode(true);
+		motor.changeControlMode(TalonControlMode.PercentVbus);
+		motor.setCurrentLimit(40);
+		motor.EnableCurrentLimit(true);
 	}
 	
 	public enum State{
@@ -77,12 +80,11 @@ public class Hanger extends Subsystem{
 	}
 	
 	public void on(){
-		motor.changeControlMode(TalonControlMode.Current);
-		motor.set(Constants.HANG_CURRENT);
+		motor.set(Constants.HANG_POWER);
 	}
 	@Override
 	public synchronized void stop(){
-		motor.changeControlMode(TalonControlMode.PercentVbus);
+		setState(State.OFF);
 		motor.set(0);
 	}
 	@Override

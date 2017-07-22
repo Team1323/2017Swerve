@@ -39,10 +39,10 @@ public class Constants {
 	public static final double SWEEPER_ROLLER_FORWARD = 1.0;
     public static final double SWEEPER_ROLLER_REVERSE = -1.0;
 	
-	public static final double HANG_CURRENT = 70;
-	public static final double HANG_CURRENT_THRESHOLD = 55;
+	public static final double HANG_POWER = -1.0;
+	public static final double HANG_CURRENT_THRESHOLD = 40;
 	
-	public static final double GEAR_DETECT_CURRENT = 15;
+	public static final double GEAR_DETECT_CURRENT = 14;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
 	public static final int CYCLES_FOR_LOST_GEAR = 7;
 }

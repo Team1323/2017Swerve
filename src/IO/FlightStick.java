@@ -23,40 +23,11 @@ public class FlightStick extends Joystick{
 	
 	public FlightStick(int usb){
 		super(usb);
+		triggerButton = new ButtonCheck(TRIGGER_BUTTON);
+		leftButton = new ButtonCheck(LEFT_BUTTON);
+		rightButton = new ButtonCheck(RIGHT_BUTTON);
+		downButton = new ButtonCheck(DOWN_BUTTON);
 	}
-	
-	public void init(){
-    	triggerButton = new ButtonCheck(TRIGGER_BUTTON);    
-    	leftButton = new ButtonCheck(LEFT_BUTTON);
-    	rightButton = new ButtonCheck(RIGHT_BUTTON);
-    	downButton = new ButtonCheck(DOWN_BUTTON);
-    }
-	
-	public void start() {
-        synchronized (mTimer) {
-            mTimer.schedule(new InitTask(), 0);
-        }
-    }
-	
-	private class InitTask extends TimerTask {
-        @Override
-        public void run() {
-            while (true) {
-                try {
-                	init();
-                    break;
-                } catch (Exception e) {
-                    System.out.println("FSM failed to initialize: " + e.getMessage());
-                    synchronized (mTimer) {
-                        mTimer.schedule(new InitTask(), 500);
-                    }
-                }
-            }
-            synchronized (mTimer) {
-                mTimer.schedule(new UpdateTask(), 0, 10);
-            }
-        }
-    }
 	
 	public double getXAxis(){
 		return Util.deadBand(getRawAxis(0), DEAD_BAND);
@@ -113,12 +84,10 @@ public class FlightStick extends Joystick{
     		return buttonActive;
     	}
     }
-	private class UpdateTask extends TimerTask{
-		public void run(){
-			triggerButton.update();
-			leftButton.update();
-			rightButton.update();
-			downButton.update();
-		}
+	public void update(){
+		triggerButton.update();
+		leftButton.update();
+		rightButton.update();
+		downButton.update();
 	}
 }

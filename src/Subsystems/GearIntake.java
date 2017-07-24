@@ -32,11 +32,27 @@ public class GearIntake extends Subsystem{
 	boolean extended = false;
 	boolean hasGear = false;
 	boolean isScoring = false;
+	boolean needsToNotifyGearAcquired = false;
+	boolean needsToNotifyGearLoss = false;
 	public boolean isExtended(){
 		return extended;
 	}
 	public boolean hasGear(){
 		return hasGear;
+	}
+	public boolean needsToNotifyGearAcquired(){
+		if(needsToNotifyGearAcquired){
+			needsToNotifyGearAcquired = false;
+			return true;
+		}
+		return false;
+	}
+	public boolean needsToNotifyGearLoss(){
+		if(needsToNotifyGearLoss){
+			needsToNotifyGearLoss = false;
+			return true;
+		}
+		return false;
 	}
 	int cyclesWithLostGear = 0;
 	
@@ -67,7 +83,8 @@ public class GearIntake extends Subsystem{
 				extendCylinder();
 				if(intake.getOutputCurrent() > Constants.GEAR_DETECT_CURRENT){
 					hasGear = true;
-					setState(State.EXTENDED_HOLDING);
+					setState(State.RETRACTED_HOLDING);
+					needsToNotifyGearAcquired = true;
 				}
 				SmartDashboard.putString("Gear Intake Status", "EXTENDED INTAKING");
 				break;
@@ -75,7 +92,10 @@ public class GearIntake extends Subsystem{
 				hold();
 				if(intake.getOutputCurrent() < Constants.GEAR_PRESENT_CURRENT){
 					cyclesWithLostGear++;
-					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR)hasGear = false;
+					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR){
+						hasGear = false;
+						needsToNotifyGearLoss = true;
+					}
 				}else{
 					cyclesWithLostGear = 0;
 				}
@@ -91,7 +111,10 @@ public class GearIntake extends Subsystem{
 				hold();
 				if(intake.getOutputCurrent() < Constants.GEAR_PRESENT_CURRENT){
 					cyclesWithLostGear++;
-					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR)hasGear = false;
+					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR){
+						hasGear = false;
+						needsToNotifyGearLoss = true;
+					}
 				}else{
 					cyclesWithLostGear = 0;
 				}

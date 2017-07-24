@@ -202,9 +202,17 @@ public class Robot extends IterativeRobot {
 				robot.gearIntake.setState(GearIntake.State.REVERSED);
 			}
 			
-			if(robot.gearIntake.isExtended() && robot.gearIntake.hasGear()){
-				coDriver.rumble(3);
-				driver.rumble(3);
+			/*if(robot.gearIntake.isExtended() && robot.gearIntake.hasGear()){
+				coDriver.rumble(3, 1);
+				driver.rumble(3, 1);
+			}*/
+			if(robot.gearIntake.needsToNotifyGearAcquired()){
+				coDriver.rumble(3, 2);
+				driver.rumble(3, 2);
+			}
+			if(robot.gearIntake.needsToNotifyGearLoss()){
+				coDriver.rumble(1, 2);
+				driver.rumble(1, 2);
 			}
 			
 			if(coDriver.getBackButton()){

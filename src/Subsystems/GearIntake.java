@@ -16,9 +16,6 @@ public class GearIntake extends Subsystem{
 	public GearIntake(){
 		intake = new CANTalon(Ports.GEAR_INTAKE);
 		intake.enableBrakeMode(false);
-		intake.changeControlMode(TalonControlMode.Current);
-		intake.setPID(0.06, 0.00, 0, 0.08, 0, 0.0, 0);
-		intake.setProfile(0);
 		intake.reverseOutput(true);
 		intake.setCloseLoopRampRate(12);
 		intake.setCurrentLimit(15);

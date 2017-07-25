@@ -182,8 +182,12 @@ public class GearIntake extends Subsystem{
 		intake.set(0);
 	}
 	
-	public void intakeGear(){
-		setState(State.EXTENDED_INTAKING);
+	public void extend(){
+		if(hasGear){
+			setState(State.EXTENDED_HOLDING);
+		}else{
+			setState(State.EXTENDED_INTAKING);
+		}
 	}
 	public void retract(){
 		if(hasGear){

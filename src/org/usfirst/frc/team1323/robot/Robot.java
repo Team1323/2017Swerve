@@ -195,7 +195,7 @@ public class Robot extends IterativeRobot {
 			}
 			//Gear Intake
 			if(coDriver.getAButton()){
-				robot.gearIntake.intakeGear();
+				robot.gearIntake.extend();
 			}else if(coDriver.getBButton()){
 				robot.gearIntake.retract();
 			}else if(coDriver.getPOV() == 0){

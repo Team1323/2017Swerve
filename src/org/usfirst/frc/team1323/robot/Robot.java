@@ -171,9 +171,9 @@ public class Robot extends IterativeRobot {
 				robot.turret.setState(Turret.ControlState.Manual);
 				robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.3);
 			}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
-				robot.turret.setAngle(90);
+				robot.turret.setState(Turret.ControlState.AngleSnap, 90);
 			}else if(coDriver.getPOV() == 180){
-				robot.turret.setAngle(-90);
+				robot.turret.setState(Turret.ControlState.AngleSnap, -90);
 			}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 				robot.turret.lock();
 			}

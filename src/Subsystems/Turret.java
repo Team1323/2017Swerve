@@ -12,12 +12,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //added
 
 public class Turret extends Subsystem{
 	private static Turret instance = new Turret();
+	private static Pidgeon pidgey;
 	private CANTalon motor;
-	private double lockedAngle = 0.0;
-	private double lockedTurretAngle = 0.0;
+	private double gyroLockedHeading = 0.0;
+	private double gyroLockedTurretAngle = 0.0;
 	private int onTargetCheck = 0;
 	private double angleOffset = 0;
 	public Turret(){
+		pidgey = Pidgeon.getInstance();
 		motor = new CANTalon(Ports.TURRET);
     	motor.setEncPosition(0);
     	motor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
@@ -52,14 +54,15 @@ public class Turret extends Subsystem{
 	public void setState(ControlState newState){
 		currentState = newState;
 	}
+	public void setState(ControlState newState, double targetAngle){
+		setState(newState);
+		setAngle(targetAngle);
+	}
 	public ControlState getCurrentState(){
 		return currentState;
 	}
 	
-	
-	
 	public void setAngle(double angle){
-		setState(ControlState.AngleSnap);
 		motor.changeControlMode(TalonControlMode.Position);
 		if(angle > Constants.TURRET_MAX_ANGLE)
 			angle = Constants.TURRET_MAX_ANGLE;
@@ -69,7 +72,7 @@ public class Turret extends Subsystem{
 		onTargetCheck = Constants.TURRET_ONTARGET_THRESH;
 	}
 	public void moveDegrees(double degree){
-		double newAngle = getAngle() - degree;
+		double newAngle = getAngle() + degree;
 		setAngle(newAngle);
 	}
 	public double getAngle(){
@@ -79,7 +82,13 @@ public class Turret extends Subsystem{
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
 	}
 	public void lock(){
+		setState(ControlState.AngleSnap);
 		setAngle(getAngle());
+	}
+	public void gyroLock(){
+		setState(ControlState.GyroComp);
+		gyroLockedHeading = pidgey.getAngle();
+		gyroLockedTurretAngle = getAngle();
 	}
 	public void update(){
 		switch(currentState){
@@ -90,8 +99,14 @@ public class Turret extends Subsystem{
 					motor.setProfile(0);
 				}
 				break;
+			case GyroComp:
+				motor.setProfile(1);
+				setAngle(gyroLockedTurretAngle - (pidgey.getAngle() - gyroLockedHeading));
+				break;
+			case Off:
+				setPercentVBus(0);
+				break;
 			default:
-				
 				break;
 		}
 	}
@@ -132,6 +147,7 @@ public class Turret extends Subsystem{
 	}
 	@Override
 	public synchronized void stop(){
+		setState(ControlState.Off);
 		setPercentVBus(0);
 	}
 	@Override 

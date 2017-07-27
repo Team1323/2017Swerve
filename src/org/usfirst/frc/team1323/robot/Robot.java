@@ -28,6 +28,7 @@ public class Robot extends IterativeRobot {
 	Looper enabledLooper = new Looper();
 	Looper disabledLooper = new Looper();
 	private boolean sweeperNeedsToStop = false;
+	private boolean sweeperCanTurnOn = false;
 	VisionServer visionServer = VisionServer.getInstance();
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -71,10 +72,10 @@ public class Robot extends IterativeRobot {
 		robot.shooter.outputToSmartDashboard();
 		robot.sweeper.outputToSmartDashboard();
 		
-		SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
+		/*SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
 		SmartDashboard.putNumber("Left Joystick Y", leftDriver.getRawAxis(1));
 		SmartDashboard.putNumber("Right Joystick X", rightDriver.getRawAxis(0));
-		SmartDashboard.putNumber("Right Joystick Y", rightDriver.getRawAxis(1));
+		SmartDashboard.putNumber("Right Joystick Y", rightDriver.getRawAxis(1));*/
 	}
 	public void stopAll(){
 		robot.swerve.stop();
@@ -154,79 +155,12 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		try{
-			//driver.update();
+			driver.update();
 			//coDriver.update();
-			//Driver
 			//driverXboxControls();
-			driverFlightStickControls();
-			
-			//Co Driver
-			
-			//Ball Intake
-			if(coDriver.getBumper(Hand.kRight)){
-	    		robot.intake.intakeForward();
-	    	}else if(coDriver.getBumper(Hand.kLeft)){
-	    		robot.intake.intakeReverse();
-	    	}
-			//Turret
-			if(Math.abs(coDriver.getX(Hand.kRight)) > 0){
-				robot.turret.setState(Turret.ControlState.Manual);
-				robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.5);
-			}else if(Math.abs(coDriver.getX(Hand.kLeft)) > 0){
-				robot.turret.setState(Turret.ControlState.Manual);
-				robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.3);
-			}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
-				robot.turret.setState(Turret.ControlState.AngleSnap, 90);
-			}else if(coDriver.getPOV() == 180){
-				robot.turret.setState(Turret.ControlState.AngleSnap, -90);
-			}else if(coDriver.xButton.longPressed()){
-				robot.turret.gyroLock();
-			}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
-				robot.turret.lock();
-			}
-			//Shooter
-			if(coDriver.getTriggerAxis(Hand.kLeft) > 0){
-				robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
-			}
-			//Sweeper
-			if(coDriver.getTriggerAxis(Hand.kRight) > 0 && robot.shooter.onTarget()){
-				robot.sweeper.startSweeper();
-			}
-			if(coDriver.getYButton()){
-				robot.sweeper.stop();
-				robot.sweeper.rollerReverse();
-				sweeperNeedsToStop = true;
-			}else if(sweeperNeedsToStop){
-				robot.sweeper.stop();
-				sweeperNeedsToStop = false;
-			}
-			//Gear Intake
-			if(coDriver.getAButton()){
-				robot.gearIntake.extend();
-			}else if(coDriver.getBButton()){
-				robot.gearIntake.retract();
-			}else if(coDriver.getPOV() == 0){
-				robot.gearIntake.setState(GearIntake.State.REVERSED);
-			}
-			
-			/*if(robot.gearIntake.isExtended() && robot.gearIntake.hasGear()){
-				coDriver.rumble(3, 1);
-				driver.rumble(3, 1);
-			}*/
-			if(robot.gearIntake.needsToNotifyGearAcquired()){
-				coDriver.rumble(3, 2);
-				driver.rumble(3, 2);
-			}
-			if(robot.gearIntake.needsToNotifyGearLoss()){
-				coDriver.rumble(1, 2);
-				driver.rumble(1, 2);
-			}
-			
-			if(coDriver.getBackButton()){
-				coDriverStop();
-				robot.swerve.setLowPower(false);
-				robot.extendBallFlap();
-			}
+			//driverFlightStickControls();
+			//coDriverXboxControls();
+			oneControllerMode();
 			
 			outputAllToSmartDashboard();
 		}catch(Throwable t){
@@ -255,7 +189,7 @@ public class Robot extends IterativeRobot {
 			robot.gearIntake.score();
 		}
 		//Hanger
-		if(coDriver.getStartButton() || driver.getStartButton()){
+		if(driver.getStartButton()){
 			robot.hanger.startHang();
 			robot.swerve.setLowPower(true);
 			robot.retractBallFlap();
@@ -285,13 +219,153 @@ public class Robot extends IterativeRobot {
 		if(rightDriver.getTriggerButton()){
 			robot.gearIntake.score();
 		}
+	}
+	public void coDriverXboxControls(){
+		//Ball Intake
+		if(coDriver.getBumper(Hand.kRight)){
+    		robot.intake.intakeForward();
+    	}else if(coDriver.getBumper(Hand.kLeft)){
+    		robot.intake.intakeReverse();
+    	}
+		//Turret
+		if(Math.abs(coDriver.getX(Hand.kRight)) > 0){
+			robot.turret.setState(Turret.ControlState.Manual);
+			robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.5);
+		}else if(Math.abs(coDriver.getX(Hand.kLeft)) > 0){
+			robot.turret.setState(Turret.ControlState.Manual);
+			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.3);
+		}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
+			robot.turret.setState(Turret.ControlState.AngleSnap, 90);
+		}else if(coDriver.getPOV() == 180){
+			robot.turret.setState(Turret.ControlState.AngleSnap, -90);
+		}else if(coDriver.xButton.longPressed()){
+			robot.turret.gyroLock();
+		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
+			robot.turret.lock();
+		}
+		//Shooter
+		if(coDriver.getTriggerAxis(Hand.kLeft) > 0){
+			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
+		}
+		//Sweeper
+		if(coDriver.getTriggerAxis(Hand.kRight) > 0 && robot.shooter.onTarget()){
+			robot.sweeper.startSweeper();
+		}
+		if(coDriver.getYButton()){
+			robot.sweeper.stop();
+			robot.sweeper.rollerReverse();
+			sweeperNeedsToStop = true;
+		}else if(sweeperNeedsToStop){
+			robot.sweeper.stop();
+			sweeperNeedsToStop = false;
+		}
+		//Gear Intake
+		if(coDriver.getAButton()){
+			robot.gearIntake.extend();
+		}else if(coDriver.getBButton()){
+			robot.gearIntake.retract();
+		}else if(coDriver.getPOV() == 0){
+			robot.gearIntake.setState(GearIntake.State.REVERSED);
+		}
+		if(robot.gearIntake.needsToNotifyGearAcquired()){
+			coDriver.rumble(3, 2);
+			driver.rumble(3, 2);
+		}
+		if(robot.gearIntake.needsToNotifyGearLoss()){
+			coDriver.rumble(1, 2);
+			driver.rumble(1, 2);
+		}
 		//Hanger
 		if(coDriver.getStartButton()){
 			robot.hanger.startHang();
 			robot.swerve.setLowPower(true);
 			robot.retractBallFlap();
 		}
+		
+		if(coDriver.getBackButton()){
+			coDriverStop();
+			robot.swerve.setLowPower(false);
+			robot.extendBallFlap();
+		}
 	}
-	
+	public void oneControllerMode(){
+		//Swerve
+		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false, driver.getTriggerAxis(Hand.kLeft) > 0);
+		if(driver.backButton.wasPressed()){
+			coDriverStop();
+			robot.swerve.setLowPower(false);
+			robot.extendBallFlap();
+		}else if(coDriver.backButton.longPressed()){
+			robot.pidgey.setAngle(0);
+			robot.swerve.setTargetHeading(0.0);
+		}
+		if(driver.aButton.longPressed()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
+		}else if(driver.bButton.longPressed()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
+		}else if(driver.xButton.longPressed()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
+		}else if(driver.yButton.longPressed()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
+		}
+		//Ball Intake
+		if(driver.rightBumper.wasPressed()){
+    		robot.intake.intakeForward();
+    	}else if(driver.leftBumper.wasPressed()){
+    		robot.intake.intakeReverse();
+    	}
+		//Turret
+		if(Math.abs(driver.getY(Hand.kRight)) > 0){
+			robot.turret.setState(Turret.ControlState.Manual);
+			robot.turret.setPercentVBus(driver.getY(Hand.kRight)*0.3);
+		}else if(driver.leftCenterClick.wasPressed() || driver.rightCenterClick.wasPressed()){
+			robot.turret.setState(Turret.ControlState.AngleSnap, 90);
+		}else if(driver.getPOV() == 180){
+			robot.turret.setState(Turret.ControlState.AngleSnap, -90);
+		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
+			robot.turret.lock();
+		}
+		//Shooter
+		if(driver.rightTrigger.longPressed()){
+			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
+			sweeperCanTurnOn = true;
+		}
+		//Sweeper
+		if(sweeperCanTurnOn && robot.shooter.onTarget()){
+			robot.sweeper.startSweeper();
+			sweeperCanTurnOn = false;
+		}
+		if(driver.yButton.wasPressed()){
+			if(sweeperNeedsToStop){
+				robot.sweeper.stop();
+				sweeperNeedsToStop = false;
+				sweeperCanTurnOn =  true;
+			}else{
+				robot.sweeper.stop();
+				robot.sweeper.rollerReverse();
+				sweeperNeedsToStop = true;
+			}
+		}
+		//Gear Intake
+		if(driver.aButton.wasPressed()){
+			robot.gearIntake.extend();
+		}else if(driver.bButton.wasPressed()){
+			robot.gearIntake.retract();
+		}else if(driver.rightTrigger.wasPressed()){
+			robot.gearIntake.score();
+		}
+		if(robot.gearIntake.needsToNotifyGearAcquired()){
+			driver.rumble(3, 2);
+		}
+		if(robot.gearIntake.needsToNotifyGearLoss()){
+			driver.rumble(1, 2);
+		}
+		//Hanger
+		if(driver.startButton.isBeingPressed()){
+			robot.hanger.startHang();
+			robot.swerve.setLowPower(true);
+			robot.retractBallFlap();
+		}
+	}
 }
 

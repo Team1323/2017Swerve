@@ -21,6 +21,8 @@ public class Intake extends Subsystem{
 		intakeMotor.changeControlMode(TalonControlMode.PercentVbus);
 		intakeMotor.reverseOutput(false);
 		intakeMotor.setVoltageRampRate(24);
+		intakeMotor.setCurrentLimit(25);
+		intakeMotor.EnableCurrentLimit(true);
 	}
 	public static Intake getInstance(){
 		return instance;

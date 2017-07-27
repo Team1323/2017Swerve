@@ -125,7 +125,17 @@ public class Xbox extends XboxController{
     		if(buttonNumber > 0){
     			buttonCheck = getRawButton(buttonNumber);
     		}else{
-    			buttonCheck = 
+    			switch(buttonNumber){
+    				case LEFT_TRIGGER:
+    					buttonCheck = getTriggerAxis(Hand.kLeft) > 0;
+    					break;
+    				case RIGHT_TRIGGER:
+    					buttonCheck = getTriggerAxis(Hand.kRight) > 0;
+    					break;
+    				default:
+    					buttonCheck = false;
+    					break;
+    			}
     		}
     		if(buttonCheck){
 	    		if(buttonActive){
@@ -173,5 +183,7 @@ public class Xbox extends XboxController{
     	rightBumper.update();
     	leftCenterClick.update();
     	rightCenterClick.update();
+    	leftTrigger.update();
+    	rightTrigger.update();
     }
 }

@@ -45,4 +45,7 @@ public class Constants {
 	public static final double GEAR_DETECT_CURRENT = 14;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
 	public static final int CYCLES_FOR_LOST_GEAR = 7;
+	
+	//Vision
+	public static final int kAndroidAppTcpPort = 8254;
 }

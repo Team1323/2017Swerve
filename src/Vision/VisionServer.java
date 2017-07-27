@@ -1,11 +1,11 @@
 package Vision;
 
-import com.team254.frc2016.Constants;
+import Utilities.Constants;
 
-import com.team254.frc2016.vision.messages.HeartbeatMessage;
-import com.team254.frc2016.vision.messages.OffWireMessage;
-import com.team254.frc2016.vision.messages.VisionMessage;
-import com.team254.lib.util.CrashTrackingRunnable;
+import Vision.Messages.HeartbeatMessage;
+import Vision.Messages.OffWireMessage;
+import Vision.Messages.VisionMessage;
+import Utilities.CrashTrackingRunnable;
 import edu.wpi.first.wpilibj.Timer;
 
 import java.io.IOException;

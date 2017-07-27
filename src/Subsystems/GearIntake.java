@@ -92,6 +92,7 @@ public class GearIntake extends Subsystem{
 					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR){
 						hasGear = false;
 						needsToNotifyGearLoss = true;
+						setState(State.EXTENDED_OFF);
 					}
 				}else{
 					cyclesWithLostGear = 0;
@@ -111,6 +112,7 @@ public class GearIntake extends Subsystem{
 					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR){
 						hasGear = false;
 						needsToNotifyGearLoss = true;
+						setState(State.RETRACTED_OFF);
 					}
 				}else{
 					cyclesWithLostGear = 0;
@@ -171,8 +173,8 @@ public class GearIntake extends Subsystem{
 		intake.set(-0.27);
 	}
 	private void reverse(){
-		intake.changeControlMode(TalonControlMode.Current);
-		intake.set(-12);
+		intake.changeControlMode(TalonControlMode.PercentVbus);
+		intake.set(0.75);
 	}
 	private void stopRoller(){
 		intake.changeControlMode(TalonControlMode.PercentVbus);

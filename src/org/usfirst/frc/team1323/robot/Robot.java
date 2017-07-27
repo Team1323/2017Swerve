@@ -310,9 +310,9 @@ public class Robot extends IterativeRobot {
 		}
 		//Ball Intake
 		if(driver.rightBumper.wasPressed()){
-    		robot.intake.intakeForward();
+    		robot.intake.toggleForward();
     	}else if(driver.leftBumper.wasPressed()){
-    		robot.intake.intakeReverse();
+    		robot.intake.toggleReverse();
     	}
 		//Turret
 		if(Math.abs(driver.getY(Hand.kRight)) > 0){

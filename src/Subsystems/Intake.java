@@ -16,6 +16,8 @@ public class Intake extends Subsystem{
 	public CANTalon getTalon(){
 		return intakeMotor;
 	}
+	boolean isForward = false;
+	boolean isReversed = false;
 	public Intake(){
 		intakeMotor = new CANTalon(Ports.INTAKE_MOTOR);
 		intakeMotor.changeControlMode(TalonControlMode.PercentVbus);
@@ -30,13 +32,31 @@ public class Intake extends Subsystem{
 	
 	public void intakeForward(){
 		intakeMotor.set(-0.7); 
+		isForward = true;
 	}
 	public void intakeReverse(){
 		intakeMotor.set(0.7);
+		isReversed = true;
+	}
+	public void toggleForward(){
+		if(isForward){
+			stop();
+		}else{
+			intakeForward();
+		}
+	}
+	public void toggleReverse(){
+		if(isReversed){
+			stop();
+		}else{
+			intakeReverse();
+		}
 	}
 	@Override
 	public synchronized void stop(){
 		intakeMotor.set(0);
+		isForward = false;
+		isReversed = false;
 	}
 	@Override
 	public synchronized void zeroSensors(){

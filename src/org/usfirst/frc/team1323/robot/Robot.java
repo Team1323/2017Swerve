@@ -295,7 +295,7 @@ public class Robot extends IterativeRobot {
 			coDriverStop();
 			robot.swerve.setLowPower(false);
 			robot.extendBallFlap();
-		}else if(coDriver.backButton.longPressed()){
+		}else if(driver.backButton.longPressed()){
 			robot.pidgey.setAngle(0);
 			robot.swerve.setTargetHeading(0.0);
 		}

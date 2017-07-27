@@ -18,6 +18,8 @@ public class Xbox extends XboxController{
     public ButtonCheck rightBumper;
     public ButtonCheck leftCenterClick;
     public ButtonCheck rightCenterClick;
+    public ButtonCheck leftTrigger;
+    public ButtonCheck rightTrigger;
     public static final int A_BUTTON = 1;
     public static final int B_BUTTON = 2;
     public static final int X_BUTTON = 3;
@@ -28,6 +30,8 @@ public class Xbox extends XboxController{
     public static final int START_BUTTON = 8;
     public static final int LEFT_CENTER_CLICK = 9;
     public static final int RIGHT_CENTER_CLICK = 10;
+    public static final int LEFT_TRIGGER = -2;
+    public static final int RIGHT_TRIGGER = -3;
     
     public Xbox(int usb)   { 
     	super(usb);
@@ -40,7 +44,9 @@ public class Xbox extends XboxController{
         leftBumper = new ButtonCheck(LEFT_BUMPER);
         rightBumper = new ButtonCheck(RIGHT_BUMPER);
         leftCenterClick = new ButtonCheck(LEFT_CENTER_CLICK);
-        rightCenterClick = new ButtonCheck(RIGHT_CENTER_CLICK);       
+        rightCenterClick = new ButtonCheck(RIGHT_CENTER_CLICK);     
+        leftTrigger = new ButtonCheck(LEFT_TRIGGER);
+        rightTrigger = new ButtonCheck(RIGHT_TRIGGER);
    }
     
     @Override
@@ -116,7 +122,11 @@ public class Xbox extends XboxController{
     		buttonNumber = id;
     	}
     	public void update(){
-    		buttonCheck = getRawButton(buttonNumber);
+    		if(buttonNumber > 0){
+    			buttonCheck = getRawButton(buttonNumber);
+    		}else{
+    			buttonCheck = 
+    		}
     		if(buttonCheck){
 	    		if(buttonActive){
 	    			if(System.currentTimeMillis() - buttonStartTime > 250){

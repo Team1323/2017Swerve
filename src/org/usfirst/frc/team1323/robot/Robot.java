@@ -1,7 +1,6 @@
 package org.usfirst.frc.team1323.robot;
 
 import IO.SimpleFlightStick;
-import IO.SimpleXbox;
 import IO.Xbox;
 import Loops.Looper;
 import Subsystems.GearIntake;
@@ -10,6 +9,7 @@ import Subsystems.Turret;
 import Utilities.Constants;
 import Utilities.CrashTracker;
 import Utilities.Util;
+import Vision.VisionServer;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -28,7 +28,7 @@ public class Robot extends IterativeRobot {
 	Looper enabledLooper = new Looper();
 	Looper disabledLooper = new Looper();
 	private boolean sweeperNeedsToStop = false;
-	//VisionServer visionServer = VisionServer.getInstance();
+	VisionServer visionServer = VisionServer.getInstance();
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -50,7 +50,7 @@ public class Robot extends IterativeRobot {
 	        enabledLooper.register(robot.gearIntake.getLoop());
 	        disabledLooper.register(robot.pidgey.getLoop());
 	        
-	        //VisionServer.getInstance();
+	        VisionServer.getInstance();
 		}catch(Throwable t){
 			CrashTracker.logThrowableCrash(t);
 			throw(t);
@@ -71,10 +71,10 @@ public class Robot extends IterativeRobot {
 		robot.shooter.outputToSmartDashboard();
 		robot.sweeper.outputToSmartDashboard();
 		
-		/*SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
+		SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
 		SmartDashboard.putNumber("Left Joystick Y", leftDriver.getRawAxis(1));
 		SmartDashboard.putNumber("Right Joystick X", rightDriver.getRawAxis(0));
-		SmartDashboard.putNumber("Right Joystick Y", rightDriver.getRawAxis(1));*/
+		SmartDashboard.putNumber("Right Joystick Y", rightDriver.getRawAxis(1));
 	}
 	public void stopAll(){
 		robot.swerve.stop();
@@ -154,11 +154,11 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		try{
-			driver.update();
-			coDriver.update();
+			//driver.update();
+			//coDriver.update();
 			//Driver
-			driverXboxControls();
-			//driverFlightStickControls();
+			//driverXboxControls();
+			driverFlightStickControls();
 			
 			//Co Driver
 			
@@ -171,7 +171,10 @@ public class Robot extends IterativeRobot {
 			//Turret
 			if(Math.abs(coDriver.getX(Hand.kRight)) > 0){
 				robot.turret.setState(Turret.ControlState.Manual);
-				robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.3);
+				robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.5);
+			}else if(Math.abs(coDriver.getX(Hand.kLeft)) > 0){
+				robot.turret.setState(Turret.ControlState.Manual);
+				robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.3);
 			}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
 				robot.turret.setState(Turret.ControlState.AngleSnap, 90);
 			}else if(coDriver.getPOV() == 180){
@@ -289,5 +292,6 @@ public class Robot extends IterativeRobot {
 			robot.retractBallFlap();
 		}
 	}
+	
 }
 

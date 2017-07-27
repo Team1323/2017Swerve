@@ -13,7 +13,7 @@ public class Constants {
 	public static final double ANGLE_FRONT_MODULE_CENTER = Math.atan(WHEELBASE_LENGTH/WHEELBASE_WIDTH);
 	
     // Swerve Module Wheel Offsets
-	public static final double FRONT_RIGHT_TURN_OFFSET = 0.0;
+	public static final double FRONT_RIGHT_TURN_OFFSET = 32.5136;
     public static final double FRONT_LEFT_TURN_OFFSET  = 97.73;
     public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
     public static final double REAR_RIGHT_TURN_OFFSET  = 355.43;
@@ -48,4 +48,7 @@ public class Constants {
 	
 	//Vision
 	public static final int kAndroidAppTcpPort = 8254;
+	public static final double kMaxTrackerDistance = 18.0;
+	public static final double kMaxGoalTrackAge = 0.3;
+	public static final double kCameraFrameRate = 30.0;
 }

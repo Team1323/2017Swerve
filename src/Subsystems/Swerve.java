@@ -72,6 +72,10 @@ public class Swerve extends Subsystem{
 		private int moduleID;
 		private int absolutePosition;
 		private double offSet = 0.0;
+		private double currentDistance = 0.0;
+		private double lastDistance = 0.0;
+		private double currentX = 0.0;
+		private double currentY = 0.0;
 		public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
 			rotationMotor = new CANTalon(rotationMotorPort);
 			driveMotor = new CANTalon(driveMotorPort);
@@ -113,6 +117,9 @@ public class Swerve extends Subsystem{
 		public double getModuleAngle(){
 			return Util.boundAngle0to360Degrees(getRawAngle() - offSet);
 		}
+		public double getFieldRelativeAngle(){
+			return Util.boundAngle0to360Degrees(getModuleAngle() + Util.boundAngle0to360Degrees(pidgey.getAngle()));
+		}
 		public void setModuleAngle(double goalAngle){
 			double newAngle = Util.continousAngle(goalAngle-(360-offSet),getRawAngle());
 			rotationMotor.set(newAngle);
@@ -122,6 +129,13 @@ public class Swerve extends Subsystem{
 		}
 		public void setDriveSpeed(double power){
 			driveMotor.set(power);
+		}
+		public void update(){
+			currentDistance = driveMotor.getEncPosition();
+			double distanceTraveled = currentDistance - lastDistance;
+			double angle = getFieldRelativeAngle();
+			currentX += Math.cos(90 - angle) * distanceTraveled;
+			currentY += Math.sin(90 - angle) * distanceTraveled;
 		}
 		@Override
 		public synchronized void stop(){

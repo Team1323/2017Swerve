@@ -82,6 +82,9 @@ public class Turret extends Subsystem{
 	public double getFieldRelativeAngle(){
 		return (getAngle() - 90) + Util.boundAngle0to360Degrees(pidgey.getAngle());
 	}
+	public void setFieldRelativeAngle(double fieldAngle){
+		setAngle((fieldAngle + 90) - Util.boundAngle0to360Degrees(pidgey.getAngle()));
+	}
 	public double getGoal(){
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
 	}

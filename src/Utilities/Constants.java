@@ -18,8 +18,10 @@ public class Constants {
     public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
     public static final double REAR_RIGHT_TURN_OFFSET  = 355.43;
     
+    //Looper Rate
     public static double kLooperDt = 0.01;
     
+    //Turret Constants
 	public static final double TURRET_MAX_ANGLE = 110;
 	public static final double TURRET_DEFAULT_P = 1.75;
 	public static final double TURRET_DEFAULT_D = 10;
@@ -32,16 +34,20 @@ public class Constants {
 	public static final double TURRET_REVS_PER_DEGREE = TURRET_TICKS_PER_DEGREE/1440;
 	public static final double TURRET_ENC_REVS_PER_ACTUAL_REV = TURRET_TICKS_PER_REV/1440;
 	
+	//Shooter Constants
 	public static final double SHOOTING_SPEED = 2650;
-	public static final double SHOOTER_ALLOWABLE_ERROR = 200;
+	public static final double SHOOTER_ALLOWABLE_ERROR = 100;
 	
+	//Sweeper Constants
 	public static final double SWEEPER_FORWARD = 0.8;
 	public static final double SWEEPER_ROLLER_FORWARD = 1.0;
     public static final double SWEEPER_ROLLER_REVERSE = -1.0;
 	
+    //Hanger Constants
 	public static final double HANG_POWER = -1.0;
 	public static final double HANG_CURRENT_THRESHOLD = 40;
 	
+	//Gear Intake Constants
 	public static final double GEAR_DETECT_CURRENT = 14;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
 	public static final int CYCLES_FOR_LOST_GEAR = 7;
@@ -50,5 +56,14 @@ public class Constants {
 	public static final int kAndroidAppTcpPort = 8254;
 	public static final double kMaxTrackerDistance = 18.0;
 	public static final double kMaxGoalTrackAge = 0.3;
-	public static final double kCameraFrameRate = 30.0;
+	public static double kCameraFrameRate = 30.0;
+	
+	// Pose of the camera frame w.r.t. the turret frame
+    public static double kCameraXOffset = 0;
+    public static double kCameraYOffset = 0.0;
+    public static double kCameraZOffset = 16;
+    public static double kCameraPitchAngleDegrees = 34; // 35.75
+    public static double kCameraYawAngleDegrees = 3;  //2.5 //positive moves the turret to the left
+    public static double kCameraDeadband = 0.0;
+    public static double kCenterOfTargetHeight = 86.0; // inches       
 }

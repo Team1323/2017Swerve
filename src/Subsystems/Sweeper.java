@@ -14,7 +14,7 @@ public class Sweeper extends Subsystem{
 		sweeperArm = new CANTalon(Ports.SWEEPER);
 		sweeperArm.setVoltageRampRate(48);
 		sweeperRoller = new CANTalon(Ports.SWEEPER_ROLLER);
-		sweeperRoller.setCurrentLimit(60);
+		sweeperRoller.setCurrentLimit(50);
 		sweeperRoller.EnableCurrentLimit(true);
 	}
 	

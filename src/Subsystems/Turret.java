@@ -7,6 +7,7 @@ import com.ctre.CANTalon.TalonControlMode;
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.Ports;
+import Utilities.Util;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //added
 
@@ -77,6 +78,9 @@ public class Turret extends Subsystem{
 	}
 	public double getAngle(){
 		return ((motor.getPosition()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
+	}
+	public double getFieldRelativeAngle(){
+		return (getAngle() - 90) + Util.boundAngle0to360Degrees(pidgey.getAngle());
 	}
 	public double getGoal(){
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
@@ -157,6 +161,7 @@ public class Turret extends Subsystem{
 	@Override
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber("Turret Angle", getAngle());
+		SmartDashboard.putNumber("Turret Field Relative Angle", getFieldRelativeAngle());
 		SmartDashboard.putNumber("Turret Position", motor.getPosition());
 		SmartDashboard.putNumber("Turret Encoder Position", motor.getEncPosition());
 		SmartDashboard.putNumber("Turret Goal", getGoal());

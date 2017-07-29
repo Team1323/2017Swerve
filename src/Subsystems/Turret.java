@@ -14,13 +14,18 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //added
 public class Turret extends Subsystem{
 	private static Turret instance = new Turret();
 	private static Pidgeon pidgey;
+	private static Swerve swerve;
 	private CANTalon motor;
 	private double gyroLockedHeading = 0.0;
 	private double gyroLockedTurretAngle = 0.0;
 	private int onTargetCheck = 0;
-	private double angleOffset = 0;
+	
+	public static final double goalX = -4.0;
+	public static final double goalY = 0.0;
+	
 	public Turret(){
 		pidgey = Pidgeon.getInstance();
+		swerve = Swerve.getInstance();
 		motor = new CANTalon(Ports.TURRET);
     	motor.setEncPosition(0);
     	motor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
@@ -46,7 +51,7 @@ public class Turret extends Subsystem{
 		}
 	}
 	public enum ControlState{
-		Off, VisionTracking, Manual, GyroComp, AngleSnap
+		Off, VisionTracking, Manual, GyroComp, AngleSnap, CalculatedTracking
 	}
 	public ControlState currentState = ControlState.AngleSnap;
 	public static Turret getInstance(){
@@ -83,8 +88,12 @@ public class Turret extends Subsystem{
 		return (getAngle() - 90) + Util.boundAngle0to360Degrees(pidgey.getAngle());
 	}
 	public void setFieldRelativeAngle(double fieldAngle){
-		setState(ControlState.AngleSnap);
 		setAngle(Util.boundAngleNeg180to180Degrees(fieldAngle + 90) - Util.boundAngleNeg180to180Degrees(pidgey.getAngle()));
+	}
+	public void faceTarget(){
+		double deltaX = swerve.getX() - goalX;
+		double deltaY = swerve.getY() - goalY;
+		setFieldRelativeAngle(180 + Math.toDegrees(Math.atan(deltaX/deltaY)));
 	}
 	public double getGoal(){
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
@@ -111,6 +120,9 @@ public class Turret extends Subsystem{
 				motor.setProfile(1);
 				setAngle(gyroLockedTurretAngle - (pidgey.getAngle() - gyroLockedHeading));
 				break;
+			case CalculatedTracking:
+				motor.setProfile(1);
+				faceTarget();
 			case Off:
 				setPercentVBus(0);
 				break;

@@ -54,6 +54,12 @@ public class Swerve extends Subsystem{
 	static final double HALF_WIDTH = Constants.WHEELBASE_WIDTH/2/12;
 	double robotX = 0.0;
 	double robotY = 0.0;
+	public double getX(){
+		return robotX;
+	}
+	public double getY(){
+		return robotY;
+	}
 	
 	private boolean isManuallyRotating = false;
 	private double manualRotationStopTime = 0.0;

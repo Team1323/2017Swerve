@@ -50,6 +50,11 @@ public class Swerve extends Subsystem{
 	private SynchronousPID snapPID = new SynchronousPID(0.01, 0.0, 0.1, 0.2);
 	private int cyclesLeft = 2;
 	
+	static final double HALF_LENGTH = Constants.WHEELBASE_LENGTH/2/12;
+	static final double HALF_WIDTH = Constants.WHEELBASE_WIDTH/2/12;
+	double robotX = 0.0;
+	double robotY = 0.0;
+	
 	private boolean isManuallyRotating = false;
 	private double manualRotationStopTime = 0.0;
 	private boolean stabilizationTargetSet = false;
@@ -74,8 +79,8 @@ public class Swerve extends Subsystem{
 		private double offSet = 0.0;
 		private double currentDistance = 0.0;
 		private double lastDistance = 0.0;
-		private double currentX = 0.0;
-		private double currentY = 0.0;
+		private double currentX = HALF_WIDTH;
+		private double currentY = -HALF_LENGTH;
 		public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
 			rotationMotor = new CANTalon(rotationMotorPort);
 			driveMotor = new CANTalon(driveMotorPort);
@@ -131,11 +136,17 @@ public class Swerve extends Subsystem{
 			driveMotor.set(power);
 		}
 		public void update(){
-			currentDistance = driveMotor.getEncPosition();
+			currentDistance = driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH/12;
 			double distanceTraveled = currentDistance - lastDistance;
-			double angle = getFieldRelativeAngle();
-			currentX += Math.cos(90 - angle) * distanceTraveled;
-			currentY += Math.sin(90 - angle) * distanceTraveled;
+			double angle = Math.toRadians(90 - getFieldRelativeAngle());
+			currentX += Math.cos(angle) * distanceTraveled;
+			currentY += Math.sin(angle) * distanceTraveled;
+			lastDistance = currentDistance;
+			
+			double halfDiagonal = Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH));
+			double robotAngle = Math.toRadians(180 - ((180-Util.boundAngle0to360Degrees(pidgey.getAngle()))+halfDiagonal));
+			robotX = currentX + (Math.sin(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
+			robotY = currentY + (Math.cos(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
 		}
 		@Override
 		public synchronized void stop(){
@@ -150,6 +161,13 @@ public class Swerve extends Subsystem{
 		public void outputToSmartDashboard(){
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle());
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", getGoal());
+			if(moduleID == 4){
+				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Enc Position", driveMotor.getEncPosition());
+				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", driveMotor.getPosition());
+				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " X", currentX);
+				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Y", currentY);
+				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Field Relative Angle", getFieldRelativeAngle());
+			}
 		}
 	}
 	
@@ -192,6 +210,7 @@ public class Swerve extends Subsystem{
 		@Override
 		public void onLoop(){
 			update();
+			rearRight.update();
 		}
 		@Override
 		public void onStop(){
@@ -285,6 +304,8 @@ public class Swerve extends Subsystem{
 		rearLeft.outputToSmartDashboard();
 		rearRight.outputToSmartDashboard();
 		SmartDashboard.putNumber("Target Heading", targetHeadingAngle);
+		SmartDashboard.putNumber("Robot X", robotX);
+		SmartDashboard.putNumber("Robot Y", robotY);
 	}
 	
 }

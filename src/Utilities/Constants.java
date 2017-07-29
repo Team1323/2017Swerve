@@ -13,10 +13,13 @@ public class Constants {
 	public static final double ANGLE_FRONT_MODULE_CENTER = Math.atan(WHEELBASE_LENGTH/WHEELBASE_WIDTH);
 	
     // Swerve Module Wheel Offsets
-	public static final double FRONT_RIGHT_TURN_OFFSET = 32.5136;
+	public static final double FRONT_RIGHT_TURN_OFFSET = 35.5625;
     public static final double FRONT_LEFT_TURN_OFFSET  = 97.73;
     public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
     public static final double REAR_RIGHT_TURN_OFFSET  = 355.43;
+    
+    public static final double SWERVE_ENCODER_REVS_PER_WHEEL_REV = 4.16458;
+    public static final double SWERVE_ENCODER_REVS_PER_INCH = SWERVE_ENCODER_REVS_PER_WHEEL_REV/(Math.PI*3);
     
     //Looper Rate
     public static double kLooperDt = 0.01;

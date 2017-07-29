@@ -320,6 +320,8 @@ public class Robot extends IterativeRobot {
 			robot.turret.setPercentVBus(driver.getY(Hand.kRight)*0.3);
 		}else if(driver.leftCenterClick.wasPressed() || driver.rightCenterClick.wasPressed()){
 			robot.turret.setState(Turret.ControlState.AngleSnap, 90);
+		}else if(driver.xButton.wasPressed()){
+			robot.turret.setFieldRelativeAngle(270);
 		}else if(driver.getPOV() == 180){
 			robot.turret.setState(Turret.ControlState.AngleSnap, -90);
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){

@@ -156,11 +156,11 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		try{
 			driver.update();
-			//coDriver.update();
-			//driverXboxControls();
+			coDriver.update();
+			driverXboxControls();
 			//driverFlightStickControls();
-			//coDriverXboxControls();
-			oneControllerMode();
+			coDriverXboxControls();
+			//oneControllerMode();
 			
 			outputAllToSmartDashboard();
 		}catch(Throwable t){
@@ -235,11 +235,11 @@ public class Robot extends IterativeRobot {
 			robot.turret.setState(Turret.ControlState.Manual);
 			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.3);
 		}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
-			robot.turret.setState(Turret.ControlState.AngleSnap, 90);
+			robot.turret.setSnapAngle(90);
 		}else if(coDriver.getPOV() == 180){
-			robot.turret.setState(Turret.ControlState.AngleSnap, -90);
+			robot.turret.setSnapAngle(-90);
 		}else if(coDriver.xButton.longPressed()){
-			robot.turret.gyroLock();
+			robot.turret.setState(Turret.ControlState.CalculatedTracking);
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}
@@ -319,11 +319,11 @@ public class Robot extends IterativeRobot {
 			robot.turret.setState(Turret.ControlState.Manual);
 			robot.turret.setPercentVBus(driver.getY(Hand.kRight)*0.3);
 		}else if(driver.leftCenterClick.wasPressed() || driver.rightCenterClick.wasPressed()){
-			robot.turret.setState(Turret.ControlState.AngleSnap, 90);
+			robot.turret.setSnapAngle(90);
 		}else if(driver.xButton.wasPressed()){
 			robot.turret.setState(Turret.ControlState.CalculatedTracking);
 		}else if(driver.getPOV() == 180){
-			robot.turret.setState(Turret.ControlState.AngleSnap, -90);
+			robot.turret.setSnapAngle(-90);
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}

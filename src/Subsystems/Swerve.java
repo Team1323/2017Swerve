@@ -50,8 +50,8 @@ public class Swerve extends Subsystem{
 	private SynchronousPID snapPID = new SynchronousPID(0.01, 0.0, 0.1, 0.2);
 	private int cyclesLeft = 2;
 	
-	static final double HALF_LENGTH = Constants.WHEELBASE_LENGTH/2/12;
-	static final double HALF_WIDTH = Constants.WHEELBASE_WIDTH/2/12;
+	static final double HALF_LENGTH = Constants.WHEELBASE_LENGTH/2;
+	static final double HALF_WIDTH = Constants.WHEELBASE_WIDTH/2;
 	double robotX = 0.0;
 	double robotY = 0.0;
 	public double getX(){
@@ -141,11 +141,11 @@ public class Swerve extends Subsystem{
 		public void setDriveSpeed(double power){
 			driveMotor.set(power);
 		}
-		public double getEncoderDistanceFeet(){
-			return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH/12;
+		public double getEncoderDistanceInches(){
+			return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
 		}
 		public void update(){
-			currentDistance = getEncoderDistanceFeet();
+			currentDistance = getEncoderDistanceInches();
 			double distanceTraveled = currentDistance - lastDistance;
 			double angle = Math.toRadians(90 - getFieldRelativeAngle());
 			currentX += Math.cos(angle) * distanceTraveled;

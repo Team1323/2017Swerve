@@ -9,11 +9,13 @@ public class Constants {
     //Swerve Calculations Constants
     public static final double WHEELBASE_LENGTH = 22.181;
     public static final double WHEELBASE_WIDTH  = 15.681;
+    public static final double WHEELBASE_HALF_LENGTH = WHEELBASE_LENGTH/2;
+    public static final double WHEELBASE_HALF_WIDTH  = WHEELBASE_WIDTH/2;
     public static final double SWERVE_R = 27.164;
 	public static final double ANGLE_FRONT_MODULE_CENTER = Math.atan(WHEELBASE_LENGTH/WHEELBASE_WIDTH);
 	
     // Swerve Module Wheel Offsets
-	public static final double FRONT_RIGHT_TURN_OFFSET = 35.5625;
+	public static final double FRONT_RIGHT_TURN_OFFSET = 165.71;
     public static final double FRONT_LEFT_TURN_OFFSET  = 97.73;
     public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
     public static final double REAR_RIGHT_TURN_OFFSET  = 355.43;
@@ -62,7 +64,7 @@ public class Constants {
 	public static double kCameraFrameRate = 30.0;
 	
 	// Pose of the camera frame w.r.t. the turret frame
-    public static double kCameraXOffset = 0;
+    public static double kCameraXOffset = -2;
     public static double kCameraYOffset = 0.0;
     public static double kCameraZOffset = 16;
     public static double kCameraPitchAngleDegrees = 34; // 35.75

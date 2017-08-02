@@ -3,16 +3,21 @@ package org.usfirst.frc.team1323.robot;
 import IO.SimpleFlightStick;
 import IO.Xbox;
 import Loops.Looper;
+import Loops.RobotStateEstimator;
+import Loops.VisionProcessor;
 import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
+import Subsystems.RobotState;
 import Subsystems.Turret;
 import Utilities.Constants;
 import Utilities.CrashTracker;
+import Utilities.RigidTransform2d;
+import Utilities.Rotation2d;
 import Utilities.Util;
 import Vision.VisionServer;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -23,6 +28,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class Robot extends IterativeRobot {
 	RoboSystem robot = RoboSystem.getInstance();
+	RobotState robotState = RobotState.getInstance();
 	public Xbox driver, coDriver;
 	public SimpleFlightStick leftDriver, rightDriver;
 	Looper enabledLooper = new Looper();
@@ -38,12 +44,15 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		try{
 			CrashTracker.logRobotInit();
+			visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 			driver = new Xbox(0);
 	        coDriver = new Xbox(1);
 	        leftDriver = new SimpleFlightStick(2);
 	        rightDriver = new SimpleFlightStick(3);
 	        zeroAllSensors();
 	        robot.turret.resetAngle(90);
+	        enabledLooper.register(VisionProcessor.getInstance());
+            enabledLooper.register(RobotStateEstimator.getInstance());
 	        enabledLooper.register(robot.swerve.getLoop());
 	        enabledLooper.register(robot.pidgey.getLoop());
 	        enabledLooper.register(robot.turret.getLoop());
@@ -61,6 +70,7 @@ public class Robot extends IterativeRobot {
 		robot.swerve.zeroSensors();
 		robot.pidgey.setAngle(0);
 		robot.turret.zeroSensors();
+		robotState.reset(Timer.getFPGATimestamp(), new RigidTransform2d(), new Rotation2d());
 	}
 	public void outputAllToSmartDashboard(){
 		robot.swerve.outputToSmartDashboard();
@@ -239,7 +249,8 @@ public class Robot extends IterativeRobot {
 		}else if(coDriver.getPOV() == 180){
 			robot.turret.setSnapAngle(-90);
 		}else if(coDriver.xButton.longPressed()){
-			robot.turret.setState(Turret.ControlState.CalculatedTracking);
+			//robot.turret.setState(Turret.ControlState.CalculatedTracking);
+			System.out.println(Double.toString(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees()));
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}

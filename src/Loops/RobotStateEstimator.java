@@ -27,7 +27,7 @@ public class RobotStateEstimator implements Loop{
 	
 	@Override
 	public void onStart(){
-		encoderPrevDistance = swerve.rearRight.getEncoderDistanceInches();
+		
 	}
 	
 	@Override

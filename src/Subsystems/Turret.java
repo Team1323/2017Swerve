@@ -9,6 +9,7 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //added
 
 public class Turret extends Subsystem{
@@ -23,9 +24,12 @@ public class Turret extends Subsystem{
 	public static final double goalX = -7.0;
 	public static final double goalY = -1.0;
 	
+	private static RobotState robotState;
+	
 	public Turret(){
 		pidgey = Pidgeon.getInstance();
 		swerve = Swerve.getInstance();
+		robotState = RobotState.getInstance();
 		motor = new CANTalon(Ports.TURRET);
     	motor.setEncPosition(0);
     	motor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
@@ -127,6 +131,11 @@ public class Turret extends Subsystem{
 				motor.setProfile(1);
 				faceTarget();
 				SmartDashboard.putString("Turret Control State", "CalculatedTracking");
+				break;
+			case VisionTracking:
+				motor.setProfile(0);
+				//moveDegrees(-robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
+				SmartDashboard.putString("Turret Control State", "VisionTracking");
 				break;
 			case Off:
 				setPercentVBus(0);

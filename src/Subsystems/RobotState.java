@@ -58,7 +58,7 @@ public class RobotState {
     
     public static final RigidTransform2d kVehicleToTurretFixed = new RigidTransform2d(
             new Translation2d(0, 0),
-            Rotation2d.fromDegrees(270));
+            Rotation2d.fromDegrees(-90));
 
     public static final RigidTransform2d kTurretRotatingToCamera = new RigidTransform2d(
             new Translation2d(Constants.kCameraXOffset, Constants.kCameraYOffset), new Rotation2d());
@@ -90,7 +90,9 @@ public class RobotState {
     }
     
     public synchronized ShooterAimingParameters getAimingParameters(double current_timestamp) {
-        ShooterAimingParameters rv = null;
+    	ShooterAimingParameters rv = new ShooterAimingParameters(0.0, new Rotation2d(), -1);
+    	if(goalTrack != null){
+        
         TrackReport report = new TrackReport(goalTrack);
 
         // turret fixed (latest) -> vehicle (latest) -> field
@@ -99,8 +101,9 @@ public class RobotState {
 
             if (current_timestamp - report.latest_timestamp <= kMaxTargetAge) {
             // turret fixed (latest) -> vehicle (latest) -> field -> goals
-            RigidTransform2d latest_turret_fixed_to_goal = latest_turret_fixed_to_field
-                    .transformBy(RigidTransform2d.fromTranslation(report.field_to_goal));
+            /*RigidTransform2d latest_turret_fixed_to_goal = latest_turret_fixed_to_field
+                    .transformBy(RigidTransform2d.fromTranslation(report.field_to_goal));*/
+            	RigidTransform2d latest_turret_fixed_to_goal = RigidTransform2d.fromTranslation(report.field_to_goal);
 
             // We can actually disregard the angular portion of this pose. It is
             // the bearing that we care about!
@@ -109,6 +112,7 @@ public class RobotState {
                             latest_turret_fixed_to_goal.getTranslation().getY(), true),
                     report.id);
         }
+    	}
         return rv;
     }
     
@@ -135,19 +139,22 @@ public class RobotState {
                     double scaling = differentialHeight / zr;
                     double distance = Math.hypot(xr, yr) * scaling;
                     Rotation2d angle = new Rotation2d(xr, yr, true);
-                    field_to_goals.add(field_to_camera
+                    /*field_to_goals.add(field_to_camera
                             .transformBy(RigidTransform2d
                                     .fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())))
-                            .getTranslation());
+                            .getTranslation());*/
+                    field_to_goals.add(RigidTransform2d.fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())).getTranslation());
                 }
             }
         }
         synchronized (this) {
-        	if(goalTrack == null || !goalTrack.isAlive()){
-        		goalTrack = GoalTrack.makeNewTrack(timestamp, field_to_goals.get(field_to_goals.size()-1), nextID);
-        		++nextID;
-        	}else{
-        		goalTrack.tryUpdate(timestamp, field_to_goals.get(field_to_goals.size()-1));
+        	if(field_to_goals.size() > 0){
+	        	if(goalTrack == null || !goalTrack.isAlive()){
+	        		goalTrack = GoalTrack.makeNewTrack(timestamp, field_to_goals.get(field_to_goals.size()-1), nextID);
+	        		++nextID;
+	        	}else{
+	        		goalTrack.tryUpdate(timestamp, field_to_goals.get(field_to_goals.size()-1));
+	        	}
         	}
         }
     }

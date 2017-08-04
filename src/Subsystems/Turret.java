@@ -134,7 +134,9 @@ public class Turret extends Subsystem{
 				break;
 			case VisionTracking:
 				motor.setProfile(0);
-				//moveDegrees(-robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
+				if(onTarget()){
+					moveDegrees(-robotState.getVisionAngle());
+				}
 				SmartDashboard.putString("Turret Control State", "VisionTracking");
 				break;
 			case Off:
@@ -149,7 +151,7 @@ public class Turret extends Subsystem{
 		return (getGoal() - getAngle());
 	}
 	public boolean onTarget(){
-		if(Math.abs(getError()) < 2.5){
+		if(Math.abs(getError()) < 1.5){
 			onTargetCheck--;
 		}else{
 			onTargetCheck = Constants.TURRET_ONTARGET_THRESH;

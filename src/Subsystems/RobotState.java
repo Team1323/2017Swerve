@@ -17,6 +17,7 @@ import Utilities.Translation2d;
 import Vision.GoalTrack;
 import Vision.GoalTrack.TrackReport;
 import Vision.TargetInfo;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class RobotState {
 	private static RobotState instance = new RobotState();
@@ -37,6 +38,14 @@ public class RobotState {
     protected Rotation2d cameraPitchCorrection;
     protected Rotation2d cameraYawCorrection;
     protected double differentialHeight;
+    double visionAngle = 0.0;
+    public double getVisionAngle(){
+    	return visionAngle;
+    }
+    boolean seesTarget = false;
+    public boolean getTargetVisbility(){
+    	return seesTarget;
+    }
     
     protected RobotState() {
         reset(0, new RigidTransform2d(), new Rotation2d());
@@ -144,8 +153,13 @@ public class RobotState {
                                     .fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())))
                             .getTranslation());*/
                     field_to_goals.add(RigidTransform2d.fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())).getTranslation());
+                    visionAngle = angle.getDegrees();
+                    seesTarget = true;
                 }
             }
+        }else{
+        	visionAngle = 0.0;
+        	seesTarget = false;
         }
         synchronized (this) {
         	if(field_to_goals.size() > 0){
@@ -171,5 +185,8 @@ public class RobotState {
             Rotation2d turret_rotation) {
         addFieldToVehicleObservation(timestamp, field_to_vehicle);
         addTurretRotationObservation(timestamp, turret_rotation);
+    }
+    public void outputToSmartDashboard(){
+    	SmartDashboard.putBoolean("Vision Target Seen", seesTarget);
     }
 }

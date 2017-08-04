@@ -15,10 +15,10 @@ public class Constants {
 	public static final double ANGLE_FRONT_MODULE_CENTER = Math.atan(WHEELBASE_LENGTH/WHEELBASE_WIDTH);
 	
     // Swerve Module Wheel Offsets
-	public static final double FRONT_RIGHT_TURN_OFFSET = 165.71;
-    public static final double FRONT_LEFT_TURN_OFFSET  = 97.73;
+	public static final double FRONT_RIGHT_TURN_OFFSET = 56.25;
+    public static final double FRONT_LEFT_TURN_OFFSET  = 99.84;
     public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
-    public static final double REAR_RIGHT_TURN_OFFSET  = 355.43;
+    public static final double REAR_RIGHT_TURN_OFFSET  = 355.42;
     
     public static final double SWERVE_ENCODER_REVS_PER_WHEEL_REV = 4.16458;
     public static final double SWERVE_ENCODER_REVS_PER_INCH = SWERVE_ENCODER_REVS_PER_WHEEL_REV/(Math.PI*3);
@@ -56,6 +56,7 @@ public class Constants {
 	public static final double GEAR_DETECT_CURRENT = 14;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
 	public static final int CYCLES_FOR_LOST_GEAR = 7;
+	public static final int CYCLES_FOR_GEAR_DETECT = 1;
 	
 	//Vision
 	public static final int kAndroidAppTcpPort = 8254;
@@ -64,11 +65,18 @@ public class Constants {
 	public static double kCameraFrameRate = 30.0;
 	
 	// Pose of the camera frame w.r.t. the turret frame
-    public static double kCameraXOffset = -2.25;
+    /*public static double kCameraXOffset = 0.0;//-2.25;
     public static double kCameraYOffset = 9.5;
     public static double kCameraZOffset = 23;
     public static double kCameraPitchAngleDegrees = 90-58.5; // 35.75
-    public static double kCameraYawAngleDegrees = 0;  //2.5 //positive moves the turret to the left
+    public static double kCameraYawAngleDegrees = 5.0;  //2.5 //positive moves the turret to the left
     public static double kCameraDeadband = 0.0;
-    public static double kCenterOfTargetHeight = 88.0; // inches       
+    public static double kCenterOfTargetHeight = 88.0; // inches       */
+	public static double kCameraXOffset = 0;
+    public static double kCameraYOffset = 0.0;
+    public static double kCameraZOffset = 16;
+    public static double kCameraPitchAngleDegrees = 34; // calibrated 4/22  35.75
+    public static double kCameraYawAngleDegrees = 3;  //2.5 //positive moves the turret to the left
+    public static double kCameraDeadband = 0.0;
+    public static double kCenterOfTargetHeight = 86.0; // inches    
 }

@@ -81,6 +81,7 @@ public class Robot extends IterativeRobot {
 		robot.gearIntake.outputToSmartDashboard();
 		robot.shooter.outputToSmartDashboard();
 		robot.sweeper.outputToSmartDashboard();
+		robotState.outputToSmartDashboard();
 		
 		/*SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
 		SmartDashboard.putNumber("Left Joystick Y", leftDriver.getRawAxis(1));
@@ -243,20 +244,34 @@ public class Robot extends IterativeRobot {
 			robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.5);
 		}else if(Math.abs(coDriver.getX(Hand.kLeft)) > 0){
 			robot.turret.setState(Turret.ControlState.Manual);
-			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.3);
+			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.25);
 		}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
 			robot.turret.setSnapAngle(90);
 		}else if(coDriver.getPOV() == 180){
 			robot.turret.setSnapAngle(-90);
+		}else if(coDriver.getPOV() == 90){
+			robot.turret.setSnapAngle(110);
+		}else if(coDriver.getPOV() == 270){
+			robot.turret.setSnapAngle(45);
 		}else if(coDriver.xButton.wasPressed()){
 			//robot.turret.setState(Turret.ControlState.CalculatedTracking);
 			System.out.println(Double.toString(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees()));
 			robot.turret.setState(Turret.ControlState.VisionTracking);
+			//robot.turret.moveDegrees(-robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}
+		
+		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.onTarget()){
+			coDriver.rumble(1, 1);
+		}
+		
+		if(coDriver.startButton.longPressed()){
+			visionServer.requestAppRestart();
+		}
 		//Shooter
 		if(coDriver.getTriggerAxis(Hand.kLeft) > 0){
+			robot.turret.gyroLock();
 			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
 		}
 		//Sweeper
@@ -288,7 +303,7 @@ public class Robot extends IterativeRobot {
 			driver.rumble(1, 2);
 		}
 		//Hanger
-		if(coDriver.getStartButton()){
+		if(coDriver.startButton.wasPressed()){
 			robot.hanger.startHang();
 			robot.swerve.setLowPower(true);
 			robot.retractBallFlap();
@@ -298,6 +313,7 @@ public class Robot extends IterativeRobot {
 			coDriverStop();
 			robot.swerve.setLowPower(false);
 			robot.extendBallFlap();
+			robot.turret.lock();
 		}
 	}
 	public void oneControllerMode(){

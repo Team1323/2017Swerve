@@ -100,11 +100,7 @@ public class Swerve extends Subsystem{
 	    	rotationMotor.setFeedbackDevice(FeedbackDevice.AnalogEncoder);
 	    	rotationMotor.reverseSensor(false);
 	    	rotationMotor.reverseOutput(true);
-	    	if(moduleID == 1){
-	    		rotationMotor.configPotentiometerTurns(358);
-	    	}else{
-	    		rotationMotor.configPotentiometerTurns(360);
-	    	}
+	    	rotationMotor.configPotentiometerTurns(360);
 	    	rotationMotor.configNominalOutputVoltage(+0f, -0f);
 	    	rotationMotor.configPeakOutputVoltage(+7f, -7f);
 	    	rotationMotor.setAllowableClosedLoopErr(0); 

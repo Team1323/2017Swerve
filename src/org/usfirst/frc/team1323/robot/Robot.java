@@ -3,16 +3,21 @@ package org.usfirst.frc.team1323.robot;
 import IO.SimpleFlightStick;
 import IO.Xbox;
 import Loops.Looper;
+import Loops.RobotStateEstimator;
+import Loops.VisionProcessor;
 import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
+import Subsystems.RobotState;
 import Subsystems.Turret;
 import Utilities.Constants;
 import Utilities.CrashTracker;
+import Utilities.RigidTransform2d;
+import Utilities.Rotation2d;
 import Utilities.Util;
 import Vision.VisionServer;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -23,6 +28,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class Robot extends IterativeRobot {
 	RoboSystem robot = RoboSystem.getInstance();
+	RobotState robotState = RobotState.getInstance();
 	public Xbox driver, coDriver;
 	public SimpleFlightStick leftDriver, rightDriver;
 	Looper enabledLooper = new Looper();
@@ -38,12 +44,15 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		try{
 			CrashTracker.logRobotInit();
+			visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 			driver = new Xbox(0);
 	        coDriver = new Xbox(1);
 	        leftDriver = new SimpleFlightStick(2);
 	        rightDriver = new SimpleFlightStick(3);
 	        zeroAllSensors();
 	        robot.turret.resetAngle(90);
+	        enabledLooper.register(VisionProcessor.getInstance());
+            enabledLooper.register(RobotStateEstimator.getInstance());
 	        enabledLooper.register(robot.swerve.getLoop());
 	        enabledLooper.register(robot.pidgey.getLoop());
 	        enabledLooper.register(robot.turret.getLoop());
@@ -61,6 +70,7 @@ public class Robot extends IterativeRobot {
 		robot.swerve.zeroSensors();
 		robot.pidgey.setAngle(0);
 		robot.turret.zeroSensors();
+		robotState.reset(Timer.getFPGATimestamp(), new RigidTransform2d(), new Rotation2d());
 	}
 	public void outputAllToSmartDashboard(){
 		robot.swerve.outputToSmartDashboard();
@@ -71,6 +81,7 @@ public class Robot extends IterativeRobot {
 		robot.gearIntake.outputToSmartDashboard();
 		robot.shooter.outputToSmartDashboard();
 		robot.sweeper.outputToSmartDashboard();
+		robotState.outputToSmartDashboard();
 		
 		/*SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
 		SmartDashboard.putNumber("Left Joystick Y", leftDriver.getRawAxis(1));
@@ -156,11 +167,11 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		try{
 			driver.update();
-			//coDriver.update();
-			//driverXboxControls();
+			coDriver.update();
+			driverXboxControls();
 			//driverFlightStickControls();
-			//coDriverXboxControls();
-			oneControllerMode();
+			coDriverXboxControls();
+			//oneControllerMode();
 			
 			outputAllToSmartDashboard();
 		}catch(Throwable t){
@@ -233,18 +244,34 @@ public class Robot extends IterativeRobot {
 			robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.5);
 		}else if(Math.abs(coDriver.getX(Hand.kLeft)) > 0){
 			robot.turret.setState(Turret.ControlState.Manual);
-			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.3);
+			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.25);
 		}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
-			robot.turret.setState(Turret.ControlState.AngleSnap, 90);
+			robot.turret.setSnapAngle(90);
 		}else if(coDriver.getPOV() == 180){
-			robot.turret.setState(Turret.ControlState.AngleSnap, -90);
-		}else if(coDriver.xButton.longPressed()){
-			robot.turret.gyroLock();
+			robot.turret.setSnapAngle(-90);
+		}else if(coDriver.getPOV() == 90){
+			robot.turret.setSnapAngle(110);
+		}else if(coDriver.getPOV() == 270){
+			robot.turret.setSnapAngle(45);
+		}else if(coDriver.xButton.wasPressed()){
+			//robot.turret.setState(Turret.ControlState.CalculatedTracking);
+			System.out.println(Double.toString(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees()));
+			robot.turret.setState(Turret.ControlState.VisionTracking);
+			//robot.turret.moveDegrees(-robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}
+		
+		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.onTarget()){
+			coDriver.rumble(1, 1);
+		}
+		
+		if(coDriver.startButton.longPressed()){
+			visionServer.requestAppRestart();
+		}
 		//Shooter
 		if(coDriver.getTriggerAxis(Hand.kLeft) > 0){
+			robot.turret.gyroLock();
 			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
 		}
 		//Sweeper
@@ -276,7 +303,7 @@ public class Robot extends IterativeRobot {
 			driver.rumble(1, 2);
 		}
 		//Hanger
-		if(coDriver.getStartButton()){
+		if(coDriver.startButton.wasPressed()){
 			robot.hanger.startHang();
 			robot.swerve.setLowPower(true);
 			robot.retractBallFlap();
@@ -286,6 +313,7 @@ public class Robot extends IterativeRobot {
 			coDriverStop();
 			robot.swerve.setLowPower(false);
 			robot.extendBallFlap();
+			robot.turret.lock();
 		}
 	}
 	public void oneControllerMode(){
@@ -319,11 +347,11 @@ public class Robot extends IterativeRobot {
 			robot.turret.setState(Turret.ControlState.Manual);
 			robot.turret.setPercentVBus(driver.getY(Hand.kRight)*0.3);
 		}else if(driver.leftCenterClick.wasPressed() || driver.rightCenterClick.wasPressed()){
-			robot.turret.setState(Turret.ControlState.AngleSnap, 90);
+			robot.turret.setSnapAngle(90);
 		}else if(driver.xButton.wasPressed()){
 			robot.turret.setState(Turret.ControlState.CalculatedTracking);
 		}else if(driver.getPOV() == 180){
-			robot.turret.setState(Turret.ControlState.AngleSnap, -90);
+			robot.turret.setSnapAngle(-90);
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}

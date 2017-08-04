@@ -44,6 +44,7 @@ public class GearIntake extends Subsystem{
 		}
 		return false;
 	}
+	int cyclesWithGearDetected = 0;
 	public boolean needsToNotifyGearLoss(){
 		if(needsToNotifyGearLoss){
 			needsToNotifyGearLoss = false;
@@ -79,13 +80,19 @@ public class GearIntake extends Subsystem{
 				forward();
 				extendCylinder();
 				if(intake.getOutputCurrent() > Constants.GEAR_DETECT_CURRENT){
-					hasGear = true;
-					setState(State.RETRACTED_HOLDING);
-					needsToNotifyGearAcquired = true;
+					cyclesWithGearDetected++;
+					if(cyclesWithGearDetected >= Constants.CYCLES_FOR_GEAR_DETECT){
+						hasGear = true;
+						needsToNotifyGearAcquired = true;
+						setState(State.RETRACTED_HOLDING);
+					}
+				}else{
+					cyclesWithGearDetected = 0;
 				}
 				SmartDashboard.putString("Gear Intake Status", "EXTENDED INTAKING");
 				break;
 			case EXTENDED_HOLDING:
+				extendCylinder();
 				hold();
 				if(intake.getOutputCurrent() < Constants.GEAR_PRESENT_CURRENT){
 					cyclesWithLostGear++;

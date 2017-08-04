@@ -22,7 +22,7 @@ public class Swerve extends Subsystem{
 	private SwerveDriveModule frontLeft;
 	private SwerveDriveModule frontRight;
 	private SwerveDriveModule rearLeft;
-	private SwerveDriveModule rearRight;
+	public SwerveDriveModule rearRight;
 	
 	private boolean forcedLowPower = false;
 	public void setLowPower(boolean on){
@@ -50,8 +50,8 @@ public class Swerve extends Subsystem{
 	private SynchronousPID snapPID = new SynchronousPID(0.01, 0.0, 0.1, 0.2);
 	private int cyclesLeft = 2;
 	
-	static final double HALF_LENGTH = Constants.WHEELBASE_LENGTH/2/12;
-	static final double HALF_WIDTH = Constants.WHEELBASE_WIDTH/2/12;
+	static final double HALF_LENGTH = Constants.WHEELBASE_LENGTH/2;
+	static final double HALF_WIDTH = Constants.WHEELBASE_WIDTH/2;
 	double robotX = 0.0;
 	double robotY = 0.0;
 	public double getX(){
@@ -100,11 +100,7 @@ public class Swerve extends Subsystem{
 	    	rotationMotor.setFeedbackDevice(FeedbackDevice.AnalogEncoder);
 	    	rotationMotor.reverseSensor(false);
 	    	rotationMotor.reverseOutput(true);
-	    	if(moduleID == 1){
-	    		rotationMotor.configPotentiometerTurns(358);
-	    	}else{
-	    		rotationMotor.configPotentiometerTurns(360);
-	    	}
+	    	rotationMotor.configPotentiometerTurns(360);
 	    	rotationMotor.configNominalOutputVoltage(+0f, -0f);
 	    	rotationMotor.configPeakOutputVoltage(+7f, -7f);
 	    	rotationMotor.setAllowableClosedLoopErr(0); 
@@ -141,8 +137,11 @@ public class Swerve extends Subsystem{
 		public void setDriveSpeed(double power){
 			driveMotor.set(power);
 		}
+		public double getEncoderDistanceInches(){
+			return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
+		}
 		public void update(){
-			currentDistance = driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH/12;
+			currentDistance = getEncoderDistanceInches();
 			double distanceTraveled = currentDistance - lastDistance;
 			double angle = Math.toRadians(90 - getFieldRelativeAngle());
 			currentX += Math.cos(angle) * distanceTraveled;
@@ -162,6 +161,8 @@ public class Swerve extends Subsystem{
 		@Override
 		public synchronized void zeroSensors(){
 			driveMotor.setEncPosition(0);
+			currentX = Math.sin(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
+			currentY = Math.cos(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
 		}
 		@Override
 		public void outputToSmartDashboard(){
@@ -302,6 +303,8 @@ public class Swerve extends Subsystem{
 		frontLeft.zeroSensors();
 		rearLeft.zeroSensors();
 		rearRight.zeroSensors();
+		robotX = 0;
+		robotY = 0;
 	}
 	@Override
 	public void outputToSmartDashboard(){

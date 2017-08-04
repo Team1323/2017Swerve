@@ -9,6 +9,7 @@ import Utilities.Constants;
 import Utilities.Ports;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //added
 
 public class Turret extends Subsystem{
@@ -20,12 +21,15 @@ public class Turret extends Subsystem{
 	private double gyroLockedTurretAngle = 0.0;
 	private int onTargetCheck = 0;
 	
-	public static final double goalX = -4.0;
-	public static final double goalY = 0.0;
+	public static final double goalX = -7.0;
+	public static final double goalY = -1.0;
+	
+	private static RobotState robotState;
 	
 	public Turret(){
 		pidgey = Pidgeon.getInstance();
 		swerve = Swerve.getInstance();
+		robotState = RobotState.getInstance();
 		motor = new CANTalon(Ports.TURRET);
     	motor.setEncPosition(0);
     	motor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
@@ -60,10 +64,6 @@ public class Turret extends Subsystem{
 	public void setState(ControlState newState){
 		currentState = newState;
 	}
-	public void setState(ControlState newState, double targetAngle){
-		setState(newState);
-		setAngle(targetAngle);
-	}
 	public ControlState getCurrentState(){
 		return currentState;
 	}
@@ -76,6 +76,10 @@ public class Turret extends Subsystem{
 			angle = -Constants.TURRET_MAX_ANGLE;
 		motor.set(angle*Constants.TURRET_REVS_PER_DEGREE);
 		onTargetCheck = Constants.TURRET_ONTARGET_THRESH;
+	}
+	public void setSnapAngle(double targetAngle){
+		setState(ControlState.AngleSnap);
+		setAngle(targetAngle);
 	}
 	public void moveDegrees(double degree){
 		double newAngle = getAngle() + degree;
@@ -93,7 +97,8 @@ public class Turret extends Subsystem{
 	public void faceTarget(){
 		double deltaX = swerve.getX() - goalX;
 		double deltaY = swerve.getY() - goalY;
-		setFieldRelativeAngle(180 + Math.toDegrees(Math.atan(deltaX/deltaY)));
+		double fieldRelativeAngle = 180 + Math.toDegrees(Math.atan(deltaX/deltaY));
+		setFieldRelativeAngle(fieldRelativeAngle);
 	}
 	public double getGoal(){
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
@@ -115,16 +120,28 @@ public class Turret extends Subsystem{
 				}else{
 					motor.setProfile(0);
 				}
+				SmartDashboard.putString("Turret Control State", "AngleSnap");
 				break;
 			case GyroComp:
 				motor.setProfile(1);
 				setAngle(gyroLockedTurretAngle - (pidgey.getAngle() - gyroLockedHeading));
+				SmartDashboard.putString("Turret Control State", "GyroComp");
 				break;
 			case CalculatedTracking:
 				motor.setProfile(1);
 				faceTarget();
+				SmartDashboard.putString("Turret Control State", "CalculatedTracking");
+				break;
+			case VisionTracking:
+				motor.setProfile(0);
+				if(onTarget()){
+					moveDegrees(-robotState.getVisionAngle());
+				}
+				SmartDashboard.putString("Turret Control State", "VisionTracking");
+				break;
 			case Off:
 				setPercentVBus(0);
+				SmartDashboard.putString("Turret Control State", "Off");
 				break;
 			default:
 				break;
@@ -134,7 +151,7 @@ public class Turret extends Subsystem{
 		return (getGoal() - getAngle());
 	}
 	public boolean onTarget(){
-		if(Math.abs(getError()) < 2.5){
+		if(Math.abs(getError()) < 1.5){
 			onTargetCheck--;
 		}else{
 			onTargetCheck = Constants.TURRET_ONTARGET_THRESH;

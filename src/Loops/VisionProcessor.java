@@ -1,5 +1,6 @@
 package Loops;
 
+import Subsystems.RobotState;
 import Vision.VisionUpdate;
 import Vision.VisionUpdateReceiver;
 
@@ -14,7 +15,7 @@ import Vision.VisionUpdateReceiver;
 public class VisionProcessor implements Loop, VisionUpdateReceiver {
     static VisionProcessor instance_ = new VisionProcessor();
     VisionUpdate update_ = null;
-    //RobotState robot_state_ = RobotState.getInstance();
+    RobotState robot_state_ = RobotState.getInstance();
 
     public static VisionProcessor getInstance() {
         return instance_;
@@ -37,7 +38,7 @@ public class VisionProcessor implements Loop, VisionUpdateReceiver {
             update = update_;
             update_ = null;
         }
-        //robot_state_.addVisionUpdate(update.getCapturedAtTimestamp(), update.getTargets());
+        robot_state_.addVisionUpdate(update.getCapturedAtTimestamp(), update.getTargets());
     }
 
     @Override

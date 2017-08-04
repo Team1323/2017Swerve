@@ -1,6 +1,8 @@
 package Vision;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -29,23 +31,29 @@ public class AdbBridge {
         bin_location_ = location;
     }
 
-    private boolean runCommand(String args) {
+    private String runCommand(String args) {
         Runtime r = Runtime.getRuntime();
         String cmd = bin_location_.toString() + " " + args;
+        StringBuffer output = new StringBuffer();
 
         try {
             Process p = r.exec(cmd);
             p.waitFor();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line = "";
+            while((line = reader.readLine()) != null){
+            	output.append(line + "\n");
+            }
         } catch (IOException e) {
             System.err.println("AdbBridge: Could not run command " + cmd);
             e.printStackTrace();
-            return false;
+            return "";
         } catch (InterruptedException e) {
             System.err.println("AdbBridge: Could not run command " + cmd);
             e.printStackTrace();
-            return false;
+            return "";
         }
-        return true;
+        return output.toString();
     }
 
     public void start() {
@@ -76,5 +84,15 @@ public class AdbBridge {
         System.out.println("Restarting app");
         runCommand("shell am force-stop com.team254.cheezdroid \\; "
                 + "am start com.team254.cheezdroid/com.team254.cheezdroid.VisionTrackerActivity");
+    }
+    public String getBatteryPercentage(){
+    	String output = runCommand("shell dumpsys battery");
+    	if(output.length() > 0){
+	    	String[] lines = output.split(System.getProperty("line.separator"));
+	    	output = lines[8].replaceAll("[^0-9]+", "");
+	    	output += "%";
+	    	return output;
+    	}
+    	return "Error";
     }
 }

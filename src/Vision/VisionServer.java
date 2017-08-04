@@ -36,6 +36,7 @@ public class VisionServer extends CrashTrackingRunnable {
     AdbBridge adb = new AdbBridge();
     double lastMessageReceivedTime = 0;
     private boolean m_use_java_time = false;
+    private String batteryPercentage = "";
 
     private ArrayList<ServerThread> serverThreads = new ArrayList<>();
     private volatile boolean mWantsAppRestart = false;
@@ -55,6 +56,10 @@ public class VisionServer extends CrashTrackingRunnable {
 
     public void requestAppRestart() {
         mWantsAppRestart = true;
+    }
+    
+    public String getBatteryPercentage(){
+    	return batteryPercentage;
     }
 
     protected class ServerThread extends CrashTrackingRunnable {
@@ -213,6 +218,7 @@ public class VisionServer extends CrashTrackingRunnable {
                     adb.restartApp();
                     mWantsAppRestart = false;
                 }
+                batteryPercentage = adb.getBatteryPercentage();
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {

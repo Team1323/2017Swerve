@@ -7,6 +7,7 @@ import Vision.Messages.OffWireMessage;
 import Vision.Messages.VisionMessage;
 import Utilities.CrashTrackingRunnable;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -211,6 +212,7 @@ public class VisionServer extends CrashTrackingRunnable {
                     // camera disconnected
                     adb.reversePortForward(m_port, m_port);
                     mIsConnect = false;
+                    mWantsAppRestart = true;
                 } else {
                     mIsConnect = true;
                 }
@@ -234,5 +236,10 @@ public class VisionServer extends CrashTrackingRunnable {
         } else {
             return Timer.getFPGATimestamp();
         }
+    }
+    
+    public void outputToSmartDashboard(){
+    	SmartDashboard.putBoolean("Phone Connected", isConnected());
+		SmartDashboard.putString("Phone Battery", getBatteryPercentage());
     }
 }

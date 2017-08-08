@@ -11,6 +11,11 @@ import Utilities.SynchronousPID;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import jaci.pathfinder.Pathfinder;
+import jaci.pathfinder.Trajectory;
+import jaci.pathfinder.Waypoint;
+import jaci.pathfinder.followers.DistanceFollower;
+import jaci.pathfinder.modifiers.SwerveModifier;
 
 public class Swerve extends Subsystem{
 	private static Swerve instance = new Swerve();
@@ -140,6 +145,9 @@ public class Swerve extends Subsystem{
 		public double getEncoderDistanceInches(){
 			return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
 		}
+		public double getModuleInchesPerSecond(){
+			return driveMotor.getSpeed()/Constants.SWERVE_ENCODER_REVS_PER_INCH/60;
+		}
 		public void update(){
 			currentDistance = getEncoderDistanceInches();
 			double distanceTraveled = currentDistance - lastDistance;
@@ -152,6 +160,31 @@ public class Swerve extends Subsystem{
 			double robotAngle = Math.toRadians(180 - ((180-Util.boundAngle0to360Degrees(pidgey.getAngle()))+halfDiagonal));
 			robotX = currentX + (Math.sin(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
 			robotY = currentY + (Math.cos(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
+			
+			Waypoint[] points = new Waypoint[]{
+					new Waypoint(0, 0, 0),
+				    new Waypoint(0, 70, 0)
+			};
+			Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, 150.0, 80.0, 2362.0);
+			Trajectory trajectory = Pathfinder.generate(points, config);
+			SwerveModifier.Mode mode = SwerveModifier.Mode.SWERVE_DEFAULT;
+
+			// Create the Modifier Object
+			SwerveModifier modifier = new SwerveModifier(trajectory);
+
+			// Generate the individual wheel trajectories using the original trajectory
+			// as the centre
+			modifier.modify(Constants.WHEELBASE_WIDTH, Constants.WHEELBASE_LENGTH, mode);
+
+			Trajectory fl = modifier.getFrontLeftTrajectory();       // Get the Front Left wheel
+			Trajectory fr = modifier.getFrontRightTrajectory();      // Get the Front Right wheel
+			Trajectory bl = modifier.getBackLeftTrajectory();        // Get the Back Left wheel
+			Trajectory br = modifier.getBackRightTrajectory();       // Get the Back Right wheel
+			
+			DistanceFollower flFollower = new DistanceFollower(fl);
+			DistanceFollower frFollower = new DistanceFollower(fr);
+			DistanceFollower blFollower = new DistanceFollower(bl);
+			DistanceFollower brFollower
 		}
 		@Override
 		public synchronized void stop(){
@@ -174,6 +207,7 @@ public class Swerve extends Subsystem{
 				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " X", currentX);
 				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Y", currentY);
 				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Field Relative Angle", getFieldRelativeAngle());
+				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + "Speed", getModuleInchesPerSecond());
 			}
 		}
 	}

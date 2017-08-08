@@ -80,6 +80,9 @@ public class Xbox extends XboxController{
     		r.start();
     	}
     }
+    public boolean isRumbling(){
+    	return rumbling;
+    }
     public class RumbleThread extends Thread{
     	public double rumblesPerSec = 1;
     	public long interval = 500;

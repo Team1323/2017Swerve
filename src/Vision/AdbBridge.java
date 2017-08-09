@@ -95,4 +95,14 @@ public class AdbBridge {
     	}
     	return "Error";
     }
+    public boolean phoneConnected(){
+    	String output = runCommand("devices");
+    	if(output.length() > 0){
+    		output = output.replace("List of devices attached", "");
+    		if(output.contains("device")){
+    			return true;
+    		}
+    	}
+    	return false;
+    }
 }

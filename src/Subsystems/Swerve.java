@@ -11,11 +11,6 @@ import Utilities.SynchronousPID;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import jaci.pathfinder.Pathfinder;
-import jaci.pathfinder.Trajectory;
-import jaci.pathfinder.Waypoint;
-import jaci.pathfinder.followers.DistanceFollower;
-import jaci.pathfinder.modifiers.SwerveModifier;
 
 public class Swerve extends Subsystem{
 	private static Swerve instance = new Swerve();
@@ -161,7 +156,7 @@ public class Swerve extends Subsystem{
 			robotX = currentX + (Math.sin(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
 			robotY = currentY + (Math.cos(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
 			
-			Waypoint[] points = new Waypoint[]{
+			/*Waypoint[] points = new Waypoint[]{
 					new Waypoint(0, 0, 0),
 				    new Waypoint(0, 70, 0)
 			};
@@ -184,7 +179,7 @@ public class Swerve extends Subsystem{
 			DistanceFollower flFollower = new DistanceFollower(fl);
 			DistanceFollower frFollower = new DistanceFollower(fr);
 			DistanceFollower blFollower = new DistanceFollower(bl);
-			DistanceFollower brFollower
+			DistanceFollower brFollower = new DistanceFollower(br);*/
 		}
 		@Override
 		public synchronized void stop(){

@@ -128,6 +128,7 @@ public class RobotState {
     public void addVisionUpdate(double timestamp, List<TargetInfo> vision_update) {
         List<Translation2d> field_to_goals = new ArrayList<>();
         RigidTransform2d field_to_camera = getFieldToCamera(timestamp);
+        
         if (!(vision_update == null || vision_update.isEmpty())) {
             for (TargetInfo target : vision_update) {
                 double ydeadband = (target.getY() > -Constants.kCameraDeadband
@@ -145,6 +146,8 @@ public class RobotState {
 
                 // find intersection with the goal
                 if (zr > 0) {
+                	SmartDashboard.putNumber("Vision xr", xr);
+                	SmartDashboard.putNumber("Vision yr", yr);
                     double scaling = differentialHeight / zr;
                     double distance = Math.hypot(xr, yr) * scaling;
                     Rotation2d angle = new Rotation2d(xr, yr, true);
@@ -152,8 +155,12 @@ public class RobotState {
                             .transformBy(RigidTransform2d
                                     .fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())))
                             .getTranslation());*/
+                    Translation2d transform = RigidTransform2d.fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())).getTranslation();
                     field_to_goals.add(RigidTransform2d.fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())).getTranslation());
                     visionAngle = angle.getDegrees();
+                    SmartDashboard.putNumber("Vision Angle", visionAngle);
+                    SmartDashboard.putNumber("Vision Distance", distance);
+                    SmartDashboard.putString("Vision Translation", transform.toString());
                     seesTarget = true;
                 }
             }
@@ -164,10 +171,10 @@ public class RobotState {
         synchronized (this) {
         	if(field_to_goals.size() > 0){
 	        	if(goalTrack == null || !goalTrack.isAlive()){
-	        		goalTrack = GoalTrack.makeNewTrack(timestamp, field_to_goals.get(field_to_goals.size()-1), nextID);
+	        		goalTrack = GoalTrack.makeNewTrack(timestamp, field_to_goals.get(0), nextID);
 	        		++nextID;
 	        	}else{
-	        		goalTrack.tryUpdate(timestamp, field_to_goals.get(field_to_goals.size()-1));
+	        		goalTrack.tryUpdate(timestamp, field_to_goals.get(0));
 	        	}
         	}
         }

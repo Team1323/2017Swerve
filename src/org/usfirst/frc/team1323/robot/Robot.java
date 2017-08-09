@@ -1,6 +1,8 @@
 package org.usfirst.frc.team1323.robot;
 
+import IO.LogitechJoystick;
 import IO.SimpleFlightStick;
+import IO.SteeringWheel;
 import IO.Xbox;
 import Loops.Looper;
 import Loops.RobotStateEstimator;
@@ -31,6 +33,8 @@ public class Robot extends IterativeRobot {
 	RobotState robotState = RobotState.getInstance();
 	public Xbox driver, coDriver;
 	public SimpleFlightStick leftDriver, rightDriver;
+	public LogitechJoystick driverJoystick;
+	public SteeringWheel steeringWheel;
 	Looper enabledLooper = new Looper();
 	Looper disabledLooper = new Looper();
 	private boolean sweeperNeedsToStop = false;
@@ -47,8 +51,10 @@ public class Robot extends IterativeRobot {
 			visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 			driver = new Xbox(0);
 	        coDriver = new Xbox(1);
-	        leftDriver = new SimpleFlightStick(2);
-	        rightDriver = new SimpleFlightStick(3);
+	        /*leftDriver = new SimpleFlightStick(2);
+	        rightDriver = new SimpleFlightStick(3);*/
+	        driverJoystick = new LogitechJoystick(3);
+	        steeringWheel = new SteeringWheel(2);
 	        zeroAllSensors();
 	        robot.turret.resetAngle(90);
 	        enabledLooper.register(VisionProcessor.getInstance());
@@ -59,6 +65,8 @@ public class Robot extends IterativeRobot {
 	        enabledLooper.register(robot.hanger.getLoop());
 	        enabledLooper.register(robot.gearIntake.getLoop());
 	        disabledLooper.register(robot.pidgey.getLoop());
+	        disabledLooper.register(VisionProcessor.getInstance());
+	        disabledLooper.register(RobotStateEstimator.getInstance());
 	        
 	        VisionServer.getInstance();
 		}catch(Throwable t){
@@ -82,6 +90,7 @@ public class Robot extends IterativeRobot {
 		robot.shooter.outputToSmartDashboard();
 		robot.sweeper.outputToSmartDashboard();
 		robotState.outputToSmartDashboard();
+		visionServer.outputToSmartDashboard();
 		
 		/*SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
 		SmartDashboard.putNumber("Left Joystick Y", leftDriver.getRawAxis(1));
@@ -168,10 +177,41 @@ public class Robot extends IterativeRobot {
 		try{
 			driver.update();
 			coDriver.update();
+			/*driverJoystick.update();
+			steeringWheel.update();*/
+			
 			driverXboxControls();
 			//driverFlightStickControls();
 			coDriverXboxControls();
 			//oneControllerMode();
+			
+			/*robot.swerve.sendInput(driverJoystick.getXAxis(), -driverJoystick.getYAxis(), steeringWheel.getWheelTurn(), false, steeringWheel.leftBumper.isBeingPressed());
+			switch(driverJoystick.getPOV()){
+				case 0:
+					robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
+					break;
+				case 90:
+					robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
+					break;
+				case 180:
+					robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
+					break;
+				case 270:
+					robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
+					break;
+			}
+			if(driverJoystick.topLeft.wasPressed()){
+				robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), -60));
+			}else if(driverJoystick.topRight.wasPressed()){
+				robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
+			}
+			if(steeringWheel.yButton.wasPressed()){
+				robot.pidgey.setAngle(0);
+				robot.swerve.setTargetHeading(0);
+			}
+			if(driverJoystick.triggerButton.wasPressed()){
+				robot.gearIntake.score();
+			}*/
 			
 			outputAllToSmartDashboard();
 		}catch(Throwable t){
@@ -194,6 +234,10 @@ public class Robot extends IterativeRobot {
 			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
 		}else if(driver.getYButton()){
 			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
+		}else if(driver.rightBumper.wasPressed()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
+		}else if(driver.leftBumper.wasPressed()){
+			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), -60));
 		}
 		//Gear Score
 		if(driver.getTriggerAxis(Hand.kRight) > 0){
@@ -263,7 +307,7 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.onTarget()){
-			coDriver.rumble(1, 1);
+			if(!coDriver.isRumbling())coDriver.rumble(1, 1);
 		}
 		
 		if(coDriver.startButton.longPressed()){

@@ -41,7 +41,7 @@ public class Turret extends Subsystem{
     	motor.setAllowableClosedLoopErr(0); 
     	motor.changeControlMode(TalonControlMode.Position);
     	motor.set(0);
-    	motor.setPID(Constants.TURRET_DEFAULT_P, 0.0, Constants.TURRET_DEFAULT_D, 0.0, 0, 0.0, 0);	//practice bot pid tuning
+    	motor.setPID(4.0, 0.0, 320.0, 0.0, 0, 0.0, 0);	//practice bot pid tuning
     	motor.setPID(5.0, 0.00, Constants.TURRET_SMALL_D, 0.0, 0, 0.0, 1);
     	motor.setProfile(0);
 		motor.enableBrakeMode(true);
@@ -112,14 +112,19 @@ public class Turret extends Subsystem{
 		gyroLockedHeading = pidgey.getAngle();
 		gyroLockedTurretAngle = getAngle();
 	}
+	public void enableVision(){
+		setState(ControlState.VisionTracking);
+		moveDegrees(robotState.getVisionAngle());
+	}
 	public void update(){
 		switch(currentState){
 			case AngleSnap:
-				if(Math.abs(getError()) < Constants.TURRET_SMALL_PID_THRESH){
+				/*if(Math.abs(getError()) < Constants.TURRET_SMALL_PID_THRESH){
 					motor.setProfile(1);
 				}else{
 					motor.setProfile(0);
-				}
+				}*/
+				motor.setProfile(0);
 				SmartDashboard.putString("Turret Control State", "AngleSnap");
 				break;
 			case GyroComp:
@@ -135,7 +140,8 @@ public class Turret extends Subsystem{
 			case VisionTracking:
 				motor.setProfile(0);
 				if(onTarget()){
-					moveDegrees(-robotState.getVisionAngle());
+					//moveDegrees(robotState.getVisionAngle());
+					//moveDegrees(-robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
 				}
 				SmartDashboard.putString("Turret Control State", "VisionTracking");
 				break;
@@ -151,7 +157,7 @@ public class Turret extends Subsystem{
 		return (getGoal() - getAngle());
 	}
 	public boolean onTarget(){
-		if(Math.abs(getError()) < 1.5){
+		if(Math.abs(getError()) < 1.0){
 			onTargetCheck--;
 		}else{
 			onTargetCheck = Constants.TURRET_ONTARGET_THRESH;

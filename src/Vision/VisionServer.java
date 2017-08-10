@@ -212,7 +212,7 @@ public class VisionServer extends CrashTrackingRunnable {
                     // camera disconnected
                     adb.reversePortForward(m_port, m_port);
                     mIsConnect = false;
-                    if(adb.phoneConnected())mWantsAppRestart = true;
+                    //if(adb.phoneConnected())mWantsAppRestart = true;
                 } else {
                     mIsConnect = true;
                 }

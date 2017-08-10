@@ -40,7 +40,7 @@ public class Constants {
 	public static final double TURRET_ENC_REVS_PER_ACTUAL_REV = TURRET_TICKS_PER_REV/1440;
 	
 	//Shooter Constants
-	public static final double SHOOTING_SPEED = 2650;
+	public static final double SHOOTING_SPEED = 2650; // 2650
 	public static final double SHOOTER_ALLOWABLE_ERROR = 100;
 	
 	//Sweeper Constants
@@ -53,10 +53,10 @@ public class Constants {
 	public static final double HANG_CURRENT_THRESHOLD = 40;
 	
 	//Gear Intake Constants
-	public static final double GEAR_DETECT_CURRENT = 14;
+	public static final double GEAR_DETECT_CURRENT = 12;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
 	public static final int CYCLES_FOR_LOST_GEAR = 7;
-	public static final int CYCLES_FOR_GEAR_DETECT = 1;
+	public static final int CYCLES_FOR_GEAR_DETECT = 5;
 	
 	//Vision
 	public static final int kAndroidAppTcpPort = 8254;

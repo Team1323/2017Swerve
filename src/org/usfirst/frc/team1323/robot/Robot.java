@@ -298,10 +298,8 @@ public class Robot extends IterativeRobot {
 		}else if(coDriver.getPOV() == 270){
 			robot.turret.setSnapAngle(45);
 		}else if(coDriver.xButton.wasPressed()){
-			//robot.turret.setState(Turret.ControlState.CalculatedTracking);
 			System.out.println(Double.toString(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees()));
-			robot.turret.setState(Turret.ControlState.VisionTracking);
-			//robot.turret.moveDegrees(-robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
+			robot.turret.enableVision();
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}

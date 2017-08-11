@@ -65,8 +65,8 @@ public class Constants {
 	public static double kCameraFrameRate = 30.0;
 	
 	// Pose of the camera frame w.r.t. the turret frame
-    public static double kCameraXOffset = -2.5;//-2.25;
-    public static double kCameraYOffset = 9.5;
+    public static double kCameraXOffset = -2.25;//-2.25;
+    public static double kCameraYOffset = 9.875;
     public static double kCameraZOffset = 23;
     public static double kCameraPitchAngleDegrees = 90-58.5; // 35.75
     public static double kCameraYawAngleDegrees = 0.0;  //2.5 //positive moves the turret to the left

@@ -299,7 +299,8 @@ public class Robot extends IterativeRobot {
 			robot.turret.setSnapAngle(45);
 		}else if(coDriver.xButton.wasPressed()){
 			System.out.println(Double.toString(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees()));
-			robot.turret.enableVision();
+			//robot.turret.enableVision();
+			robot.turret.fieldPositionLock();
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}
@@ -313,7 +314,7 @@ public class Robot extends IterativeRobot {
 		}
 		//Shooter
 		if(coDriver.getTriggerAxis(Hand.kLeft) > 0){
-			robot.turret.gyroLock();
+			robot.turret.fieldPositionLock();
 			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
 		}
 		//Sweeper

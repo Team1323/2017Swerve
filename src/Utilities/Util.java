@@ -89,10 +89,6 @@ public class Util {
         else if(x > from_max) return to_max;
         return ((x-from_min)*(to_max-to_min)/(from_max-from_min)) + to_min;
     }
-   /*/ public static double scaleStickDeadband(double input, double deadband) {
-    	double offsetInput = input-deadband;
-    	return offsetInput/(1-deadband);
-    }/**/
     public static double normalize(double current, double test){
     	if(current > test) return current;
     	return test;

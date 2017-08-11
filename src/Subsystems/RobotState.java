@@ -39,12 +39,16 @@ public class RobotState {
     protected Rotation2d cameraYawCorrection;
     protected double differentialHeight;
     double visionAngle = 0.0;
+    double distanceToTarget = 0.0;
     public double getVisionAngle(){
     	return visionAngle;
     }
     boolean seesTarget = false;
     public boolean getTargetVisbility(){
     	return seesTarget;
+    }
+    public double getTargetDistance(){
+    	return distanceToTarget;
     }
     
     protected RobotState() {
@@ -119,7 +123,7 @@ public class RobotState {
             	
             	Double distance = latest_turret_fixed_to_goal.getTranslation().norm();
             	
-            	Rotation2d turretAngle = new Rotation2d(Math.cos(-camAngle.getRadians())*distance+9.5, Math.sin(-camAngle.getRadians())*distance -2.5, true);
+            	Rotation2d turretAngle = new Rotation2d(Math.cos(-camAngle.getRadians())*distance + Constants.kCameraYOffset, Math.sin(-camAngle.getRadians())*distance + Constants.kCameraXOffset, true);
 
             // We can actually disregard the angular portion of this pose. It is
             // the bearing that we care about!
@@ -164,9 +168,9 @@ public class RobotState {
                     Translation2d transform = RigidTransform2d.fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())).getTranslation();
                     field_to_goals.add(RigidTransform2d.fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())).getTranslation());
                     //visionAngle = Math.toDegrees(Math.atan2(Math.sin(angle.getRadians())*distance - 2.5, Math.cos(angle.getRadians())*distance + 9.5));
-                    Rotation2d newAngle = new Rotation2d(Math.cos(-angle.getRadians())*distance+9.5, Math.sin(-angle.getRadians())*distance -2.5, true);
+                    Rotation2d newAngle = new Rotation2d(Math.cos(-angle.getRadians())*distance + Constants.kCameraYOffset, Math.sin(-angle.getRadians())*distance + Constants.kCameraXOffset, true);
                     visionAngle = newAngle.getDegrees();
-                    
+                    distanceToTarget = distance;
                     SmartDashboard.putNumber("Vision Angle", visionAngle);
                     SmartDashboard.putNumber("Original Vision Angle", angle.getDegrees());
                     SmartDashboard.putNumber("Vision Distance", distance);

@@ -95,8 +95,8 @@ public class Turret extends Subsystem{
 		setAngle(Util.boundAngleNeg180to180Degrees(fieldAngle + 90) - Util.boundAngleNeg180to180Degrees(pidgey.getAngle()));
 	}
 	public void fieldPositionLock(){
-		goalX = swerve.getX() - (Math.sin(Math.toRadians(Util.boundAngle0to360Degrees(getFieldRelativeAngle() - 180)))*(robotState.getTargetDistance() + Constants.kCameraYOffset));
-		goalY = swerve.getY() - (Math.cos(Math.toRadians(Util.boundAngle0to360Degrees(getFieldRelativeAngle() - 180)))*(robotState.getTargetDistance() + Constants.kCameraYOffset));
+		goalX = swerve.getX() - (Math.sin(Math.toRadians(Util.boundAngle0to360Degrees(getFieldRelativeAngle() - 180)))*(robotState.getTargetDistance() + Constants.kCameraYOffset + 7.5));
+		goalY = swerve.getY() - (Math.cos(Math.toRadians(Util.boundAngle0to360Degrees(getFieldRelativeAngle() - 180)))*(robotState.getTargetDistance() + Constants.kCameraYOffset + 7.5));
 		setState(ControlState.CalculatedTracking);
 	}
 	public void faceTarget(){

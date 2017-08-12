@@ -1,5 +1,7 @@
 package Subsystems;
 
+import java.util.ArrayList;
+
 import com.ctre.CANTalon;
 import com.ctre.CANTalon.FeedbackDevice;
 import com.ctre.CANTalon.TalonControlMode;
@@ -23,6 +25,7 @@ public class Swerve extends Subsystem{
 	private SwerveDriveModule frontRight;
 	private SwerveDriveModule rearLeft;
 	public SwerveDriveModule rearRight;
+	ArrayList<SwerveDriveModule> modules;
 	
 	private boolean forcedLowPower = false;
 	public void setLowPower(boolean on){
@@ -70,6 +73,12 @@ public class Swerve extends Subsystem{
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1,Constants.FRONT_RIGHT_TURN_OFFSET);
 		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3,Constants.REAR_LEFT_TURN_OFFSET);
 		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4,Constants.REAR_RIGHT_TURN_OFFSET);
+		
+		modules = new ArrayList<>(4);
+		modules.add(frontLeft);
+		modules.add(frontRight);
+		modules.add(rearLeft);
+		modules.add(rearRight);
 		
 		snapPID.setOutputRange(-0.6, 0.6);
 	}
@@ -302,10 +311,9 @@ public class Swerve extends Subsystem{
 		
 		kinematics.calculate(xInput, yInput, rotateInput);
 	    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.01){
-	    	frontRight.setModuleAngle(0);
-		    frontLeft.setModuleAngle(0);
-		    rearLeft.setModuleAngle(0);
-		    rearRight.setModuleAngle(0);
+		    for(SwerveDriveModule m : modules){
+		    	m.setModuleAngle(0);
+		    }
 	    }else{
 		    frontRight.setModuleAngle(kinematics.frSteeringAngle());
 		    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
@@ -321,26 +329,23 @@ public class Swerve extends Subsystem{
 	@Override
 	public synchronized void stop(){
 		sendInput(0.0, 0.0, 0.0, false, false);
-		frontRight.stop();
-		frontLeft.stop();
-		rearLeft.stop();
-		rearRight.stop();
+		for(SwerveDriveModule m : modules){
+			m.stop();
+		}
 	}
 	@Override
 	public synchronized void zeroSensors(){
-		frontRight.zeroSensors();
-		frontLeft.zeroSensors();
-		rearLeft.zeroSensors();
-		rearRight.zeroSensors();
+		for(SwerveDriveModule m : modules){
+			m.zeroSensors();
+		}
 		robotX = 0;
 		robotY = 0;
 	}
 	@Override
 	public void outputToSmartDashboard(){
-		frontRight.outputToSmartDashboard();
-		frontLeft.outputToSmartDashboard();
-		rearLeft.outputToSmartDashboard();
-		rearRight.outputToSmartDashboard();
+		for(SwerveDriveModule m : modules){
+			m.outputToSmartDashboard();
+		}
 		SmartDashboard.putNumber("Target Heading", targetHeadingAngle);
 		SmartDashboard.putNumber("Robot X", robotX);
 		SmartDashboard.putNumber("Robot Y", robotY);

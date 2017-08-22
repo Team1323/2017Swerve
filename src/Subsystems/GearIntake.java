@@ -84,6 +84,7 @@ public class GearIntake extends Subsystem{
 					if(cyclesWithGearDetected >= Constants.CYCLES_FOR_GEAR_DETECT){
 						hasGear = true;
 						needsToNotifyGearAcquired = true;
+						cyclesWithGearDetected = 0;
 						setState(State.RETRACTED_HOLDING);
 					}
 				}else{
@@ -99,6 +100,7 @@ public class GearIntake extends Subsystem{
 					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR){
 						hasGear = false;
 						needsToNotifyGearLoss = true;
+						cyclesWithLostGear = 0;
 						setState(State.EXTENDED_OFF);
 					}
 				}else{

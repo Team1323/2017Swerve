@@ -2,10 +2,7 @@ package Subsystems;
 
 import com.ctre.CANTalon;
 import com.ctre.CANTalon.TalonControlMode;
-import com.ctre.PigeonImu;
-import com.ctre.PigeonImu.PigeonState;
 
-import Loops.Loop;
 import Utilities.Ports;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 

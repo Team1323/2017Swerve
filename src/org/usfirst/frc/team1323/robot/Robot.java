@@ -10,9 +10,11 @@ import Loops.VisionProcessor;
 import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
 import Subsystems.RobotState;
+import Subsystems.Swerve;
 import Subsystems.Turret;
 import Utilities.Constants;
 import Utilities.CrashTracker;
+import Utilities.Logger;
 import Utilities.RigidTransform2d;
 import Utilities.Rotation2d;
 import Utilities.Util;
@@ -20,7 +22,6 @@ import Vision.VisionServer;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Timer;
-import jaci.pathfinder.Waypoint;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -30,8 +31,8 @@ import jaci.pathfinder.Waypoint;
  * directory.
  */
 public class Robot extends IterativeRobot {
-	RoboSystem robot = RoboSystem.getInstance();
-	RobotState robotState = RobotState.getInstance();
+	RoboSystem robot;
+	RobotState robotState;
 	public Xbox driver, coDriver;
 	public SimpleFlightStick leftDriver, rightDriver;
 	public LogitechJoystick driverJoystick;
@@ -48,14 +49,15 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() {
 		try{
+			Logger.clearLog();
+			robot = RoboSystem.getInstance();
+			robotState = RobotState.getInstance();
 			CrashTracker.logRobotInit();
 			visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 			driver = new Xbox(0);
 	        coDriver = new Xbox(1);
 	        /*leftDriver = new SimpleFlightStick(2);
 	        rightDriver = new SimpleFlightStick(3);*/
-	        driverJoystick = new LogitechJoystick(3);
-	        steeringWheel = new SteeringWheel(2);
 	        zeroAllSensors();
 	        robot.turret.resetAngle(90);
 	        enabledLooper.register(VisionProcessor.getInstance());
@@ -68,6 +70,7 @@ public class Robot extends IterativeRobot {
 	        disabledLooper.register(robot.pidgey.getLoop());
 	        disabledLooper.register(VisionProcessor.getInstance());
 	        disabledLooper.register(RobotStateEstimator.getInstance());
+	        
 	        
 	        VisionServer.getInstance();
 		}catch(Throwable t){
@@ -92,11 +95,6 @@ public class Robot extends IterativeRobot {
 		robot.sweeper.outputToSmartDashboard();
 		robotState.outputToSmartDashboard();
 		visionServer.outputToSmartDashboard();
-		
-		/*SmartDashboard.putNumber("Left Joystick X", leftDriver.getRawAxis(0));
-		SmartDashboard.putNumber("Left Joystick Y", leftDriver.getRawAxis(1));
-		SmartDashboard.putNumber("Right Joystick X", rightDriver.getRawAxis(0));
-		SmartDashboard.putNumber("Right Joystick Y", rightDriver.getRawAxis(1));*/
 	}
 	public void stopAll(){
 		robot.swerve.stop();
@@ -212,9 +210,9 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(driver.getPOV() == 90){
-			robot.swerve.followPath(false);
-		}else if(driver.getPOV() == 270){
-			robot.swerve.followPath(true);
+			robot.swerve.followPath(Swerve.Path.TEST);
+		}else if(driver.getPOV() == 180){
+			robot.swerve.followPath(Swerve.Path.BLUE_HOPPER);
 		}
 		//Gear Score
 		if(driver.getTriggerAxis(Hand.kRight) > 0){
@@ -266,7 +264,7 @@ public class Robot extends IterativeRobot {
 		}else if(Math.abs(coDriver.getX(Hand.kLeft)) > 0){
 			robot.turret.setState(Turret.ControlState.Manual);
 			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.25);
-		}else if(coDriver.getStickButton(Hand.kLeft) || coDriver.getStickButton(Hand.kRight)){
+		}else if(coDriver.getStickButton(Hand.kRight)){
 			robot.turret.setSnapAngle(90);
 		}else if(coDriver.getPOV() == 180){
 			robot.turret.setSnapAngle(-90);
@@ -285,7 +283,7 @@ public class Robot extends IterativeRobot {
 			coDriver.rumble(1, 1);
 		}
 		
-		if(coDriver.startButton.longPressed()){
+		if(coDriver.leftCenterClick.wasPressed()){
 			visionServer.requestAppRestart();
 		}
 		//Shooter

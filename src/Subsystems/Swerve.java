@@ -21,8 +21,8 @@ import jaci.pathfinder.followers.DistanceFollower;
 import jaci.pathfinder.modifiers.SwerveModifier;
 
 public class Swerve extends Subsystem{
-	private static Swerve instance = new Swerve();
-	private Pidgeon pidgey = Pidgeon.getInstance();
+	private static Swerve instance = null;
+	private Pidgeon pidgey = null;
 	private SwerveKinematics kinematics = new SwerveKinematics();
 	private double xInput;
 	private double yInput;
@@ -39,6 +39,7 @@ public class Swerve extends Subsystem{
 	public void setLowPower(boolean on){
 		forcedLowPower = on;
 	}
+	public boolean shouldBrake = true;
 	
 	public enum ControlState{
 		Manual, PathFollowing
@@ -54,14 +55,20 @@ public class Swerve extends Subsystem{
 	double maxAccel = 16;
 	double maxJerk = 84;
 	Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, maxVel, maxAccel, maxJerk);
+	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, maxVel, maxAccel, maxJerk);
 	SwerveModifier.Mode mode = SwerveModifier.Mode.SWERVE_DEFAULT;
-	Trajectory leftTrajectory;
-	Trajectory rightTrajectory;
+	Trajectory redHopperTrajectory;
+	Trajectory testTrajectory;
+	Trajectory blueHopperTrajectory;
 	SwerveModifier modifier;
 	DistanceFollower flFollower;
 	DistanceFollower frFollower;
 	DistanceFollower blFollower;
 	DistanceFollower brFollower;
+	
+	public enum Path{
+		BLUE_HOPPER, RED_HOPPER, TEST
+	}
 	
 	public enum HeadingController{
 		Off, Stabilize, Snap
@@ -100,6 +107,8 @@ public class Swerve extends Subsystem{
 	private boolean stabilizationTargetSet = false;
 	
 	public Swerve(){
+		pidgey = Pidgeon.getInstance();
+		
 		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2,Constants.FRONT_LEFT_TURN_OFFSET);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1,Constants.FRONT_RIGHT_TURN_OFFSET);
 		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3,Constants.REAR_LEFT_TURN_OFFSET);
@@ -113,34 +122,33 @@ public class Swerve extends Subsystem{
 		
 		snapPID.setOutputRange(-0.5, 0.5);
 		
-		Waypoint[] rightPoints = new Waypoint[]{
+	}
+	public static Swerve getInstance(){
+		if(instance == null) instance = new Swerve();
+        return instance;
+    }
+	
+	private void generatePaths(){
+		Waypoint[] stablePoints = new Waypoint[]{
 				new Waypoint(0,0,0),
-				new Waypoint(-6, 0.5, Pathfinder.d2r(175)),
+				new Waypoint(-6, 0.5, Pathfinder.d2r(170)),
 				new Waypoint(-7,2.5,Pathfinder.d2r(90)),
 				new Waypoint(-5, 3.5, Pathfinder.d2r(0))
 		};
-		Waypoint[] leftPoints = new Waypoint[]{
+		Waypoint[] rightPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
-				new Waypoint(-8,-8,0),
+				new Waypoint(-5, 0.05, Pathfinder.d2r(179)),
+				new Waypoint(-7,2.5,Pathfinder.d2r(90)),
+				new Waypoint(-5, 3.5, Pathfinder.d2r(0))
 		};
-		//leftTrajectory = Pathfinder.generate(leftPoints, config);
-		rightTrajectory = Pathfinder.generate(rightPoints, config);
-		/*for (int i = 0; i < rightTrajectory.length(); i++) {
-		    Trajectory.Segment seg = rightTrajectory.get(i);
-		    Logger.log("x: " + Double.toString(seg.x) + ", y: " + Double.toString(seg.y) + ", v: " + Double.toString(seg.velocity) + ", a: " + Double.toString(seg.acceleration) + ", j: " + Double.toString(seg.jerk) + ", h: " + Double.toString(seg.heading) + "\n");
-		}*/
-		for (int i = 0; i < rightTrajectory.length(); i++) {
-		    Trajectory.Segment seg = rightTrajectory.get(i);
-		    /**/
+		
+		testTrajectory = Pathfinder.generate(rightPoints, config);
+		blueHopperTrajectory = Pathfinder.generate(stablePoints, stableConfig);
+		for (int i = 0; i < testTrajectory.length(); i++) {
+		    Trajectory.Segment seg = testTrajectory.get(i);
 		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
-		    /*/
-		    Logger.log(Double.toString(seg.velocity) + ", " + Double.toString(seg.acceleration));
-		    /**/
 		}
 	}
-	public static Swerve getInstance(){
-        return instance;
-    }
 	
 	public class SwerveDriveModule extends Subsystem{
 		private CANTalon rotationMotor;
@@ -152,6 +160,8 @@ public class Swerve extends Subsystem{
 		private double lastDistance = 0.0;
 		private double currentX = HALF_WIDTH;
 		private double currentY = -HALF_LENGTH;
+		public boolean hasBraked = false;
+		public boolean hasBraked(){return hasBraked;}
 		public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
 			rotationMotor = new CANTalon(rotationMotorPort);
 			driveMotor = new CANTalon(driveMotorPort);
@@ -273,6 +283,9 @@ public class Swerve extends Subsystem{
 		if(lowPower || forcedLowPower){
 			xInput *= 0.45;
 			yInput *= 0.45;
+			shouldBrake = false;
+		}else{
+			shouldBrake = true;
 		}
 		rotateInput = rotate*0.6;
 		
@@ -291,11 +304,17 @@ public class Swerve extends Subsystem{
 		}
 	}
 	
-	public void followPath(boolean left){
-		if(left){
-			modifier = new SwerveModifier(leftTrajectory);
-		}else{
-			modifier = new SwerveModifier(rightTrajectory);
+	public void followPath(Path path){
+		switch(path){
+			case BLUE_HOPPER:
+				modifier = new SwerveModifier(blueHopperTrajectory);
+				break;
+			case RED_HOPPER:
+				modifier = new SwerveModifier(redHopperTrajectory);
+				break;
+			case TEST:
+				modifier = new SwerveModifier(testTrajectory);
+				break;
 		}
 		
 		modifier.modify(Constants.WHEELBASE_WIDTH/12, Constants.WHEELBASE_LENGTH/12, mode);
@@ -304,10 +323,10 @@ public class Swerve extends Subsystem{
 		blFollower = new DistanceFollower(modifier.getBackLeftTrajectory());
 		brFollower = new DistanceFollower(modifier.getBackRightTrajectory());
 		
-		double d = 0.0;
 		double p = 1.0;
-		double a = 0.0;
+		double d = 0.0;
 		double v = 1/(maxVel);
+		double a = 0.0;
 		
 		flFollower.configurePIDVA(p, 0.0, d, v, a);
 		frFollower.configurePIDVA(p, 0.0, d, v, a);
@@ -317,6 +336,11 @@ public class Swerve extends Subsystem{
 		encoderOffset = rearRight.getEncoderDistanceFeet();
 		
 		setState(ControlState.PathFollowing);
+	}
+	
+	public boolean isFinishedWithPath(){
+		return (getState() == ControlState.PathFollowing && flFollower.isFinished() && frFollower.isFinished()
+				&& blFollower.isFinished() && brFollower.isFinished());
 	}
 	
 	private final Loop swerveLoop = new Loop(){
@@ -385,14 +409,18 @@ public class Swerve extends Subsystem{
 				
 				kinematics.calculate(xInput, yInput, rotateInput);
 			    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.01){
-				    /*for(SwerveDriveModule m : modules){
-				    	m.setModuleAngle(0);
-				    }*/
-			    	frontRight.setModuleAngle(45);
-			    	frontLeft.setModuleAngle(-45);
-			    	rearLeft.setModuleAngle(-135);
-			    	rearRight.setModuleAngle(135);
+			    	if(shouldBrake){
+					    for(SwerveDriveModule m : modules){
+					    	if(!m.hasBraked()){
+					    		m.setModuleAngle(m.getModuleAngle() + 90);
+					    		m.hasBraked = true;
+					    	}
+					    }
+			    	}
 			    }else{
+			    	for(SwerveDriveModule m : modules){
+			    		m.hasBraked = false;
+			    	}
 				    frontRight.setModuleAngle(kinematics.frSteeringAngle());
 				    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
 				    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
@@ -420,7 +448,7 @@ public class Swerve extends Subsystem{
 				rearRight.setDriveSpeed(bro);
 				rearLeft.setDriveSpeed(-blo);
 				
-				if(brFollower.isFinished()){
+				if(isFinishedWithPath()){
 					setState(ControlState.Manual);
 				}
 				break;

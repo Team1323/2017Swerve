@@ -32,7 +32,7 @@ public class Pidgeon {
 			PigeonImu.GeneralStatus genStatus = new PigeonImu.GeneralStatus();
 			PigeonImu.FusionStatus fusionStatus = new PigeonImu.FusionStatus();
 			double [] xyz_dps = new double [3];
-			//currentAngle = -pidgey.GetFusedHeading(fusionStatus);
+			currentAngle = -pidgey.GetFusedHeading(fusionStatus);
 			pidgey.GetGeneralStatus(genStatus);
 			pidgey.GetRawGyro(xyz_dps);
 			pidgeonIsGood = (pidgey.GetState() == PigeonState.Ready) ? true : false;
@@ -46,7 +46,7 @@ public class Pidgeon {
 			
 			double [] ypr = new double [3];
 			pidgey.GetYawPitchRoll(ypr);
-			currentAngle = -ypr[0];
+			//currentAngle = -ypr[0];
 			
 		}catch(Exception e){
 			System.out.println(e);

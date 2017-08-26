@@ -34,13 +34,4 @@ public class Ports {
     
     public static final int GEAR_INTAKE_ARM  		= 0;
     public static final int BALL_FLAP			= 1;
-    
-    /*public static final int FRONT_RIGHT_ROTATION= 5; 
-    public static final int FRONT_RIGHT_DRIVE   = 3; 
-    public static final int FRONT_LEFT_ROTATION = 4;
-    public static final int FRONT_LEFT_DRIVE    = 2; 
-    public static final int REAR_LEFT_ROTATION  = 11;
-    public static final int REAR_LEFT_DRIVE     = 13;
-    public static final int REAR_RIGHT_ROTATION = 10;
-    public static final int REAR_RIGHT_DRIVE    = 12;*/
 }

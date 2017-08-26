@@ -4,10 +4,11 @@ import Subsystems.Turret;
 
 public class StartAutoAimingAction implements Action{
 	private boolean isDone;
-	private final Turret turret = Turret.getInstance();
+	private final Turret turret;
 	
 	public StartAutoAimingAction(){
 		isDone = false;
+		turret = Turret.getInstance();
 	}
 	
 	@Override

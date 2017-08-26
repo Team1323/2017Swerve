@@ -32,7 +32,7 @@ public class RoboSystem {
 		gearIntake = GearIntake.getInstance();
 		shooter = Shooter.getInstance();
 		sweeper = Sweeper.getInstance();		
-		ballFlap = new Solenoid(Ports.BALL_FLAP);
+		ballFlap = new Solenoid(20, Ports.BALL_FLAP);
 	}
 	public void extendBallFlap(){
 		ballFlap.set(true);

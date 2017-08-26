@@ -4,7 +4,11 @@ import Subsystems.RoboSystem;
 
 public class DeployBallFlapAction implements Action{
 	public boolean isDone = false;
-	private final RoboSystem robot = RoboSystem.getInstance();
+	private final RoboSystem robot;
+	
+	public DeployBallFlapAction(){
+		 robot = RoboSystem.getInstance();
+	}
 	
 	@Override
 	public boolean isFinished(){

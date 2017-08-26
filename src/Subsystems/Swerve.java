@@ -42,7 +42,7 @@ public class Swerve extends Subsystem{
 	public boolean shouldBrake = true;
 	
 	public enum ControlState{
-		Manual, PathFollowing
+		Manual, PathFollowing, Neutral
 	}
 	private ControlState currentState = ControlState.Manual;
 	public ControlState getState(){
@@ -65,6 +65,7 @@ public class Swerve extends Subsystem{
 	DistanceFollower frFollower;
 	DistanceFollower blFollower;
 	DistanceFollower brFollower;
+	double pathFollowingHeading = 0;
 	
 	public enum Path{
 		BLUE_HOPPER, RED_HOPPER, TEST
@@ -119,6 +120,8 @@ public class Swerve extends Subsystem{
 		modules.add(frontRight);
 		modules.add(rearLeft);
 		modules.add(rearRight);
+		
+		generatePaths();
 		
 		snapPID.setOutputRange(-0.5, 0.5);
 		
@@ -315,6 +318,8 @@ public class Swerve extends Subsystem{
 			case TEST:
 				modifier = new SwerveModifier(testTrajectory);
 				break;
+			default:
+				break;
 		}
 		
 		modifier.modify(Constants.WHEELBASE_WIDTH/12, Constants.WHEELBASE_LENGTH/12, mode);
@@ -335,12 +340,14 @@ public class Swerve extends Subsystem{
 		
 		encoderOffset = rearRight.getEncoderDistanceFeet();
 		
+		pathFollowingHeading = pidgey.getAngle();
+		
 		setState(ControlState.PathFollowing);
 	}
 	
 	public boolean isFinishedWithPath(){
-		return (getState() == ControlState.PathFollowing && flFollower.isFinished() && frFollower.isFinished()
-				&& blFollower.isFinished() && brFollower.isFinished());
+		return (getState() == ControlState.PathFollowing && 
+				brFollower.getSegment().position >= (0.95 * blueHopperTrajectory.get(blueHopperTrajectory.length()-1).position));
 	}
 	
 	private final Loop swerveLoop = new Loop(){
@@ -438,19 +445,25 @@ public class Swerve extends Subsystem{
 			    double blo = blFollower.calculate((rearRight.getEncoderDistanceFeet() - encoderOffset));
 			    double bro = brFollower.calculate((rearRight.getEncoderDistanceFeet() - encoderOffset));
 			    
-				frontRight.setFieldRelativeAngle(Util.boundAngle0to360Degrees(Math.toDegrees(frFollower.getHeading())));
-				frontLeft.setFieldRelativeAngle(Util.boundAngle0to360Degrees(Math.toDegrees(flFollower.getHeading())));
-				rearLeft.setFieldRelativeAngle(Util.boundAngle0to360Degrees(Math.toDegrees(blFollower.getHeading())));
-				rearRight.setFieldRelativeAngle(Util.boundAngle0to360Degrees(Math.toDegrees(brFollower.getHeading())));
+			    double pathHeadingError = pidgey.getAngle() - pathFollowingHeading;
+			    
+				frontRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(frFollower.getHeading())) - pathHeadingError);
+				frontLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(flFollower.getHeading())) - pathHeadingError);
+				rearLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(blFollower.getHeading())) - pathHeadingError);
+				rearRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(brFollower.getHeading())) - pathHeadingError);
 				
 				frontRight.setDriveSpeed(fro);
 				frontLeft.setDriveSpeed(-flo);
 				rearRight.setDriveSpeed(bro);
 				rearLeft.setDriveSpeed(-blo);
 				
-				if(isFinishedWithPath()){
-					setState(ControlState.Manual);
+				if(brFollower.isFinished()){
+					setState(ControlState.Neutral);
 				}
+				
+				break;
+			case Neutral:
+				stop();
 				break;
 		}
 	}

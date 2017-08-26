@@ -1,5 +1,7 @@
 package org.usfirst.frc.team1323.robot;
 
+import Auto.AutoModeExecuter;
+import Auto.SmartDashboardInteractions;
 import IO.LogitechJoystick;
 import IO.SimpleFlightStick;
 import IO.SteeringWheel;
@@ -39,9 +41,12 @@ public class Robot extends IterativeRobot {
 	public SteeringWheel steeringWheel;
 	Looper enabledLooper = new Looper();
 	Looper disabledLooper = new Looper();
+	AutoModeExecuter autoModeExecuter = null;
 	private boolean sweeperNeedsToStop = false;
 	private boolean sweeperCanTurnOn = false;
 	VisionServer visionServer = VisionServer.getInstance();
+	
+	SmartDashboardInteractions smartDashboardInteractions = new SmartDashboardInteractions();
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -71,6 +76,10 @@ public class Robot extends IterativeRobot {
 	        disabledLooper.register(VisionProcessor.getInstance());
 	        disabledLooper.register(RobotStateEstimator.getInstance());
 	        
+	        smartDashboardInteractions.initWithDefaults();
+	        
+	        System.out.println(smartDashboardInteractions.getSelectedSide());
+	        robot.pidgey.setAngle(smartDashboardInteractions.getSelectedSide().equals("Blue") ? 180 : 0);
 	        
 	        VisionServer.getInstance();
 		}catch(Throwable t){
@@ -80,8 +89,7 @@ public class Robot extends IterativeRobot {
 	}
 	public void zeroAllSensors(){
 		robot.swerve.zeroSensors();
-		robot.pidgey.setAngle(0);
-		robot.turret.zeroSensors();
+		//robot.pidgey.setAngle(0);
 		robotState.reset(Timer.getFPGATimestamp(), new RigidTransform2d(), new Rotation2d());
 	}
 	public void outputAllToSmartDashboard(){
@@ -116,6 +124,12 @@ public class Robot extends IterativeRobot {
 	public void disabledInit(){
 		try{
 			CrashTracker.logDisabledInit();
+			
+			if(autoModeExecuter != null){
+				autoModeExecuter.stop();
+			}
+			autoModeExecuter = null;
+			
 			enabledLooper.stop();
 			disabledLooper.start();
 			stopAll();
@@ -128,6 +142,19 @@ public class Robot extends IterativeRobot {
 	public void autonomousInit() {
 		try{
 			CrashTracker.logAutoInit();
+			if(autoModeExecuter != null){
+				autoModeExecuter.stop();
+			}
+			autoModeExecuter = null;
+			
+			zeroAllSensors();
+			
+			disabledLooper.stop();
+			enabledLooper.start();
+			
+			autoModeExecuter = new AutoModeExecuter();
+			autoModeExecuter.setAutoMode(smartDashboardInteractions.getSelectedAutoMode());
+			autoModeExecuter.start();
 		}catch(Throwable t){
 			CrashTracker.logThrowableCrash(t);
 			throw(t);
@@ -137,8 +164,16 @@ public class Robot extends IterativeRobot {
 	public void teleopInit(){
 		try{
 			CrashTracker.logTeleopInit();
+			
+			if(autoModeExecuter != null){
+				autoModeExecuter.stop();
+			}
+			autoModeExecuter = null;
+			
 			disabledLooper.stop();
 			enabledLooper.start();
+			
+			robot.swerve.setState(Swerve.ControlState.Manual);
 			robot.swerve.setTargetHeading(robot.pidgey.getAngle());
 		}catch(Throwable t){
 			CrashTracker.logThrowableCrash(t);
@@ -161,7 +196,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousPeriodic() {
 		try{
-			
+			outputAllToSmartDashboard();
 		}catch(Throwable t){
 			CrashTracker.logThrowableCrash(t);
 			throw(t);
@@ -210,10 +245,18 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(driver.getPOV() == 90){
-			robot.swerve.followPath(Swerve.Path.TEST);
+			//robot.swerve.followPath(Swerve.Path.TEST);
 		}else if(driver.getPOV() == 180){
 			robot.swerve.followPath(Swerve.Path.BLUE_HOPPER);
 		}
+		
+		if(driver.getPOV() == 90){
+			robot.extendBallFlap();
+		}
+		if(driver.getPOV() == 270){
+			robot.retractBallFlap();
+		}
+		
 		//Gear Score
 		if(driver.getTriggerAxis(Hand.kRight) > 0){
 			robot.gearIntake.score();

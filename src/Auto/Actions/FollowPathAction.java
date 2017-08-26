@@ -3,7 +3,7 @@ package Auto.Actions;
 import Subsystems.Swerve;
 
 public class FollowPathAction implements Action{
-	private Swerve swerve = Swerve.getInstance();
+	private Swerve swerve;
 	
 	private Swerve.Path path;
 	private boolean hasStarted;
@@ -11,6 +11,7 @@ public class FollowPathAction implements Action{
 	public FollowPathAction(Swerve.Path mPath){
 		path = mPath;
 		hasStarted = false;
+		swerve = Swerve.getInstance();
 	}
 	
 	@Override

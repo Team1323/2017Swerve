@@ -1,10 +1,16 @@
 package Auto.Actions;
 
 import Subsystems.RoboSystem;
+import edu.wpi.first.wpilibj.Timer;
 
 public class TurnOnIntakeAction implements Action{
-	private boolean isDone = false;
-	private final RoboSystem robot = RoboSystem.getInstance();
+	private boolean isDone;
+	private final RoboSystem robot;
+	
+	public TurnOnIntakeAction(){
+		isDone = false;
+		robot = RoboSystem.getInstance();
+	}
 	
 	@Override 
 	public boolean isFinished(){

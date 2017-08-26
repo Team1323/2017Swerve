@@ -56,7 +56,7 @@ public class Constants {
 	public static final double GEAR_DETECT_CURRENT = 12;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
 	public static final int CYCLES_FOR_LOST_GEAR = 7;
-	public static final int CYCLES_FOR_GEAR_DETECT = 3;
+	public static final int CYCLES_FOR_GEAR_DETECT = 5;
 	
 	//Vision
 	public static final int kAndroidAppTcpPort = 8254;
@@ -71,12 +71,5 @@ public class Constants {
     public static double kCameraPitchAngleDegrees = 90-58.5; // 35.75
     public static double kCameraYawAngleDegrees = 0.0;  //2.5 //positive moves the turret to the left
     public static double kCameraDeadband = 0.0;
-    public static double kCenterOfTargetHeight = 88.0; // inches       
-	/*public static double kCameraXOffset = 0;
-    public static double kCameraYOffset = 0.0;
-    public static double kCameraZOffset = 16;
-    public static double kCameraPitchAngleDegrees = 34; // calibrated 4/22  35.75
-    public static double kCameraYawAngleDegrees = 3;  //2.5 //positive moves the turret to the left
-    public static double kCameraDeadband = 0.0;
-    public static double kCenterOfTargetHeight = 86.0; // inches  */  
+    public static double kCenterOfTargetHeight = 88.0; // inches      
 }

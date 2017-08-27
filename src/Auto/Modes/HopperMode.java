@@ -4,11 +4,11 @@ import java.util.Arrays;
 
 import Auto.AutoModeBase;
 import Auto.AutoModeEndedException;
-import Auto.SmartDashboardInteractions;
 import Auto.Actions.DeployBallFlapAction;
 import Auto.Actions.ExtendIntakeAction;
 import Auto.Actions.FollowPathAction;
 import Auto.Actions.ParallelAction;
+import Auto.Actions.ReciprocateBallFlapAction;
 import Auto.Actions.SeriesAction;
 import Auto.Actions.StartAutoAimingAction;
 import Auto.Actions.TurnOnShooterAction;
@@ -39,7 +39,7 @@ public class HopperMode extends AutoModeBase{
 				new DeployBallFlapAction(), new StartAutoAimingAction())));
 		
 		runAction(new SeriesAction(Arrays.asList(new WaitForAutoAimAction(), new TurnOnShooterAction(), 
-				new TurnOnSweeperAction()))); 
+				new TurnOnSweeperAction(), new ReciprocateBallFlapAction(1, 3)))); 
 	}
 	
 }

@@ -24,11 +24,11 @@ public class RoboSystem {
 		return instance;
 	}
 	public RoboSystem(){
+		hanger = Hanger.getInstance();
 		intake = Intake.getInstance();
 		pidgey = Pidgeon.getInstance();
 		swerve = Swerve.getInstance();
 		turret = Turret.getInstance();
-		hanger = Hanger.getInstance();
 		gearIntake = GearIntake.getInstance();
 		shooter = Shooter.getInstance();
 		sweeper = Sweeper.getInstance();		
@@ -39,5 +39,8 @@ public class RoboSystem {
 	}
 	public void retractBallFlap(){
 		ballFlap.set(false);
+	}
+	public void toggleBallFlap(){
+		ballFlap.set(!ballFlap.get());
 	}
 }

@@ -8,14 +8,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Pidgeon {
 	private PigeonImu pidgey;
-	private Intake intake;
+	private Hanger hanger;
     private double currentAngle = 0.0;
     boolean pidgeonIsGood = false;
     double currentAngularRate = 0.0;
 	public Pidgeon(){
-		intake = Intake.getInstance();
+		hanger = Hanger.getInstance();
 		try{
-			pidgey = new PigeonImu(intake.getTalon());
+			pidgey = new PigeonImu(hanger.getTalon());
 		}catch(Exception e){
 			System.out.println(e);
 		}

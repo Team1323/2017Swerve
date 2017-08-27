@@ -10,6 +10,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Hanger extends Subsystem{
 	private CANTalon motor;
+	public CANTalon getTalon(){
+		return motor;
+	}
 	private static Hanger instance = new Hanger();
 	public static Hanger getInstance(){
 		return instance;

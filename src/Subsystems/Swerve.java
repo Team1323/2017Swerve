@@ -261,9 +261,9 @@ public class Swerve extends Subsystem{
 		public void outputToSmartDashboard(){
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle());
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", getGoal());
+			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceFeet());
 			if(moduleID == 4){
 				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Enc Position", driveMotor.getEncPosition());
-				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceFeet());
 				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " X", currentX);
 				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Y", currentY);
 				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Field Relative Angle", getFieldRelativeAngle());

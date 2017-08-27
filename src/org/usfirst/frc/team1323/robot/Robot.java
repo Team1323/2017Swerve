@@ -245,15 +245,10 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(driver.getPOV() == 90){
-			//robot.swerve.followPath(Swerve.Path.TEST);
+			robot.extendBallFlap();
 		}else if(driver.getPOV() == 180){
 			robot.swerve.followPath(Swerve.Path.BLUE_HOPPER);
-		}
-		
-		if(driver.getPOV() == 90){
-			robot.extendBallFlap();
-		}
-		if(driver.getPOV() == 270){
+		}else if(driver.getPOV() == 270){
 			robot.retractBallFlap();
 		}
 		
@@ -261,6 +256,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getTriggerAxis(Hand.kRight) > 0){
 			robot.gearIntake.score();
 		}
+		
 		//Hanger
 		if(driver.getStartButton()){
 			robot.hanger.startHang();
@@ -300,6 +296,7 @@ public class Robot extends IterativeRobot {
     	}else if(coDriver.getBumper(Hand.kLeft)){
     		robot.intake.intakeReverse();
     	}
+		
 		//Turret
 		if(Math.abs(coDriver.getX(Hand.kRight)) > 0){
 			robot.turret.setState(Turret.ControlState.Manual);
@@ -329,16 +326,13 @@ public class Robot extends IterativeRobot {
 		if(coDriver.leftCenterClick.wasPressed()){
 			visionServer.requestAppRestart();
 		}
+		
 		//Shooter
 		if(coDriver.getTriggerAxis(Hand.kLeft) > 0){
-			/*if(robot.turret.getFieldRelativeAngle() < 345 && robot.turret.getFieldRelativeAngle() > 15 ){
-				robot.turret.fieldPositionLock();
-			}else{
-				robot.turret.gyroLock();
-			}*/
 			robot.turret.gyroLock();
 			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
 		}
+		
 		//Sweeper
 		if(coDriver.getTriggerAxis(Hand.kRight) > 0 && robot.shooter.onTarget()){
 			robot.sweeper.startSweeper();
@@ -351,6 +345,7 @@ public class Robot extends IterativeRobot {
 			robot.sweeper.stop();
 			sweeperNeedsToStop = false;
 		}
+		
 		//Gear Intake
 		if(coDriver.getAButton()){
 			robot.gearIntake.extend();
@@ -367,6 +362,7 @@ public class Robot extends IterativeRobot {
 			coDriver.rumble(1, 2);
 			driver.rumble(1, 2);
 		}
+		
 		//Hanger
 		if(coDriver.startButton.wasPressed()){
 			robot.hanger.startHang();

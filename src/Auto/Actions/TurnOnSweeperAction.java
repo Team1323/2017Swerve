@@ -18,6 +18,7 @@ public class TurnOnSweeperAction implements Action{
 	
 	@Override
 	public void update(){
+		isDone = true;
 	}
 	
 	@Override

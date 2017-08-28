@@ -55,7 +55,7 @@ public class Swerve extends Subsystem{
 	double maxAccel = 16;
 	double maxJerk = 84;
 	Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, maxVel, maxAccel, maxJerk);
-	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, maxVel, maxAccel, maxJerk);
+	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, /*Constants.kLooperDt*/0.02, maxVel, maxAccel, maxJerk);
 	SwerveModifier.Mode mode = SwerveModifier.Mode.SWERVE_DEFAULT;
 	Trajectory redHopperTrajectory;
 	Trajectory testTrajectory;
@@ -65,7 +65,9 @@ public class Swerve extends Subsystem{
 	DistanceFollower frFollower;
 	DistanceFollower blFollower;
 	DistanceFollower brFollower;
-	double pathFollowingHeading = 0;
+	
+	public double dt;
+	double timestamp;
 	
 	public enum Path{
 		BLUE_HOPPER, RED_HOPPER, TEST
@@ -135,8 +137,8 @@ public class Swerve extends Subsystem{
 		Waypoint[] stablePoints = new Waypoint[]{
 				new Waypoint(0,0,0),
 				new Waypoint(-6, 0.5, Pathfinder.d2r(170)),
-				new Waypoint(-7,2.5,Pathfinder.d2r(90)),
-				new Waypoint(-5, 3.5, Pathfinder.d2r(0))
+				new Waypoint(-7.5,2.5,Pathfinder.d2r(90)),
+				new Waypoint(-5, 3.75, Pathfinder.d2r(0))
 		};
 		Waypoint[] rightPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
@@ -147,10 +149,10 @@ public class Swerve extends Subsystem{
 		
 		testTrajectory = Pathfinder.generate(rightPoints, config);
 		blueHopperTrajectory = Pathfinder.generate(stablePoints, stableConfig);
-		for (int i = 0; i < testTrajectory.length(); i++) {
+		/*for (int i = 0; i < testTrajectory.length(); i++) {
 		    Trajectory.Segment seg = testTrajectory.get(i);
 		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
-		}
+		}*/
 	}
 	
 	public class SwerveDriveModule extends Subsystem{
@@ -159,6 +161,7 @@ public class Swerve extends Subsystem{
 		private int moduleID;
 		private int absolutePosition;
 		private double offSet = 0.0;
+		public double pathFollowingOffset = 0.0;
 		private double currentDistance = 0.0;
 		private double lastDistance = 0.0;
 		private double currentX = HALF_WIDTH;
@@ -224,7 +227,7 @@ public class Swerve extends Subsystem{
 			return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
 		}
 		public double getEncoderDistanceFeet(){
-			return getEncoderDistanceInches()/12;
+			return (moduleID == 1) ? -getEncoderDistanceInches()/12 : getEncoderDistanceInches()/12;
 		}
 		public double getModuleInchesPerSecond(){
 			return driveMotor.getSpeed()/Constants.SWERVE_ENCODER_REVS_PER_INCH/60;
@@ -319,6 +322,7 @@ public class Swerve extends Subsystem{
 				modifier = new SwerveModifier(testTrajectory);
 				break;
 			default:
+				modifier = new SwerveModifier(blueHopperTrajectory);
 				break;
 		}
 		
@@ -338,9 +342,12 @@ public class Swerve extends Subsystem{
 		blFollower.configurePIDVA(p, 0.0, d, v, a);
 		brFollower.configurePIDVA(p, 0.0, d, v, a);
 		
-		encoderOffset = rearRight.getEncoderDistanceFeet();
+		for(SwerveDriveModule m : modules){
+			m.pathFollowingOffset = m.getEncoderDistanceFeet();
+		}
 		
-		pathFollowingHeading = pidgey.getAngle();
+		setTargetHeading(pidgey.getAngle());
+		setHeadingController(HeadingController.Stabilize);
 		
 		setState(ControlState.PathFollowing);
 	}
@@ -373,49 +380,51 @@ public class Swerve extends Subsystem{
 		return pidgey.getAngle() - targetHeadingAngle;
 	}
 	public void update(){
+		double now = Timer.getFPGATimestamp();
+		
+		double rotationCorrection = 0.0;
+		switch(headingController){
+			case Off:
+				targetHeadingAngle = pidgey.getAngle();
+				SmartDashboard.putString("Heading Controller", "Off");
+				break;
+			case Stabilize:
+				if(!stabilizationTargetSet && (Timer.getFPGATimestamp() - manualRotationStopTime >= 0.3)){
+					targetHeadingAngle = pidgey.getAngle();
+					stabilizationTargetSet = true;
+				}
+				if(stabilizationTargetSet){
+					if(Math.abs(getHeadingError()) > 5){
+						rotationCorrection = strongHeadingPID.calculate(getHeadingError());
+					}else if(Math.abs(getHeadingError()) > 0.5){
+						rotationCorrection = headingPID.calculate(getHeadingError());
+					}
+				}
+				SmartDashboard.putString("Heading Controller", "Stabilize");
+				break;
+			case Snap:
+				rotationCorrection = snapPID.calculate(getHeadingError());
+				if(Math.abs(getHeadingError()) < 2){
+					cyclesLeft--;
+				}else{
+					cyclesLeft = 1;
+				}
+				if(cyclesLeft <= 0){
+					setHeadingController(HeadingController.Stabilize);
+					rotationCorrection = 0;
+				}
+				SmartDashboard.putString("Heading Controller", "Snap");
+				break;
+			default:
+				break;
+		}
+		SmartDashboard.putNumber("Rotation Correction", rotationCorrection);
+		rotateInput += rotationCorrection;
+		
 		switch(currentState){
 			case Manual:
-				double rotationCorrection = 0.0;
-				switch(headingController){
-					case Off:
-						targetHeadingAngle = pidgey.getAngle();
-						SmartDashboard.putString("Heading Controller", "Off");
-						break;
-					case Stabilize:
-						if(!stabilizationTargetSet && (Timer.getFPGATimestamp() - manualRotationStopTime >= 0.3)){
-							targetHeadingAngle = pidgey.getAngle();
-							stabilizationTargetSet = true;
-						}
-						if(stabilizationTargetSet){
-							if(Math.abs(getHeadingError()) > 5){
-								rotationCorrection = strongHeadingPID.calculate(getHeadingError());
-							}else if(Math.abs(getHeadingError()) > 0.5){
-								rotationCorrection = headingPID.calculate(getHeadingError());
-							}
-						}
-						SmartDashboard.putString("Heading Controller", "Stabilize");
-						break;
-					case Snap:
-						rotationCorrection = snapPID.calculate(getHeadingError());
-						if(Math.abs(getHeadingError()) < 2){
-							cyclesLeft--;
-						}else{
-							cyclesLeft = 1;
-						}
-						if(cyclesLeft <= 0){
-							setHeadingController(HeadingController.Stabilize);
-							rotationCorrection = 0;
-						}
-						SmartDashboard.putString("Heading Controller", "Snap");
-						break;
-					default:
-						break;
-				}
-				SmartDashboard.putNumber("Rotation Correction", rotationCorrection);
-				rotateInput += rotationCorrection;
-				
 				kinematics.calculate(xInput, yInput, rotateInput);
-			    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.01){
+			    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.02){
 			    	if(shouldBrake){
 					    for(SwerveDriveModule m : modules){
 					    	if(!m.hasBraked()){
@@ -440,17 +449,24 @@ public class Swerve extends Subsystem{
 			    rearRight.setDriveSpeed(kinematics.rrWheelSpeed());
 				break;
 			case PathFollowing:
-				double fro = frFollower.calculate((rearRight.getEncoderDistanceFeet() - encoderOffset));
-			    double flo = flFollower.calculate((rearRight.getEncoderDistanceFeet() - encoderOffset));
-			    double blo = blFollower.calculate((rearRight.getEncoderDistanceFeet() - encoderOffset));
-			    double bro = brFollower.calculate((rearRight.getEncoderDistanceFeet() - encoderOffset));
+				double fro = frFollower.calculate((frontRight.getEncoderDistanceFeet() - frontRight.pathFollowingOffset));
+			    double flo = flFollower.calculate((frontLeft.getEncoderDistanceFeet() - frontLeft.pathFollowingOffset));
+			    double blo = blFollower.calculate((rearLeft.getEncoderDistanceFeet() - rearLeft.pathFollowingOffset));
+			    double bro = brFollower.calculate((rearRight.getEncoderDistanceFeet() - rearRight.pathFollowingOffset));
 			    
-			    double pathHeadingError = pidgey.getAngle() - pathFollowingHeading;
+			    double pathWheelAngle = (frFollower.getHeading() + flFollower.getHeading() + 
+			    		blFollower.getHeading() + brFollower.getHeading())/4;
+			    kinematics.calculate(Math.sin(pathWheelAngle), Math.cos(pathWheelAngle), rotationCorrection);
 			    
-				frontRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(frFollower.getHeading())) - pathHeadingError);
-				frontLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(flFollower.getHeading())) - pathHeadingError);
-				rearLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(blFollower.getHeading())) - pathHeadingError);
-				rearRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(brFollower.getHeading())) - pathHeadingError);
+				/*frontRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(frFollower.getHeading())));
+				frontLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(flFollower.getHeading())));
+				rearLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(blFollower.getHeading())));
+				rearRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(brFollower.getHeading())));*/
+			    
+			    frontRight.setModuleAngle(kinematics.frSteeringAngle());
+			    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
+			    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
+			    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
 				
 				frontRight.setDriveSpeed(fro);
 				frontLeft.setDriveSpeed(-flo);
@@ -466,6 +482,8 @@ public class Swerve extends Subsystem{
 				stop();
 				break;
 		}
+		dt = now - timestamp;
+		timestamp = now;
 	}
 	@Override
 	public synchronized void stop(){

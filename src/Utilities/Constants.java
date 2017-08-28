@@ -24,7 +24,7 @@ public class Constants {
     public static final double SWERVE_ENCODER_REVS_PER_INCH = SWERVE_ENCODER_REVS_PER_WHEEL_REV/(Math.PI*3);
     
     //Looper Rate
-    public static double kLooperDt = 0.01;
+    public static final double kLooperDt = 0.01;
     
     //Turret Constants
 	public static final double TURRET_MAX_ANGLE = 110;

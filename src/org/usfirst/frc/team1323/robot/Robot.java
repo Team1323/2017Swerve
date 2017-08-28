@@ -40,6 +40,7 @@ public class Robot extends IterativeRobot {
 	public LogitechJoystick driverJoystick;
 	public SteeringWheel steeringWheel;
 	Looper enabledLooper = new Looper();
+	Looper swerveLooper = new Looper();
 	Looper disabledLooper = new Looper();
 	AutoModeExecuter autoModeExecuter = null;
 	private boolean sweeperNeedsToStop = false;
@@ -67,11 +68,12 @@ public class Robot extends IterativeRobot {
 	        robot.turret.resetAngle(90);
 	        enabledLooper.register(VisionProcessor.getInstance());
             enabledLooper.register(RobotStateEstimator.getInstance());
-	        enabledLooper.register(robot.swerve.getLoop());
+	        //enabledLooper.register(robot.swerve.getLoop());
 	        enabledLooper.register(robot.pidgey.getLoop());
 	        enabledLooper.register(robot.turret.getLoop());
 	        enabledLooper.register(robot.hanger.getLoop());
 	        enabledLooper.register(robot.gearIntake.getLoop());
+	        swerveLooper.register(robot.swerve.getLoop());
 	        disabledLooper.register(robot.pidgey.getLoop());
 	        disabledLooper.register(VisionProcessor.getInstance());
 	        disabledLooper.register(RobotStateEstimator.getInstance());
@@ -131,6 +133,7 @@ public class Robot extends IterativeRobot {
 			autoModeExecuter = null;
 			
 			enabledLooper.stop();
+			swerveLooper.stop();
 			disabledLooper.start();
 			stopAll();
 		}catch(Throwable t){
@@ -172,6 +175,7 @@ public class Robot extends IterativeRobot {
 			
 			disabledLooper.stop();
 			enabledLooper.start();
+			swerveLooper.start();
 			
 			robot.swerve.setState(Swerve.ControlState.Manual);
 			robot.swerve.setTargetHeading(robot.pidgey.getAngle());

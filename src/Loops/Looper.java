@@ -83,4 +83,8 @@ public class Looper {
     public void outputToSmartDashboard() {
         SmartDashboard.putNumber("looper_dt", dt_);
     }
+    
+    public void print(){
+    	System.out.println("Dt: " + Double.toString(dt_));
+    }
 }

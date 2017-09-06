@@ -16,6 +16,7 @@ public class Pidgeon {
 		hanger = Hanger.getInstance();
 		try{
 			pidgey = new PigeonImu(hanger.getTalon());
+			pidgey.EnableTemperatureCompensation(true);
 		}catch(Exception e){
 			System.out.println(e);
 		}
@@ -91,5 +92,6 @@ public class Pidgeon {
 		SmartDashboard.putNumber(" Heading Angle ", getAngle());
 		SmartDashboard.putNumber(" Pigeon Rate ", getAngularRate());
 		SmartDashboard.putBoolean(" Pigeon Good ", isGood());
+		SmartDashboard.putNumber("Pigeon Temp", pidgey.GetTemp());
 	}
 }

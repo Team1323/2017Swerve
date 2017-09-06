@@ -55,7 +55,7 @@ public class Swerve extends Subsystem{
 	double maxAccel = 16;
 	double maxJerk = 84;
 	Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, maxVel, maxAccel, maxJerk);
-	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, /*Constants.kLooperDt*/0.02, maxVel, maxAccel, maxJerk);
+	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, maxVel, maxAccel, maxJerk);
 	SwerveModifier.Mode mode = SwerveModifier.Mode.SWERVE_DEFAULT;
 	Trajectory redHopperTrajectory;
 	Trajectory testTrajectory;
@@ -91,7 +91,7 @@ public class Swerve extends Subsystem{
 	}
 	private SynchronousPID headingPID = new SynchronousPID(0.001, 0.0, 0.0007, 0.0);
 	private SynchronousPID strongHeadingPID = new SynchronousPID(0.008, 0.0, 0.0, 0.0);
-	private SynchronousPID snapPID = new SynchronousPID(0.01, 0.0, 0.1, 0.2);
+	private SynchronousPID snapPID = new SynchronousPID(0.0075, 0.0, 0.1, 0.2);//(0.01, 0.0, 0.1, 0.2);
 	private int cyclesLeft = 1;
 	
 	static final double HALF_LENGTH = Constants.WHEELBASE_LENGTH/2;
@@ -142,17 +142,23 @@ public class Swerve extends Subsystem{
 		};
 		Waypoint[] rightPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
-				new Waypoint(-5, 0.05, Pathfinder.d2r(179)),
-				new Waypoint(-7,2.5,Pathfinder.d2r(90)),
-				new Waypoint(-5, 3.5, Pathfinder.d2r(0))
+				new Waypoint(-7.15, 2.0, Pathfinder.d2r(130)),
+				new Waypoint(-7.5, 3.0, Pathfinder.d2r(50)),
+				new Waypoint(-3.75, 2.9, Pathfinder.d2r(0))
+		};
+		Waypoint[] redPoints = new Waypoint[]{
+				new Waypoint(0,0,0),
+				new Waypoint(7.15, 2.0, Pathfinder.d2r(50)),
+				new Waypoint(7.5, 3.0, Pathfinder.d2r(130)),
+				new Waypoint(3.75, 2.9, Pathfinder.d2r(180))
 		};
 		
-		testTrajectory = Pathfinder.generate(rightPoints, config);
+		testTrajectory = Pathfinder.generate(rightPoints, stableConfig);
 		blueHopperTrajectory = Pathfinder.generate(stablePoints, stableConfig);
-		/*for (int i = 0; i < testTrajectory.length(); i++) {
+		for (int i = 0; i < testTrajectory.length(); i++) {
 		    Trajectory.Segment seg = testTrajectory.get(i);
 		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
-		}*/
+		}
 	}
 	
 	public class SwerveDriveModule extends Subsystem{
@@ -332,7 +338,7 @@ public class Swerve extends Subsystem{
 		blFollower = new DistanceFollower(modifier.getBackLeftTrajectory());
 		brFollower = new DistanceFollower(modifier.getBackRightTrajectory());
 		
-		double p = 1.0;
+		double p = 0.8;
 		double d = 0.0;
 		double v = 1/(maxVel);
 		double a = 0.0;
@@ -424,13 +430,14 @@ public class Swerve extends Subsystem{
 		switch(currentState){
 			case Manual:
 				kinematics.calculate(xInput, yInput, rotateInput);
-			    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.02){
+			    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.05){
 			    	if(shouldBrake){
 					    for(SwerveDriveModule m : modules){
-					    	if(!m.hasBraked()){
+					    	/*if(!m.hasBraked()){
 					    		m.setModuleAngle(m.getModuleAngle() + 90);
 					    		m.hasBraked = true;
-					    	}
+					    	}*/
+					    	m.setModuleAngle(0);
 					    }
 			    	}
 			    }else{

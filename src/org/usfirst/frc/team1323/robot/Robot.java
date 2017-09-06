@@ -251,7 +251,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			robot.extendBallFlap();
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.Path.BLUE_HOPPER);
+			robot.swerve.followPath(Swerve.Path.TEST);
 		}else if(driver.getPOV() == 270){
 			robot.retractBallFlap();
 		}

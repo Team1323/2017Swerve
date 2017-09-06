@@ -20,8 +20,9 @@ public class Constants {
     public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
     public static final double REAR_RIGHT_TURN_OFFSET  = 355.42;
     
-    public static final double SWERVE_ENCODER_REVS_PER_WHEEL_REV = 4.16458;
-    public static final double SWERVE_ENCODER_REVS_PER_INCH = SWERVE_ENCODER_REVS_PER_WHEEL_REV/(Math.PI*3);
+    public static final double SWERVE_WHEEL_DIAMETER = 2.5;
+    public static final double SWERVE_ENCODER_REVS_PER_WHEEL_REV = 4.0;//4.307692308;
+    public static final double SWERVE_ENCODER_REVS_PER_INCH = SWERVE_ENCODER_REVS_PER_WHEEL_REV/(Math.PI*SWERVE_WHEEL_DIAMETER);
     
     //Looper Rate
     public static final double kLooperDt = 0.01;
@@ -56,7 +57,7 @@ public class Constants {
 	public static final double GEAR_DETECT_CURRENT = 12;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
 	public static final int CYCLES_FOR_LOST_GEAR = 7;
-	public static final int CYCLES_FOR_GEAR_DETECT = 5;
+	public static final int CYCLES_FOR_GEAR_DETECT = 10;
 	
 	//Vision
 	public static final int kAndroidAppTcpPort = 8254;

@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.XboxController;
 
 public class Xbox extends XboxController{
     private static final double PRESS_THRESHOLD = 0.3;
-    private static final double DEAD_BAND = 0.2;
+    private static final double DEAD_BAND = 0.15;
     private boolean rumbling = false;
     public ButtonCheck aButton;
     public ButtonCheck bButton;
@@ -20,6 +20,7 @@ public class Xbox extends XboxController{
     public ButtonCheck rightCenterClick;
     public ButtonCheck leftTrigger;
     public ButtonCheck rightTrigger;
+    public ButtonCheck POV180;
     public static final int A_BUTTON = 1;
     public static final int B_BUTTON = 2;
     public static final int X_BUTTON = 3;
@@ -32,6 +33,7 @@ public class Xbox extends XboxController{
     public static final int RIGHT_CENTER_CLICK = 10;
     public static final int LEFT_TRIGGER = -2;
     public static final int RIGHT_TRIGGER = -3;
+    public static final int POV_180 = -4;
     
     public Xbox(int usb)   { 
     	super(usb);
@@ -47,6 +49,7 @@ public class Xbox extends XboxController{
         rightCenterClick = new ButtonCheck(RIGHT_CENTER_CLICK);     
         leftTrigger = new ButtonCheck(LEFT_TRIGGER);
         rightTrigger = new ButtonCheck(RIGHT_TRIGGER);
+        POV180 = new ButtonCheck(POV_180);
    }
     
     @Override
@@ -135,6 +138,9 @@ public class Xbox extends XboxController{
     				case RIGHT_TRIGGER:
     					buttonCheck = getTriggerAxis(Hand.kRight) > 0;
     					break;
+    				case POV_180:
+    					buttonCheck = (getPOV() == 180);
+    					break;
     				default:
     					buttonCheck = false;
     					break;
@@ -188,5 +194,6 @@ public class Xbox extends XboxController{
     	rightCenterClick.update();
     	leftTrigger.update();
     	rightTrigger.update();
+    	POV180.update();
     }
 }

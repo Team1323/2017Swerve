@@ -38,7 +38,18 @@ public class HopperMode extends AutoModeBase{
 		runAction(new ParallelAction(Arrays.asList(new FollowPathAction(path), new ExtendIntakeAction(), 
 				new DeployBallFlapAction(), new StartAutoAimingAction())));
 		
-		runAction(new SeriesAction(Arrays.asList(new WaitForAutoAimAction(), new TurnOnShooterAction(), 
+		WaitForAutoAimAction autoAim = new WaitForAutoAimAction();
+		runAction(autoAim);
+		if(autoAim.timedOut){
+			System.out.println("Auto Aim timed out");
+			if(turretAngle == 90){
+				robot.turret.gyroLock(-pigeonAngle, 100);
+			}else if(turretAngle == -90){
+				robot.turret.gyroLock(-pigeonAngle, -100);
+			}
+		}
+		
+		runAction(new SeriesAction(Arrays.asList(new TurnOnShooterAction(), 
 				new TurnOnSweeperAction(), new ReciprocateBallFlapAction(1, 3)))); 
 	}
 	

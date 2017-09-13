@@ -15,6 +15,9 @@ public class SwerveKinematics {
 	private double rearLeftSteeringAngle = 0.0;
 	private double rearRightSteeringAngle = 0.0;
 	
+	public double[] wheelAngles = new double[4];
+	public double[] wheelSpeeds = new double[4];
+	
 	public void calculate(double x, double y, double rotate){
 		double A = x - rotate * (Constants.WHEELBASE_LENGTH / Constants.SWERVE_R);
 	    double B = x + rotate * (Constants.WHEELBASE_LENGTH / Constants.SWERVE_R);
@@ -36,10 +39,20 @@ public class SwerveKinematics {
 	        rearRightWheelSpeed /= max;
 	    }
 	    
+	    wheelSpeeds[0] = frontRightWheelSpeed;
+	    wheelSpeeds[1] = frontLeftWheelSpeed;
+	    wheelSpeeds[2] = rearLeftWheelSpeed;
+	    wheelSpeeds[3] = rearRightWheelSpeed;
+	    
 	    frontRightSteeringAngle = Math.atan2(B, C)*180/Math.PI; 
 	    frontLeftSteeringAngle = Math.atan2(B, D)*180/Math.PI;
 	    rearLeftSteeringAngle = Math.atan2(A, D)*180/Math.PI;
 	    rearRightSteeringAngle = Math.atan2(A, C)*180/Math.PI;
+	    
+	    wheelAngles[0] = frontRightSteeringAngle;
+	    wheelAngles[1] = frontLeftSteeringAngle;
+	    wheelAngles[2] = rearLeftSteeringAngle;
+	    wheelAngles[3] = rearRightSteeringAngle;
 	}
 	
 	public double frWheelSpeed(){

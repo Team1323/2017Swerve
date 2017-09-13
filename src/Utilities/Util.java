@@ -183,6 +183,14 @@ public class Util {
 		return G1 < G2;
 //		return true;
 	}
+    public static boolean shouldReverse(double goalAngle, double currentAngle){
+    	goalAngle = boundAngle0to360Degrees(goalAngle);
+    	currentAngle = boundAngle0to360Degrees(currentAngle);
+    	double reversedAngle = boundAngle0to360Degrees(currentAngle + 180);
+    	double angleDifference = Math.abs(goalAngle - currentAngle);
+    	double reversedAngleDifference = Math.abs(goalAngle - reversedAngle);
+    	return reversedAngleDifference < angleDifference;
+    }
     public static double calcPID(double p, double i, double d, double f, double error, double rate, double cap){
     	double calc = 0.0;
     	if(error > 0){

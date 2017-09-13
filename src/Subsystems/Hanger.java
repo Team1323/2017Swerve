@@ -49,7 +49,7 @@ public class Hanger extends Subsystem{
 				setState(State.HANGING);
 				break;
 			case HANGING:
-				if(motor.getOutputCurrent() > Constants.HANG_CURRENT_THRESHOLD){
+				if(motor.getOutputCurrent() > Constants.HANG_STOP_CURRENT){
 					setState(State.HANG_DETECTED);
 				}
 				SmartDashboard.putString(" Hanger Status ", "Hanging Waiting");
@@ -57,6 +57,7 @@ public class Hanger extends Subsystem{
 			case HANG_DETECTED:
 				stop();
 				SmartDashboard.putString(" Hanger Status ", "Hang Complete");
+				break;
 		}
 	}
 	
@@ -85,6 +86,11 @@ public class Hanger extends Subsystem{
 	public void on(){
 		motor.set(Constants.HANG_POWER);
 	}
+	
+	public boolean isHanging(){
+		return (currentState == State.HANGING) && (motor.getOutputCurrent() > Constants.HANGING_DETECT_CURRENT);
+	}
+	
 	@Override
 	public synchronized void stop(){
 		setState(State.OFF);

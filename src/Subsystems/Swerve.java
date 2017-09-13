@@ -39,6 +39,10 @@ public class Swerve extends Subsystem{
 	public void setLowPower(boolean on){
 		forcedLowPower = on;
 	}
+	public boolean superSlow = false;
+	public void toggleSuperSlow(){
+		superSlow = !superSlow;
+	}
 	public boolean shouldBrake = true;
 	
 	public enum ControlState{
@@ -166,7 +170,7 @@ public class Swerve extends Subsystem{
 		public CANTalon driveMotor;
 		private int moduleID;
 		private int absolutePosition;
-		private double offSet = 0.0;
+		private double offset = 0.0;
 		public double pathFollowingOffset = 0.0;
 		private double currentDistance = 0.0;
 		private double lastDistance = 0.0;
@@ -178,7 +182,7 @@ public class Swerve extends Subsystem{
 			rotationMotor = new CANTalon(rotationMotorPort);
 			driveMotor = new CANTalon(driveMotorPort);
 			moduleID = moduleNum;  
-			offSet = _offSet;
+			offset = _offSet;
 			loadProperties();
 		}
 		public final void loadProperties(){
@@ -211,7 +215,7 @@ public class Swerve extends Subsystem{
 			return rotationMotor.get();
 		}
 		public double getModuleAngle(){
-			return Util.boundAngle0to360Degrees(getRawAngle() - offSet);
+			return Util.boundAngle0to360Degrees(getRawAngle() - offset);
 		}
 		public double getFieldRelativeAngle(){
 			return Util.boundAngle0to360Degrees(getModuleAngle() + Util.boundAngle0to360Degrees(pidgey.getAngle()));
@@ -220,11 +224,11 @@ public class Swerve extends Subsystem{
 			setModuleAngle(Util.boundAngle0to360Degrees(fieldAngle - Util.boundAngle0to360Degrees(pidgey.getAngle())));
 		}
 		public void setModuleAngle(double goalAngle){
-			double newAngle = Util.continousAngle(goalAngle-(360-offSet),getRawAngle());
+			double newAngle = Util.continousAngle(goalAngle+offset,getRawAngle());
 			rotationMotor.set(newAngle);
 		}
 		public double getGoal(){
-			return Util.boundAngle0to360Degrees(rotationMotor.getSetpoint() - offSet);
+			return Util.boundAngle0to360Degrees(rotationMotor.getSetpoint() - offset);
 		}
 		public void setDriveSpeed(double power){
 			driveMotor.set(power);
@@ -292,14 +296,14 @@ public class Swerve extends Subsystem{
 			xInput = (-y * Math.sin(angle)) + (x * Math.cos(angle));
 			yInput = tmp;			
 		}
-		if(lowPower || forcedLowPower){
+		if(superSlow){
+			xInput *= 0.3;
+			yInput *= 0.3;
+		}else if(lowPower || forcedLowPower){
 			xInput *= 0.45;
 			yInput *= 0.45;
-			shouldBrake = false;
-		}else{
-			shouldBrake = true;
 		}
-		rotateInput = rotate*0.6;
+		rotateInput = rotate*0.8;
 		
 		if(rotateInput == 0){
 			if(isManuallyRotating){
@@ -313,6 +317,12 @@ public class Swerve extends Subsystem{
 		}else{
 			setHeadingController(HeadingController.Off);
 			isManuallyRotating = true;
+		}
+		
+		if(x != 0 || y != 0){
+			shouldBrake = false;
+		}else if(rotateInput != 0){
+			shouldBrake = true;
 		}
 	}
 	
@@ -395,7 +405,7 @@ public class Swerve extends Subsystem{
 				SmartDashboard.putString("Heading Controller", "Off");
 				break;
 			case Stabilize:
-				if(!stabilizationTargetSet && (Timer.getFPGATimestamp() - manualRotationStopTime >= 0.3)){
+				if(!stabilizationTargetSet && (Timer.getFPGATimestamp() - manualRotationStopTime >= 0.45)){
 					targetHeadingAngle = pidgey.getAngle();
 					stabilizationTargetSet = true;
 				}
@@ -430,26 +440,47 @@ public class Swerve extends Subsystem{
 		switch(currentState){
 			case Manual:
 				kinematics.calculate(xInput, yInput, rotateInput);
-			    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.05){
+			    if(xInput == 0 && yInput == 0 && Math.abs(rotateInput) <= 0.1){
 			    	if(shouldBrake){
 					    for(SwerveDriveModule m : modules){
-					    	/*if(!m.hasBraked()){
+					    	if(!m.hasBraked()){
 					    		m.setModuleAngle(m.getModuleAngle() + 90);
 					    		m.hasBraked = true;
-					    	}*/
-					    	m.setModuleAngle(0);
+					    	}
+					    	//m.setModuleAngle(0);
 					    }
 			    	}
 			    }else{
 			    	for(SwerveDriveModule m : modules){
 			    		m.hasBraked = false;
 			    	}
+			    	/*for(int i=0; i<4; i++){
+			    		if(Util.shouldReverse(kinematics.wheelAngles[i], modules.get(i).getModuleAngle())){
+			    			modules.get(i).setModuleAngle(kinematics.wheelAngles[i] + 180);
+			    		}else{
+			    			modules.get(i).setModuleAngle(kinematics.wheelAngles[i]);
+			    		}
+			    	}*/
 				    frontRight.setModuleAngle(kinematics.frSteeringAngle());
 				    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
 				    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
 				    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
 			    }
-			    
+			    /*for(int i=0; i<4; i++){
+		    		if(Util.shouldReverse(kinematics.wheelAngles[i], modules.get(i).getModuleAngle())){
+		    			if(i == 1 || i == 2){
+		    				modules.get(i).setDriveSpeed(kinematics.wheelSpeeds[i]);
+		    			}else{
+		    				modules.get(i).setDriveSpeed(-kinematics.wheelSpeeds[i]);
+		    			}
+		    		}else{
+		    			if(i == 1 || i == 2){
+		    				modules.get(i).setDriveSpeed(-kinematics.wheelSpeeds[i]);
+		    			}else{
+		    				modules.get(i).setDriveSpeed(kinematics.wheelSpeeds[i]);
+		    			}
+		    		}
+			    }*/
 			    frontRight.setDriveSpeed(kinematics.frWheelSpeed());
 			    frontLeft.setDriveSpeed(-kinematics.flWheelSpeed());
 			    rearLeft.setDriveSpeed(-kinematics.rlWheelSpeed());

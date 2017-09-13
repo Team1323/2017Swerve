@@ -5,6 +5,7 @@ import org.json.simple.JSONArray;
 import Auto.Modes.HopperMode;
 import Auto.Modes.StandStillMode;
 import Subsystems.Swerve;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SmartDashboardInteractions {
@@ -16,39 +17,36 @@ public class SmartDashboardInteractions {
     private static final AutoOption DEFAULT_MODE = AutoOption.HOPPER;
     private static final AutoSide DEFAULT_SIDE = AutoSide.BLUE;
     
+    private SendableChooser modeChooser;
+    private SendableChooser sideChooser;
+    
     public void initWithDefaults(){
-    	JSONArray autoOptionsArray = new JSONArray();
-    	for(AutoOption autoOption : AutoOption.values()){
-    		autoOptionsArray.add(autoOption.name);
-    	}
-    	SmartDashboard.putString(AUTO_OPTIONS, autoOptionsArray.toString());
+    	modeChooser = new SendableChooser();
+    	modeChooser.addDefault("Hopper", DEFAULT_MODE);
+    	sideChooser = new SendableChooser();
+    	sideChooser.addDefault("Blue", DEFAULT_SIDE);
+    	sideChooser.addObject("Red", AutoSide.RED);
+    	SmartDashboard.putData("Mode Chooser", modeChooser);
+    	SmartDashboard.putData("Side Chooser", sideChooser);
     	SmartDashboard.putString(SELECTED_AUTO_MODE, DEFAULT_MODE.name);
     	SmartDashboard.putString(SELECTED_AUTO_SIDE, DEFAULT_SIDE.color);
     }
     
     public AutoModeBase getSelectedAutoMode(){
-    	String autoModeString = SmartDashboard.getString(SELECTED_AUTO_MODE, DEFAULT_MODE.name);
-        AutoOption selectedOption = DEFAULT_MODE;
-        for (AutoOption autoOption : AutoOption.values()) {
-            if (autoOption.name.equals(autoModeString)) {
-                selectedOption = autoOption;
-                break;
-            }
-        }
+        AutoOption selectedOption =  (AutoOption)  modeChooser.getSelected();
         
-        String autoSideString = SmartDashboard.getString(SELECTED_AUTO_SIDE, DEFAULT_SIDE.color);
-        AutoSide selectedSide = DEFAULT_SIDE;
-        for(AutoSide autoSide : AutoSide.values()){
-        	if(autoSide.color.equals(autoSideString)){
-        		selectedSide = autoSide;
-        	}
-        }
+        AutoSide selectedSide = (AutoSide) sideChooser.getSelected();
         
         return createAutoMode(selectedOption, selectedSide);
     }
     
     public String getSelectedSide(){
-    	return SmartDashboard.getString(SELECTED_AUTO_SIDE, DEFAULT_SIDE.color);
+    	AutoSide side = (AutoSide) sideChooser.getSelected();
+    	return side.color;
+    }
+    public String getSelectedMode(){
+    	AutoOption option = (AutoOption) modeChooser.getSelected();
+    	return option.name;
     }
     
     enum AutoOption{
@@ -85,5 +83,10 @@ public class SmartDashboardInteractions {
                 System.out.println("ERROR: unexpected auto mode: " + option);
                 return new StandStillMode();
     	}
+    }
+    
+    public void output(){
+    	SmartDashboard.putString(SELECTED_AUTO_MODE, getSelectedMode());
+    	SmartDashboard.putString(SELECTED_AUTO_SIDE, getSelectedSide());
     }
 }

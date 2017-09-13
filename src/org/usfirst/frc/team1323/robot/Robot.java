@@ -154,6 +154,7 @@ public class Robot extends IterativeRobot {
 			
 			disabledLooper.stop();
 			enabledLooper.start();
+			swerveLooper.start();
 			
 			autoModeExecuter = new AutoModeExecuter();
 			autoModeExecuter.setAutoMode(smartDashboardInteractions.getSelectedAutoMode());
@@ -189,6 +190,7 @@ public class Robot extends IterativeRobot {
 		try{
 			stopAll();
 			outputAllToSmartDashboard();
+			smartDashboardInteractions.output();
 		}catch(Throwable t){
 			CrashTracker.logThrowableCrash(t);
 			throw(t);
@@ -230,6 +232,9 @@ public class Robot extends IterativeRobot {
 	public void driverXboxControls(){
 		//Swerve
 		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false, driver.getTriggerAxis(Hand.kLeft) > 0);
+		if(driver.leftCenterClick.wasPressed()){
+			robot.swerve.toggleSuperSlow();
+		}
 		if(driver.getBackButton()){
 			robot.pidgey.setAngle(0);
 			robot.swerve.setTargetHeading(0.0);
@@ -248,12 +253,16 @@ public class Robot extends IterativeRobot {
 			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), -60));
 		}
 		
+		if(robot.hanger.isHanging()){
+			robot.swerve.setHeadingController(Swerve.HeadingController.Off);
+		}
+		
 		if(driver.getPOV() == 90){
-			robot.extendBallFlap();
+			//robot.extendBallFlap();
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.Path.TEST);
+			//robot.swerve.followPath(Swerve.Path.TEST);
 		}else if(driver.getPOV() == 270){
-			robot.retractBallFlap();
+			//robot.retractBallFlap();
 		}
 		
 		//Gear Score
@@ -304,14 +313,12 @@ public class Robot extends IterativeRobot {
 		//Turret
 		if(Math.abs(coDriver.getX(Hand.kRight)) > 0){
 			robot.turret.setState(Turret.ControlState.Manual);
-			robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.5);
+			robot.turret.setPercentVBus(coDriver.getX(Hand.kRight)*0.6);
 		}else if(Math.abs(coDriver.getX(Hand.kLeft)) > 0){
 			robot.turret.setState(Turret.ControlState.Manual);
-			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.25);
+			robot.turret.setPercentVBus(coDriver.getX(Hand.kLeft)*0.15);
 		}else if(coDriver.getStickButton(Hand.kRight)){
 			robot.turret.setSnapAngle(90);
-		}else if(coDriver.getPOV() == 180){
-			robot.turret.setSnapAngle(-90);
 		}else if(coDriver.getPOV() == 90){
 			robot.turret.setSnapAngle(110);
 		}else if(coDriver.getPOV() == 270){
@@ -348,6 +355,12 @@ public class Robot extends IterativeRobot {
 		}else if(sweeperNeedsToStop){
 			robot.sweeper.stop();
 			sweeperNeedsToStop = false;
+		}
+		
+		//Ball Flap
+		if(coDriver.POV180.wasPressed()){
+			System.out.println("POV Clicked");
+			robot.toggleBallFlap();
 		}
 		
 		//Gear Intake

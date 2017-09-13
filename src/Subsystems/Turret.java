@@ -118,6 +118,11 @@ public class Turret extends Subsystem{
 		gyroLockedHeading = pidgey.getAngle();
 		gyroLockedTurretAngle = getAngle();
 	}
+	public void gyroLock(double lockedHeading, double lockedTurretAngle){
+		setState(ControlState.GyroComp);
+		gyroLockedHeading = lockedHeading;
+		gyroLockedTurretAngle = lockedTurretAngle;
+	}
 	public void enableVision(){
 		setState(ControlState.VisionTracking);
 		//moveDegrees(robotState.getVisionAngle());

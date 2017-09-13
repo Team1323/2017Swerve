@@ -51,7 +51,8 @@ public class Constants {
 	
     //Hanger Constants
 	public static final double HANG_POWER = -1.0;
-	public static final double HANG_CURRENT_THRESHOLD = 40;
+	public static final double HANG_STOP_CURRENT = 40;
+	public static final double HANGING_DETECT_CURRENT = 15;
 	
 	//Gear Intake Constants
 	public static final double GEAR_DETECT_CURRENT = 12;

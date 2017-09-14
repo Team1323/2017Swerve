@@ -45,7 +45,7 @@ public class Constants {
 	public static final double SHOOTER_ALLOWABLE_ERROR = 100;
 	
 	//Sweeper Constants
-	public static final double SWEEPER_FORWARD = 0.8;
+	public static final double SWEEPER_FORWARD = 0.7;
 	public static final double SWEEPER_ROLLER_FORWARD = 1.0;
     public static final double SWEEPER_ROLLER_REVERSE = -1.0;
 	

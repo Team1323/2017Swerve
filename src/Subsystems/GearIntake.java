@@ -53,6 +53,7 @@ public class GearIntake extends Subsystem{
 		return false;
 	}
 	int cyclesWithLostGear = 0;
+	double stateStartTime = Double.POSITIVE_INFINITY;
 	
 	public enum State{
 		OFF,
@@ -67,6 +68,7 @@ public class GearIntake extends Subsystem{
 	}
 	public void setState(State newState){
 		currentState = newState;
+		stateStartTime = Timer.getFPGATimestamp();
 	}
 	
 	public void update(){
@@ -79,7 +81,7 @@ public class GearIntake extends Subsystem{
 			case EXTENDED_INTAKING:
 				forward();
 				extendCylinder();
-				if(intake.getOutputCurrent() > Constants.GEAR_DETECT_CURRENT){
+				if(intake.getOutputCurrent() > Constants.GEAR_DETECT_CURRENT && (Timer.getFPGATimestamp() - stateStartTime > 0.5)){
 					cyclesWithGearDetected++;
 					if(cyclesWithGearDetected >= Constants.CYCLES_FOR_GEAR_DETECT){
 						hasGear = true;

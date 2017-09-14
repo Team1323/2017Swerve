@@ -488,7 +488,7 @@ public class Swerve extends Subsystem{
 				break;
 			case PathFollowing:
 				double fro = frFollower.calculate((frontRight.getEncoderDistanceFeet() - frontRight.pathFollowingOffset));
-			    double flo = flFollower.calculate((frontLeft.getEncoderDistanceFeet() - frontLeft.pathFollowingOffset));
+			    double flo = flFollower.calculate((rearLeft.getEncoderDistanceFeet() - rearLeft.pathFollowingOffset));
 			    double blo = blFollower.calculate((rearLeft.getEncoderDistanceFeet() - rearLeft.pathFollowingOffset));
 			    double bro = brFollower.calculate((rearRight.getEncoderDistanceFeet() - rearRight.pathFollowingOffset));
 			    

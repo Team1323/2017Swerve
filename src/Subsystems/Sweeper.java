@@ -22,6 +22,7 @@ public class Sweeper extends Subsystem{
 	public static Sweeper getInstance(){
 		return instance;
 	}
+	public boolean isInThread = false;
 	
 	public void armForward(){
 		sweeperArm.set(Constants.SWEEPER_FORWARD);
@@ -33,14 +34,18 @@ public class Sweeper extends Subsystem{
 		sweeperRoller.set(Constants.SWEEPER_ROLLER_REVERSE);
 	}
 	public void startSweeper(){
-		SweeperSequence sequence = new SweeperSequence();
-		sequence.start();
+		if(!isInThread){
+			SweeperSequence sequence = new SweeperSequence();
+			sequence.start();
+		}
 	}
 	public class SweeperSequence extends Thread{
 		public void run(){
+			isInThread = true;
 			rollerForward();
 			Timer.delay(0.25);
 			armForward();
+			isInThread = false;
 		}
 	}
 	@Override

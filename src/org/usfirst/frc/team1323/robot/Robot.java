@@ -260,7 +260,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			//robot.extendBallFlap();
 		}else if(driver.getPOV() == 180){
-			//robot.swerve.followPath(Swerve.Path.TEST);
+			robot.swerve.followPath(Swerve.Path.TEST);
 		}else if(driver.getPOV() == 270){
 			//robot.retractBallFlap();
 		}
@@ -345,7 +345,7 @@ public class Robot extends IterativeRobot {
 		}
 		
 		//Sweeper
-		if(coDriver.getTriggerAxis(Hand.kRight) > 0 && robot.shooter.onTarget()){
+		if(coDriver.getTriggerAxis(Hand.kRight) > 0 && (robot.shooter.onTarget())){
 			robot.sweeper.startSweeper();
 		}
 		if(coDriver.getYButton()){

@@ -79,6 +79,8 @@ public class Shooter extends Subsystem{
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber("Shooter Voltage", master.getOutputVoltage());
 		SmartDashboard.putNumber("Shooter Current", master.getOutputCurrent());
+		SmartDashboard.putNumber("Shooter 2 Voltage", slave.getOutputVoltage());
+		SmartDashboard.putNumber("Shooter 2 Current", slave.getOutputCurrent());
 		SmartDashboard.putNumber("Shooter Shooter Error", getError());
 		SmartDashboard.putNumber("SHOOTER_SPEED", getSpeed());
     	SmartDashboard.putNumber("SHOOTER_SPEED_GRAPH", getSpeed());

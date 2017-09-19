@@ -123,6 +123,10 @@ public class Turret extends Subsystem{
 		gyroLockedHeading = lockedHeading;
 		gyroLockedTurretAngle = lockedTurretAngle;
 	}
+	public void setGyroLockAngle(double lockedHeading, double lockedTurretAngle){
+		setState(ControlState.AngleSnap);
+		setAngle(lockedTurretAngle - (pidgey.getAngle() - lockedHeading));
+	}
 	public void enableVision(){
 		setState(ControlState.VisionTracking);
 		//moveDegrees(robotState.getVisionAngle());
@@ -150,7 +154,7 @@ public class Turret extends Subsystem{
 				break;
 			case VisionTracking:
 				motor.setProfile(0);
-				if(onTarget() && isStationary()){
+				if(onTarget() && isStationary() && robotState.getTargetVisbility()){
 					moveDegrees(robotState.getVisionAngle());
 					//moveDegrees(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
 				}
@@ -168,7 +172,7 @@ public class Turret extends Subsystem{
 		return (getGoal() - getAngle());
 	}
 	public boolean onTarget(){
-		if(Math.abs(getError()) < 1.0){
+		if(Math.abs(getError()) < 1.5){
 			onTargetCheck--;
 		}else{
 			onTargetCheck = Constants.TURRET_ONTARGET_THRESH;

@@ -179,7 +179,7 @@ public class RobotState {
                 }
             }
         }else{
-        	visionAngle = 0.0;
+        	visionAngle = Double.POSITIVE_INFINITY;
         	seesTarget = false;
         }
         synchronized (this) {

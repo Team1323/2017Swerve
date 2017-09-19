@@ -7,9 +7,11 @@ import Utilities.Constants;
 
 public class TurnOnShooterAction implements Action{
 	private RoboSystem robot;
+	private boolean isDone;
 	
 	public TurnOnShooterAction(){
 		robot = RoboSystem.getInstance();
+		isDone = false;
 	}
 	
 	@Override
@@ -19,6 +21,9 @@ public class TurnOnShooterAction implements Action{
 	
 	@Override
 	public void update(){
+		if(robot.turret.onTarget()){
+			robot.turret.gyroLock();
+		}
 	}
 	
 	@Override
@@ -27,7 +32,6 @@ public class TurnOnShooterAction implements Action{
 	
 	@Override
 	public void start(){
-		robot.turret.gyroLock();
-		robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
+		robot.shooter.setSpeed(Constants.SHOOTING_SPEED + 25);
 	}
 }

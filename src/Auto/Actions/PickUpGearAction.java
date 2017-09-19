@@ -5,14 +5,16 @@ import Subsystems.RoboSystem;
 
 public class PickUpGearAction implements Action{
 	private RoboSystem robot;
+	private boolean isDone;
 	
 	public PickUpGearAction(){
 		robot = RoboSystem.getInstance();
+		isDone = false;
 	}
 	
 	@Override
 	public boolean isFinished(){
-		return robot.gearIntake.getState() != GearIntake.State.EXTENDED_INTAKING && robot.gearIntake.hasGear();
+		return isDone;
 	}
 	
 	@Override
@@ -27,6 +29,7 @@ public class PickUpGearAction implements Action{
 	
 	@Override
 	public void start(){
-		robot.gearIntake.setState(GearIntake.State.EXTENDED_INTAKING);
+		robot.gearIntake.setState(GearIntake.State.RETRACTED_HOLDING);
+		isDone = true;
 	}
 }

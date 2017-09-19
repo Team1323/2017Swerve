@@ -1,6 +1,10 @@
 package Subsystems;
 
 import Utilities.Ports;
+import edu.wpi.cscore.MjpegServer;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.cscore.VideoMode.PixelFormat;
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Solenoid;
 
 public class RoboSystem {
@@ -14,6 +18,8 @@ public class RoboSystem {
 	public GearIntake gearIntake;
 	public Shooter shooter;
 	public Sweeper sweeper;
+
+	public CameraServer cam;
 	
 	public Solenoid ballFlap;
 	
@@ -42,5 +48,12 @@ public class RoboSystem {
 	}
 	public void toggleBallFlap(){
 		ballFlap.set(!ballFlap.get());
+	}
+	public void initCamera(){
+		cam = CameraServer.getInstance();
+    	UsbCamera usbCamera = new UsbCamera("USB Camera 0", 0);
+    	usbCamera.setVideoMode(PixelFormat.kMJPEG, 640, 480, 30);
+    	MjpegServer mjpegServer2 = new MjpegServer("serve_Blur", 1182);
+    	mjpegServer2.setSource(usbCamera);
 	}
 }

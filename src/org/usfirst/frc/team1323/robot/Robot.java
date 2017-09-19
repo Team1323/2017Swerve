@@ -77,11 +77,23 @@ public class Robot extends IterativeRobot {
 	        disabledLooper.register(robot.pidgey.getLoop());
 	        disabledLooper.register(VisionProcessor.getInstance());
 	        disabledLooper.register(RobotStateEstimator.getInstance());
-	        
+	        robot.initCamera();
 	        smartDashboardInteractions.initWithDefaults();
 	        
 	        System.out.println(smartDashboardInteractions.getSelectedSide());
-	        robot.pidgey.setAngle(smartDashboardInteractions.getSelectedSide().equals("Blue") ? 180 : 0);
+	        
+	        if(smartDashboardInteractions.getSelectedMode().equals("Hopper")){
+	        	if(smartDashboardInteractions.getSelectedSide().equals("Blue")){
+	        		robot.pidgey.setAngle(180);
+	        		robot.turret.resetAngle(90);
+	        	}else{
+	        		robot.pidgey.setAngle(0);
+	        		robot.turret.resetAngle(-90);
+	        	}
+	        }else if(smartDashboardInteractions.getSelectedMode().equals("Gear")){
+	        	robot.pidgey.setAngle(0);
+	        	robot.turret.resetAngle(-90);
+	        }
 	        
 	        VisionServer.getInstance();
 		}catch(Throwable t){
@@ -260,7 +272,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			//robot.extendBallFlap();
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.Path.TEST);
+			robot.swerve.followPath(Swerve.Path.FORWARD);
 		}else if(driver.getPOV() == 270){
 			//robot.retractBallFlap();
 		}
@@ -332,6 +344,7 @@ public class Robot extends IterativeRobot {
 		
 		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.isStationary() && robotState.getVisionAngle() < 1.5){
 			coDriver.rumble(1, 1);
+			driver.rumble(1,  1);
 		}
 		
 		if(coDriver.leftCenterClick.wasPressed()){

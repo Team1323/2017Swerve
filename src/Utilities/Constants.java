@@ -46,8 +46,8 @@ public class Constants {
 	
 	//Sweeper Constants
 	public static final double SWEEPER_FORWARD = 0.7;
-	public static final double SWEEPER_ROLLER_FORWARD = 1.0;
-    public static final double SWEEPER_ROLLER_REVERSE = -1.0;
+	public static final double SWEEPER_ROLLER_FORWARD = -1.0;
+    public static final double SWEEPER_ROLLER_REVERSE = 1.0;
 	
     //Hanger Constants
 	public static final double HANG_POWER = -1.0;
@@ -55,10 +55,10 @@ public class Constants {
 	public static final double HANGING_DETECT_CURRENT = 15;
 	
 	//Gear Intake Constants
-	public static final double GEAR_DETECT_CURRENT = 12;
+	public static final double GEAR_DETECT_CURRENT = 9;
 	public static final double GEAR_PRESENT_CURRENT = 3.0;
-	public static final int CYCLES_FOR_LOST_GEAR = 7;
-	public static final int CYCLES_FOR_GEAR_DETECT = 10;
+	public static final int CYCLES_FOR_LOST_GEAR = 10;
+	public static final int CYCLES_FOR_GEAR_DETECT = 3;
 	
 	//Vision
 	public static final int kAndroidAppTcpPort = 8254;

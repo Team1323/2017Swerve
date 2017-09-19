@@ -22,7 +22,7 @@ public class Hanger extends Subsystem{
 		motor.reverseOutput(false);
 		motor.enableBrakeMode(true);
 		motor.changeControlMode(TalonControlMode.PercentVbus);
-		motor.setCurrentLimit(40);
+		motor.setCurrentLimit(70);
 		motor.EnableCurrentLimit(true);
 	}
 	
@@ -49,9 +49,9 @@ public class Hanger extends Subsystem{
 				setState(State.HANGING);
 				break;
 			case HANGING:
-				if(motor.getOutputCurrent() > Constants.HANG_STOP_CURRENT){
+				/*if(motor.getOutputCurrent() > Constants.HANG_STOP_CURRENT){
 					setState(State.HANG_DETECTED);
-				}
+				}*/
 				SmartDashboard.putString(" Hanger Status ", "Hanging Waiting");
 				break;
 			case HANG_DETECTED:

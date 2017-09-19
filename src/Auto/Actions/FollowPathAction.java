@@ -1,22 +1,32 @@
 package Auto.Actions;
 
+import Subsystems.RoboSystem;
 import Subsystems.Swerve;
 
 public class FollowPathAction implements Action{
-	private Swerve swerve;
+	private RoboSystem robot;
 	
 	private Swerve.Path path;
 	private boolean hasStarted;
+	private double heading;
 	
 	public FollowPathAction(Swerve.Path mPath){
+		robot = RoboSystem.getInstance();
 		path = mPath;
 		hasStarted = false;
-		swerve = Swerve.getInstance();
+		heading = robot.pidgey.getAngle();
+	}
+	
+	public FollowPathAction(Swerve.Path mPath, double heading){
+		path = mPath;
+		hasStarted = false;
+		robot = RoboSystem.getInstance();
+		this.heading = heading;
 	}
 	
 	@Override
 	public boolean isFinished(){
-		return hasStarted && swerve.isFinishedWithPath();
+		return hasStarted && robot.swerve.isFinishedWithPath();
 	}
 	
 	@Override
@@ -26,12 +36,12 @@ public class FollowPathAction implements Action{
 	
 	@Override
 	public void done(){
-		swerve.stop();
+		robot.swerve.stop();
 	}
 	
 	@Override
 	public void start(){
-		swerve.followPath(path);
+		robot.swerve.followPath(path, false, heading);
 	}
 	
 }

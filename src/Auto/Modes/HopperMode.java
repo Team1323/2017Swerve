@@ -14,6 +14,7 @@ import Auto.Actions.StartAutoAimingAction;
 import Auto.Actions.TurnOnShooterAction;
 import Auto.Actions.TurnOnSweeperAction;
 import Auto.Actions.WaitForAutoAimAction;
+import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
 import Subsystems.Swerve;
 
@@ -34,23 +35,13 @@ public class HopperMode extends AutoModeBase{
 	public void routine() throws AutoModeEndedException{
 		robot.pidgey.setAngle(pigeonAngle);
 		robot.turret.resetAngle(turretAngle);
+		robot.turret.lock();
+		robot.gearIntake.setState(GearIntake.State.RETRACTED_OFF);
 		
 		runAction(new ParallelAction(Arrays.asList(new FollowPathAction(path), new ExtendIntakeAction(), 
 				new DeployBallFlapAction(), new StartAutoAimingAction())));
-		
-		WaitForAutoAimAction autoAim = new WaitForAutoAimAction();
-		runAction(autoAim);
-		if(autoAim.timedOut){
-			System.out.println("Auto Aim timed out");
-			if(turretAngle == 90){
-				robot.turret.gyroLock(-pigeonAngle, 100);
-			}else if(turretAngle == -90){
-				robot.turret.gyroLock(-pigeonAngle, -100);
-			}
-		}
-		
-		runAction(new SeriesAction(Arrays.asList(new TurnOnShooterAction(), 
-				new TurnOnSweeperAction(), new ReciprocateBallFlapAction(1, 3)))); 
+		runAction(new SeriesAction(Arrays.asList(new WaitForAutoAimAction(turretAngle, pigeonAngle), new TurnOnShooterAction(), 
+				new TurnOnSweeperAction(), new ReciprocateBallFlapAction(1.5, 3)))); 
 	}
 	
 }

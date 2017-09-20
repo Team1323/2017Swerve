@@ -272,7 +272,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			//robot.extendBallFlap();
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.Path.FORWARD);
+			robot.swerve.moveDistance(robot.turret.getFieldRelativeAngle(), robotState.getTargetDistance() - Constants.kOptimalShootingDistance);
 		}else if(driver.getPOV() == 270){
 			//robot.retractBallFlap();
 		}
@@ -345,6 +345,9 @@ public class Robot extends IterativeRobot {
 		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.isStationary() && robotState.getVisionAngle() < 1.5){
 			coDriver.rumble(1, 1);
 			driver.rumble(1,  1);
+			if(robot.swerve.getState() != Swerve.ControlState.AdjustTargetDistance){
+				robot.swerve.moveDistance(robot.turret.getFieldRelativeAngle(), robotState.getTargetDistance() - Constants.kOptimalShootingDistance);
+			}
 		}
 		
 		if(coDriver.leftCenterClick.wasPressed()){

@@ -24,9 +24,10 @@ public class Swerve extends Subsystem{
 	private static Swerve instance = null;
 	private Pidgeon pidgey = null;
 	private SwerveKinematics kinematics = new SwerveKinematics();
-	private double xInput;
-	private double yInput;
-	private double rotateInput;
+	private double xInput = 0;
+	private double yInput = 0;
+	private double rotateInput = 0;
+	private double rotationCorrection = 0;
 	private SwerveDriveModule frontLeft;
 	private SwerveDriveModule frontRight;
 	private SwerveDriveModule rearLeft;
@@ -46,7 +47,7 @@ public class Swerve extends Subsystem{
 	public boolean shouldBrake = true;
 	
 	public enum ControlState{
-		Manual, PathFollowing, Neutral, StraightPath
+		Manual, PathFollowing, Neutral, StraightPath, AdjustTargetDistance
 	}
 	private ControlState currentState = ControlState.Manual;
 	public ControlState getState(){
@@ -103,8 +104,6 @@ public class Swerve extends Subsystem{
 	private SynchronousPID snapPID = new SynchronousPID(0.0075, 0.0, 0.1, 0.2);//(0.01, 0.0, 0.1, 0.2);
 	private int cyclesLeft = 1;
 	
-	static final double HALF_LENGTH = Constants.WHEELBASE_LENGTH/2;
-	static final double HALF_WIDTH = Constants.WHEELBASE_WIDTH/2;
 	double robotX = 0.0;
 	double robotY = 0.0;
 	public double getX(){
@@ -125,6 +124,10 @@ public class Swerve extends Subsystem{
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1,Constants.FRONT_RIGHT_TURN_OFFSET);
 		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3,Constants.REAR_LEFT_TURN_OFFSET);
 		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4,Constants.REAR_RIGHT_TURN_OFFSET);
+		
+		frontRight.driveMotor.reverseSensor(true);
+		frontLeft.driveMotor.reverseOutput(true);
+		rearLeft.driveMotor.reverseOutput(true);
 		
 		modules = new ArrayList<>(4);
 		modules.add(frontRight);
@@ -184,136 +187,17 @@ public class Swerve extends Subsystem{
 		};
 		
 		
-		redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
+		/*redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
 		blueHopperTrajectory = Pathfinder.generate(bluePoints, stableConfig);
 		forwardTrajectory = Pathfinder.generate(forwardPoints, stableConfig);
 		backwardTrajectory = Pathfinder.generate(backwardPoints, stableConfig);
-		gearTrajectory = Pathfinder.generate(gearPoints, gearConfig);
+		gearTrajectory = Pathfinder.generate(gearPoints, gearConfig);*/
 		/*for (int i = 0; i < forwardTrajectory.length(); i++) {
 		    Trajectory.Segment seg = forwardTrajectory.get(i);
 		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
 		}*/
 	}
 	
-	public class SwerveDriveModule extends Subsystem{
-		private CANTalon rotationMotor;
-		public CANTalon driveMotor;
-		private int moduleID;
-		private int absolutePosition;
-		private double offset = 0.0;
-		public double pathFollowingOffset = 0.0;
-		private double currentDistance = 0.0;
-		private double lastDistance = 0.0;
-		private double currentX = HALF_WIDTH;
-		private double currentY = -HALF_LENGTH;
-		public boolean hasBraked = false;
-		public boolean hasBraked(){return hasBraked;}
-		public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
-			rotationMotor = new CANTalon(rotationMotorPort);
-			driveMotor = new CANTalon(driveMotorPort);
-			moduleID = moduleNum;  
-			offset = _offSet;
-			loadProperties();
-		}
-		public final void loadProperties(){
-	    	absolutePosition = rotationMotor.getPulseWidthPosition() & 0xFFF;
-	    	rotationMotor.setEncPosition(absolutePosition);
-	    	rotationMotor.setFeedbackDevice(FeedbackDevice.AnalogEncoder);
-	    	rotationMotor.reverseSensor(false);
-	    	rotationMotor.reverseOutput(true);
-	    	rotationMotor.configPotentiometerTurns(360);
-	    	rotationMotor.configNominalOutputVoltage(+0f, -0f);
-	    	rotationMotor.configPeakOutputVoltage(+7f, -7f);
-	    	rotationMotor.setAllowableClosedLoopErr(0); 
-	    	rotationMotor.changeControlMode(TalonControlMode.Position);
-	    	rotationMotor.setPID(5.0, 0.0, 40.0, 0.00, 0, 0.0, 0);
-	    	rotationMotor.setProfile(0);
-	    	rotationMotor.set(rotationMotor.get());
-	    	driveMotor.setEncPosition(0);
-	    	driveMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
-	    	driveMotor.configEncoderCodesPerRev(360);
-	    	driveMotor.setStatusFrameRateMs(CANTalon.StatusFrameRate.QuadEncoder, 10);
-	    	driveMotor.configNominalOutputVoltage(+0f, -0f);
-	    	driveMotor.configPeakOutputVoltage(+12f, -12f);
-	    	driveMotor.setVoltageRampRate(0.0);
-	    	driveMotor.setAllowableClosedLoopErr(0);
-	    	driveMotor.changeControlMode(TalonControlMode.PercentVbus);
-	    	driveMotor.reverseOutput(false);
-	    	driveMotor.enableBrakeMode(true);
-		}
-		public double getRawAngle(){
-			return rotationMotor.get();
-		}
-		public double getModuleAngle(){
-			return Util.boundAngle0to360Degrees(getRawAngle() - offset);
-		}
-		public double getFieldRelativeAngle(){
-			return Util.boundAngle0to360Degrees(getModuleAngle() + Util.boundAngle0to360Degrees(pidgey.getAngle()));
-		}
-		public void setFieldRelativeAngle(double fieldAngle){
-			setModuleAngle(Util.boundAngle0to360Degrees(fieldAngle - Util.boundAngle0to360Degrees(pidgey.getAngle())));
-		}
-		public void setModuleAngle(double goalAngle){
-			double newAngle = Util.continousAngle(goalAngle+offset,getRawAngle());
-			rotationMotor.set(newAngle);
-		}
-		public double getGoal(){
-			return Util.boundAngle0to360Degrees(rotationMotor.getSetpoint() - offset);
-		}
-		public void setDriveSpeed(double power){
-			driveMotor.set(power);
-		}
-		public double getEncoderDistanceInches(){
-			return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
-		}
-		public double getEncoderDistanceFeet(){
-			return (moduleID == 1) ? -getEncoderDistanceInches()/12 : getEncoderDistanceInches()/12;
-		}
-		public double getModuleInchesPerSecond(){
-			return driveMotor.getSpeed()/Constants.SWERVE_ENCODER_REVS_PER_INCH/60;
-		}
-		public double getModuleFeetPerSecond(){
-			return getModuleInchesPerSecond()/12;
-		}
-		public void update(){
-			currentDistance = getEncoderDistanceInches();
-			double distanceTraveled = currentDistance - lastDistance;
-			double angle = Math.toRadians(90 - getFieldRelativeAngle());
-			currentX += Math.cos(angle) * distanceTraveled;
-			currentY += Math.sin(angle) * distanceTraveled;
-			lastDistance = currentDistance;
-			
-			double halfDiagonal = Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH));
-			double robotAngle = Math.toRadians(180 - ((180-Util.boundAngle0to360Degrees(pidgey.getAngle()))+halfDiagonal));
-			robotX = currentX + (Math.sin(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
-			robotY = currentY + (Math.cos(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
-			
-		}
-		@Override
-		public synchronized void stop(){
-			rotationMotor.set(rotationMotor.get());
-			driveMotor.set(0);
-		}
-		@Override
-		public synchronized void zeroSensors(){
-			driveMotor.setEncPosition(0);
-			currentX = Math.sin(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
-			currentY = Math.cos(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
-		}
-		@Override
-		public void outputToSmartDashboard(){
-			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle());
-			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", getGoal());
-			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceFeet());
-			if(moduleID == 4){
-				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Enc Position", driveMotor.getEncPosition());
-				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " X", currentX);
-				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Y", currentY);
-				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Field Relative Angle", getFieldRelativeAngle());
-				SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + "Speed", getModuleFeetPerSecond());
-			}
-		}
-	}
 	
 	public void sendInput(double x, double y, double rotate, boolean robotCentric, boolean lowPower){
 		double angle = pidgey.getAngle()/180.0*Math.PI;
@@ -353,6 +237,10 @@ public class Swerve extends Subsystem{
 			shouldBrake = false;
 		}else if(rotateInput != 0){
 			shouldBrake = true;
+		}
+		
+		if(xInput != 0 || yInput != 0 || rotateInput != 0){
+			setState(ControlState.Manual);
 		}
 	}
 	
@@ -436,6 +324,16 @@ public class Swerve extends Subsystem{
 				blFollower.isFinished() && brFollower.isFinished());
 	}
 	
+	public void moveDistance(double wheelAngle, double distance){
+		setState(ControlState.AdjustTargetDistance);
+		for(SwerveDriveModule m : modules){
+			m.setFieldRelativeAngle(wheelAngle);
+		}
+		for(SwerveDriveModule m : modules){
+			m.moveInches(distance);
+		}
+	}
+	
 	private final Loop swerveLoop = new Loop(){
 		@Override
 		public void onStart(){
@@ -460,8 +358,7 @@ public class Swerve extends Subsystem{
 	}
 	public void update(){
 		double now = Timer.getFPGATimestamp();
-		
-		double rotationCorrection = 0.0;
+		rotationCorrection = 0;
 		switch(headingController){
 			case Off:
 				targetHeadingAngle = pidgey.getAngle();
@@ -497,7 +394,7 @@ public class Swerve extends Subsystem{
 			default:
 				break;
 		}
-		SmartDashboard.putNumber("Rotation Correction", rotationCorrection);
+		
 		rotateInput += rotationCorrection;
 		
 		switch(currentState){
@@ -510,7 +407,6 @@ public class Swerve extends Subsystem{
 					    		m.setModuleAngle(m.getModuleAngle() + 90);
 					    		m.hasBraked = true;
 					    	}
-					    	//m.setModuleAngle(0);
 					    }
 			    	}
 			    }else{
@@ -603,6 +499,9 @@ public class Swerve extends Subsystem{
 					setState(ControlState.Neutral);
 				}
 				break;
+			case AdjustTargetDistance:
+				
+				break;
 			case Neutral:
 				stop();
 				break;
@@ -638,6 +537,7 @@ public class Swerve extends Subsystem{
 		SmartDashboard.putNumber("Target Heading", targetHeadingAngle);
 		SmartDashboard.putNumber("Robot X", robotX);
 		SmartDashboard.putNumber("Robot Y", robotY);
+		SmartDashboard.putNumber("Rotation Correction", rotationCorrection);
 	}
 	
 }

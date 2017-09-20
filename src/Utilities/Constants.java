@@ -20,6 +20,10 @@ public class Constants {
     public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
     public static final double REAR_RIGHT_TURN_OFFSET  = 355.42;
     
+    //rpm 3844 4033 3900 4179 3989
+    //native units 9226 9680 9362 10030 9574
+    //f gain 0.10685189053687069145602673908502
+    
     public static final double SWERVE_WHEEL_DIAMETER = 2.5;
     public static final double SWERVE_ENCODER_REVS_PER_WHEEL_REV = 4.0;//4.307692308;
     public static final double SWERVE_ENCODER_REVS_PER_INCH = SWERVE_ENCODER_REVS_PER_WHEEL_REV/(Math.PI*SWERVE_WHEEL_DIAMETER);
@@ -65,6 +69,7 @@ public class Constants {
 	public static final double kMaxTrackerDistance = 18.0;
 	public static final double kMaxGoalTrackAge = 0.3;
 	public static double kCameraFrameRate = 30.0;
+	public static final double kOptimalShootingDistance = 67.4;
 	
 	// Pose of the camera frame w.r.t. the turret frame
     public static double kCameraXOffset = -2.25;//-2.25;

@@ -9,7 +9,6 @@ import Auto.Actions.ExtendIntakeAction;
 import Auto.Actions.FollowPathAction;
 import Auto.Actions.ParallelAction;
 import Auto.Actions.PickUpGearAction;
-import Auto.Actions.StraightPathAction;
 import Subsystems.GearIntake;
 import Subsystems.RoboSystem;
 import Subsystems.Swerve;

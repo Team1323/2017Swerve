@@ -22,8 +22,8 @@ public class SwerveDriveModule extends Subsystem{
 	public double pathFollowingOffset = 0.0;
 	private double currentDistance = 0.0;
 	private double lastDistance = 0.0;
-	private double currentX = HALF_WIDTH;
-	private double currentY = -HALF_LENGTH;
+	private double currentX = 0;
+	private double currentY = 0;
 	public boolean hasBraked = false;
 	public boolean hasBraked(){return hasBraked;}
 	public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
@@ -96,8 +96,10 @@ public class SwerveDriveModule extends Subsystem{
 		return getModuleInchesPerSecond()/12;
 	}
 	public double inchesToRotations(double inches){
-		//return inches/Constants.SWERVE_WHEEL_DIAMETER*Constants.SWERVE_ENCODER_REVS_PER_WHEEL_REV;
 		return inches*Constants.SWERVE_ENCODER_REVS_PER_INCH;
+	}
+	public double rotationsToInches(double rotations){
+		return rotations/Constants.SWERVE_ENCODER_REVS_PER_INCH;
 	}
 	public void moveInches(double inches){
 		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
@@ -107,6 +109,16 @@ public class SwerveDriveModule extends Subsystem{
     	driveMotor.setMotionMagicAcceleration(4500);
     	driveMotor.set(driveMotor.getPosition() + inchesToRotations(inches));
 	}
+	public boolean onDistanceTarget(){
+		return (driveMotor.getControlMode() == TalonControlMode.MotionMagic) && 
+				Math.abs(rotationsToInches(driveMotor.getSetpoint()) - rotationsToInches(driveMotor.getPosition())) < 2.0;
+	}
+	public void setOriginCoordinates(double x, double y){
+		currentX = x;
+		currentY = y;
+	}
+	public double getX(){return currentX;}
+	public double getY(){return currentY;}
 	public void update(){
 		currentDistance = getEncoderDistanceInches();
 		double distanceTraveled = currentDistance - lastDistance;
@@ -129,18 +141,18 @@ public class SwerveDriveModule extends Subsystem{
 	@Override
 	public synchronized void zeroSensors(){
 		driveMotor.setEncPosition(0);
-		currentX = Math.sin(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
+/*		currentX = Math.sin(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
 		currentY = Math.cos(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
-	}
+/**/	}
 	@Override
 	public void outputToSmartDashboard(){
+		String smallX = Float.toString((float)(Math.round(getX() * 100.0) / 100.0));
+		String smallY = Float.toString((float)(Math.round(getY() * 100.0) / 100.0));
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle());
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", getGoal());
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceFeet());
-		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Enc Position", driveMotor.getPosition());
-		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Setpoint", driveMotor.getSetpoint());
+		SmartDashboard.putString("Module " + Integer.toString(moduleID) + " Coordinates ", "("+smallX+" , "+smallY+")");
 		if(moduleID == 4){
-			
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " X", currentX);
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Y", currentY);
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Field Relative Angle", getFieldRelativeAngle());

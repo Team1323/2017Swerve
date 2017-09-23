@@ -43,6 +43,10 @@ public class RobotState {
     public double getVisionAngle(){
     	return visionAngle;
     }
+    double originalVisionAngle = 0.0;
+    public double getOriginalVisionAngle(){
+    	return originalVisionAngle;
+    }
     boolean seesTarget = false;
     public boolean getTargetVisbility(){
     	return seesTarget;
@@ -171,6 +175,7 @@ public class RobotState {
                     Rotation2d newAngle = new Rotation2d(Math.cos(-angle.getRadians())*distance + Constants.kCameraYOffset, Math.sin(-angle.getRadians())*distance + Constants.kCameraXOffset, true);
                     visionAngle = newAngle.getDegrees();
                     distanceToTarget = distance;
+                    originalVisionAngle = angle.getDegrees();
                     SmartDashboard.putNumber("Vision Angle", visionAngle);
                     SmartDashboard.putNumber("Original Vision Angle", angle.getDegrees());
                     SmartDashboard.putNumber("Vision Distance", distance);

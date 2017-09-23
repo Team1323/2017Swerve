@@ -6,6 +6,7 @@ import com.ctre.CANTalon.TalonControlMode;
 
 import Utilities.Constants;
 import Utilities.Ports;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Shooter extends Subsystem{
@@ -27,6 +28,10 @@ public class Shooter extends Subsystem{
 		master.SetVelocityMeasurementWindow(32);
 		master.setNominalClosedLoopVoltage(12);
 		master.enableBrakeMode(false);
+		
+		if(master.isSensorPresent(CANTalon.FeedbackDevice.CtreMagEncoder_Relative) != CANTalon.FeedbackDeviceStatus.FeedbackStatusPresent){
+			DriverStation.reportError("Could not detect shooter encoder!", false);
+		}
 		
 		slave = new CANTalon(Ports.SHOOTER_MOTOR_SLAVE);
 		slave.changeControlMode(TalonControlMode.Follower);
@@ -79,8 +84,6 @@ public class Shooter extends Subsystem{
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber("Shooter Voltage", master.getOutputVoltage());
 		SmartDashboard.putNumber("Shooter Current", master.getOutputCurrent());
-		SmartDashboard.putNumber("Shooter 2 Voltage", slave.getOutputVoltage());
-		SmartDashboard.putNumber("Shooter 2 Current", slave.getOutputCurrent());
 		SmartDashboard.putNumber("Shooter Shooter Error", getError());
 		SmartDashboard.putNumber("SHOOTER_SPEED", getSpeed());
     	SmartDashboard.putNumber("SHOOTER_SPEED_GRAPH", getSpeed());

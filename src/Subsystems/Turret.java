@@ -39,10 +39,13 @@ public class Turret extends Subsystem{
     	motor.configNominalOutputVoltage(+0f, -0f);
     	motor.configPeakOutputVoltage(+5f, -5f);
     	motor.setAllowableClosedLoopErr(0); 
-    	motor.changeControlMode(TalonControlMode.Position);
+    	motor.changeControlMode(TalonControlMode.MotionMagic);
     	motor.set(0);
-    	motor.setPID(4.0, 0.0, 160.0, 0.0, 0, 0.0, 0);	//practice bot pid tuning
-    	motor.setPID(5.0, 0.00, Constants.TURRET_SMALL_D, 0.0, 0, 0.0, 1);
+    	motor.setPID(4.0, 0.0, 160.0, 0.0, 0, 0.0, 0);
+    	motor.setPID(4.0, 0.0, 100.0, 0.8184, 0, 0.0, 1);
+		motor.setMotionMagicCruiseVelocity(300);
+		motor.setMotionMagicAcceleration(800);
+    	//motor.setPID(5.0, 0.00, Constants.TURRET_SMALL_D, 0.0, 0, 0.0, 1);
     	motor.setProfile(0);
 		motor.enableBrakeMode(true);
 		motor.setNominalClosedLoopVoltage(12);
@@ -50,14 +53,11 @@ public class Turret extends Subsystem{
 		motor.enableReverseSoftLimit(true);
 		motor.setForwardSoftLimit((Constants.TURRET_MAX_ANGLE/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV);
 		motor.setReverseSoftLimit((-Constants.TURRET_MAX_ANGLE/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV);
-		if(motor.isSensorPresent(CANTalon.FeedbackDevice.QuadEncoder) != CANTalon.FeedbackDeviceStatus.FeedbackStatusPresent){
-			DriverStation.reportError("Could not detect turret encoder!", false);
-		}
 	}
 	public enum ControlState{
-		Off, VisionTracking, Manual, GyroComp, AngleSnap, CalculatedTracking
+		Off, VisionTracking, Manual, GyroComp, CalculatedTracking, MotionMagic
 	}
-	public ControlState currentState = ControlState.AngleSnap;
+	public ControlState currentState = ControlState.MotionMagic;
 	public static Turret getInstance(){
 		return instance;
 	}	
@@ -69,7 +69,7 @@ public class Turret extends Subsystem{
 	}
 	
 	public void setAngle(double angle){
-		motor.changeControlMode(TalonControlMode.Position);
+		motor.changeControlMode(TalonControlMode.MotionMagic);
 		if(angle > Constants.TURRET_MAX_ANGLE)
 			angle = Constants.TURRET_MAX_ANGLE;
 		if(angle < -Constants.TURRET_MAX_ANGLE)
@@ -77,9 +77,11 @@ public class Turret extends Subsystem{
 		motor.set(angle*Constants.TURRET_REVS_PER_DEGREE);
 		onTargetCheck = Constants.TURRET_ONTARGET_THRESH;
 	}
-	public void setSnapAngle(double targetAngle){
-		setState(ControlState.AngleSnap);
-		setAngle(targetAngle);
+	public void setMotionMagic(double angle){
+		setState(ControlState.MotionMagic);
+		motor.changeControlMode(TalonControlMode.MotionMagic);
+		motor.setProfile(1);
+		motor.set(angle*Constants.TURRET_REVS_PER_DEGREE);
 	}
 	public void moveDegrees(double degree){
 		double newAngle = getAngle() + degree;
@@ -110,7 +112,7 @@ public class Turret extends Subsystem{
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
 	}
 	public void lock(){
-		setState(ControlState.AngleSnap);
+		setState(ControlState.MotionMagic);
 		setAngle(getAngle());
 	}
 	public void gyroLock(){
@@ -124,31 +126,35 @@ public class Turret extends Subsystem{
 		gyroLockedTurretAngle = lockedTurretAngle;
 	}
 	public void setGyroLockAngle(double lockedHeading, double lockedTurretAngle){
-		setState(ControlState.AngleSnap);
+		setState(ControlState.MotionMagic);
 		setAngle(lockedTurretAngle - (pidgey.getAngle() - lockedHeading));
 	}
 	public void enableVision(){
 		setState(ControlState.VisionTracking);
 		//moveDegrees(robotState.getVisionAngle());
 	}
+	public double getTrueVisionDistance(){
+		double modVisionAngle = Math.toRadians(robotState.getVisionAngle());
+		double distance = robotState.getTargetDistance();
+		double ogVisionAngle = -Math.toRadians(robotState.getOriginalVisionAngle());
+		double radius = Math.hypot(Constants.kCameraXOffset, Constants.kCameraYOffset);
+		double chord = Math.sqrt((2*radius*radius) - (2*radius*radius*Math.cos(modVisionAngle)));
+		double radiusToCamPlane = Math.atan(Constants.kCameraYOffset/Math.abs(Constants.kCameraXOffset));
+		double radiusToCamRay = radiusToCamPlane + (Math.PI/2);
+		double innerIsoscelesAngle = (Math.PI - modVisionAngle)/2;
+		double theta = radiusToCamRay - innerIsoscelesAngle - ogVisionAngle;
+		double trueDistance = Math.sqrt((distance*distance) + (chord*chord) - (2*distance*chord*Math.cos(theta)));
+		return trueDistance;
+	}
 	public void update(){
 		switch(currentState){
-			case AngleSnap:
-				/*if(Math.abs(getError()) < Constants.TURRET_SMALL_PID_THRESH){
-					motor.setProfile(1);
-				}else{
-					motor.setProfile(0);
-				}*/
-				motor.setProfile(0);
-				SmartDashboard.putString("Turret Control State", "AngleSnap");
-				break;
 			case GyroComp:
-				motor.setProfile(1);
+				motor.setProfile(0);
 				setAngle(gyroLockedTurretAngle - (pidgey.getAngle() - gyroLockedHeading));
 				SmartDashboard.putString("Turret Control State", "GyroComp");
 				break;
 			case CalculatedTracking:
-				motor.setProfile(1);
+				motor.setProfile(0);
 				faceTarget();
 				SmartDashboard.putString("Turret Control State", "CalculatedTracking");
 				break;
@@ -159,6 +165,13 @@ public class Turret extends Subsystem{
 					//moveDegrees(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
 				}
 				SmartDashboard.putString("Turret Control State", "VisionTracking");
+				break;
+			case MotionMagic:
+				motor.setProfile(1);
+				SmartDashboard.putString("Turret Control State", "MotionMagic");
+				break;
+			case Manual:
+				SmartDashboard.putString("Turret Control State", "Manual");
 				break;
 			case Off:
 				setPercentVBus(0);
@@ -229,5 +242,6 @@ public class Turret extends Subsystem{
 		SmartDashboard.putNumber("Turret Speed", getTurretDegreesPerSecond());
 		SmartDashboard.putNumber("Turret Current", motor.getOutputCurrent());
 		SmartDashboard.putNumber("Turret Voltage", motor.getOutputVoltage());
+		SmartDashboard.putNumber("True Vision Distance", getTrueVisionDistance());
 	}
 }

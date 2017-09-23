@@ -21,6 +21,9 @@ import jaci.pathfinder.followers.DistanceFollower;
 import jaci.pathfinder.modifiers.SwerveModifier;
 
 public class Swerve extends Subsystem{
+	static final double HALF_LENGTH = Constants.WHEELBASE_LENGTH/2;
+	static final double HALF_WIDTH = Constants.WHEELBASE_WIDTH/2;
+	
 	private static Swerve instance = null;
 	private Pidgeon pidgey = null;
 	private SwerveKinematics kinematics = new SwerveKinematics();
@@ -106,11 +109,16 @@ public class Swerve extends Subsystem{
 	
 	double robotX = 0.0;
 	double robotY = 0.0;
+	double distanceTraveled = 0.0;
+	double distanceTraveledOffset = 0.0;
 	public double getX(){
 		return robotX;
 	}
 	public double getY(){
 		return robotY;
+	}
+	public double getDistanceTraveled(){
+		return distanceTraveled;
 	}
 	
 	private boolean isManuallyRotating = false;
@@ -128,6 +136,11 @@ public class Swerve extends Subsystem{
 		frontRight.driveMotor.reverseSensor(true);
 		frontLeft.driveMotor.reverseOutput(true);
 		rearLeft.driveMotor.reverseOutput(true);
+		
+		frontRight.setOriginCoordinates(HALF_WIDTH, HALF_LENGTH);
+		frontLeft.setOriginCoordinates(-HALF_WIDTH, HALF_LENGTH);
+		rearLeft.setOriginCoordinates(-HALF_WIDTH, -HALF_LENGTH);
+		rearRight.setOriginCoordinates(HALF_WIDTH, -HALF_LENGTH);
 		
 		modules = new ArrayList<>(4);
 		modules.add(frontRight);
@@ -187,9 +200,9 @@ public class Swerve extends Subsystem{
 		};
 		
 		
-		/*redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
+		redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
 		blueHopperTrajectory = Pathfinder.generate(bluePoints, stableConfig);
-		forwardTrajectory = Pathfinder.generate(forwardPoints, stableConfig);
+		/*forwardTrajectory = Pathfinder.generate(forwardPoints, stableConfig);
 		backwardTrajectory = Pathfinder.generate(backwardPoints, stableConfig);
 		gearTrajectory = Pathfinder.generate(gearPoints, gearConfig);*/
 		/*for (int i = 0; i < forwardTrajectory.length(); i++) {
@@ -295,6 +308,7 @@ public class Swerve extends Subsystem{
 		for(SwerveDriveModule m : modules){
 			m.pathFollowingOffset = m.getEncoderDistanceFeet();
 		}
+		distanceTraveledOffset = distanceTraveled;
 		
 		setTargetHeading(heading);
 		setHeadingController(HeadingController.Stabilize);
@@ -334,6 +348,14 @@ public class Swerve extends Subsystem{
 		}
 	}
 	
+	public boolean distanceOnTarget(){
+		boolean onTarget = true;
+		for(SwerveDriveModule m : modules){
+			if(!m.onDistanceTarget()) onTarget = false;
+		}
+		return onTarget;
+	}
+	
 	private final Loop swerveLoop = new Loop(){
 		@Override
 		public void onStart(){
@@ -342,7 +364,16 @@ public class Swerve extends Subsystem{
 		@Override
 		public void onLoop(){
 			update();
-			rearRight.update();
+			double x = 0;
+			double y = 0;
+			for(SwerveDriveModule m : modules){
+				m.update();
+				x += m.getX();
+				y += m.getY();
+			}
+			distanceTraveled += Math.hypot(robotX - (x/4), robotY - (y/4));
+			robotX = x/4;
+			robotY = y/4;
 		}
 		@Override
 		public void onStop(){
@@ -453,25 +484,37 @@ public class Swerve extends Subsystem{
 			    rearRight.setDriveSpeed(kinematics.rrWheelSpeed());*/
 				break;
 			case PathFollowing:
+/*/
 				double fro = frFollower.calculate((frontRight.getEncoderDistanceFeet() - frontRight.pathFollowingOffset));
 			    double flo = flFollower.calculate((rearLeft.getEncoderDistanceFeet() - rearLeft.pathFollowingOffset));
 			    double blo = blFollower.calculate((rearLeft.getEncoderDistanceFeet() - rearLeft.pathFollowingOffset));
 			    double bro = brFollower.calculate((rearRight.getEncoderDistanceFeet() - rearRight.pathFollowingOffset));
-			    
+/*/				double fro = frFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
+			    double flo = flFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
+			    double blo = blFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
+			    double bro = brFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
+/**/
 			    double pathWheelAngle = (frFollower.getHeading() + flFollower.getHeading() + 
 			    		blFollower.getHeading() + brFollower.getHeading())/4;
-			    kinematics.calculate(Math.sin(pathWheelAngle), Math.cos(pathWheelAngle), rotationCorrection);
+			    kinematics.calculate(Math.sin(pathWheelAngle+Math.toRadians(pidgey.getAngle())), Math.cos(pathWheelAngle+Math.toRadians(pidgey.getAngle())), rotationCorrection);
 			    
 				/*frontRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(frFollower.getHeading())));
 				frontLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(flFollower.getHeading())));
 				rearLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(blFollower.getHeading())));
 				rearRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(brFollower.getHeading())));*/
 			    
+/**/
 			    frontRight.setModuleAngle(kinematics.frSteeringAngle());
 			    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
 			    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
 			    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
-				
+/*/
+			    
+			    frontRight.setFieldRelativeAngle(kinematics.frSteeringAngle());
+			    frontLeft.setFieldRelativeAngle(kinematics.flSteeringAngle());
+			    rearLeft.setFieldRelativeAngle(kinematics.rlSteeringAngle());
+			    rearRight.setFieldRelativeAngle(kinematics.rrSteeringAngle());
+/**/
 				frontRight.setDriveSpeed(fro);
 				frontLeft.setDriveSpeed(-flo);
 				rearRight.setDriveSpeed(bro);
@@ -537,6 +580,7 @@ public class Swerve extends Subsystem{
 		SmartDashboard.putNumber("Target Heading", targetHeadingAngle);
 		SmartDashboard.putNumber("Robot X", robotX);
 		SmartDashboard.putNumber("Robot Y", robotY);
+		SmartDashboard.putNumber("Distance Traveled", distanceTraveled);
 		SmartDashboard.putNumber("Rotation Correction", rotationCorrection);
 	}
 	

@@ -6,6 +6,8 @@ import com.ctre.CANTalon.TalonControlMode;
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.Ports;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -13,6 +15,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class GearIntake extends Subsystem{
 	private CANTalon intake;
 	private Solenoid cylinder;
+	private DigitalInput banner;
 	public GearIntake(){
 		intake = new CANTalon(Ports.GEAR_INTAKE);
 		intake.enableBrakeMode(false);
@@ -21,6 +24,7 @@ public class GearIntake extends Subsystem{
 		intake.setCurrentLimit(15);
 		intake.EnableCurrentLimit(true);
 		cylinder = new Solenoid(20, Ports.GEAR_INTAKE_ARM);
+		banner = new DigitalInput(0);
 	}
 	private static GearIntake instance = new GearIntake();
 	public static GearIntake getInstance(){
@@ -247,5 +251,6 @@ public class GearIntake extends Subsystem{
 		SmartDashboard.putNumber("Gear Intake Voltage" , intake.getOutputVoltage());
 		SmartDashboard.putNumber("Gear Intake Current", intake.getOutputCurrent());
 		SmartDashboard.putBoolean("Has Gear", hasGear);
+		SmartDashboard.putBoolean("Banner", banner.get());
 	}
 }

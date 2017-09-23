@@ -43,6 +43,8 @@ public class Constants {
 	public static final double TURRET_TICKS_PER_DEGREE = TURRET_TICKS_PER_REV/360;
 	public static final double TURRET_REVS_PER_DEGREE = TURRET_TICKS_PER_DEGREE/1440;
 	public static final double TURRET_ENC_REVS_PER_ACTUAL_REV = TURRET_TICKS_PER_REV/1440;
+	//rpm 500
+	//native units 1250
 	
 	//Shooter Constants
 	public static final double SHOOTING_SPEED = 2650; // 2650

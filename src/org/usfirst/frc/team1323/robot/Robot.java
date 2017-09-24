@@ -253,17 +253,17 @@ public class Robot extends IterativeRobot {
 			robot.swerve.setTargetHeading(0.0);
 		}
 		if(driver.getAButton()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
+			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
 		}else if(driver.getBButton()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
+			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
 		}else if(driver.getXButton()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
+			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
 		}else if(driver.getYButton()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
+			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
 		}else if(driver.rightBumper.wasPressed()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
+			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
 		}else if(driver.leftBumper.wasPressed()){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), -60));
+			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), -60));
 		}
 		
 		if(robot.hanger.isHanging()){
@@ -273,7 +273,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.Path.RED_HOPPER, false, 45);
+			robot.swerve.followPath(Swerve.Path.RED_HOPPER, false, 180);
 		}else if(driver.getPOV() == 270){
 			//robot.retractBallFlap();
 		}

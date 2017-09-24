@@ -59,6 +59,10 @@ public class SwerveDriveModule extends Subsystem{
     	driveMotor.changeControlMode(TalonControlMode.PercentVbus);
     	driveMotor.reverseOutput(false);
     	driveMotor.enableBrakeMode(true);
+    	driveMotor.setProfile(0);
+    	driveMotor.setPID(0.5, 0, 80.0, 0.10685189, 0, 0.0, 0);
+    	driveMotor.setMotionMagicCruiseVelocity(3200);
+    	driveMotor.setMotionMagicAcceleration(4500);
 	}
 	public double getRawAngle(){
 		return rotationMotor.get();
@@ -103,15 +107,11 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	public void moveInches(double inches){
 		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
-		driveMotor.setProfile(0);
-    	driveMotor.setPID(0.5, 0, 80.0, 0.10685189, 0, 0.0, 0);
-    	driveMotor.setMotionMagicCruiseVelocity(3200);
-    	driveMotor.setMotionMagicAcceleration(4500);
     	driveMotor.set(driveMotor.getPosition() + inchesToRotations(inches));
 	}
 	public boolean onDistanceTarget(){
 		return (driveMotor.getControlMode() == TalonControlMode.MotionMagic) && 
-				Math.abs(rotationsToInches(driveMotor.getSetpoint()) - rotationsToInches(driveMotor.getPosition())) < 2.0;
+				Math.abs(rotationsToInches(driveMotor.getSetpoint()) - rotationsToInches(driveMotor.getPosition())) < 1.0;
 	}
 	public void setOriginCoordinates(double x, double y){
 		currentX = x;

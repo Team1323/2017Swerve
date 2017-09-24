@@ -29,6 +29,7 @@ public class Swerve extends Subsystem{
 	private SwerveKinematics kinematics = new SwerveKinematics();
 	private double xInput = 0;
 	private double yInput = 0;
+	private double inputMagnitude = 0;
 	private double rotateInput = 0;
 	private double rotationCorrection = 0;
 	private SwerveDriveModule frontLeft;
@@ -50,7 +51,7 @@ public class Swerve extends Subsystem{
 	public boolean shouldBrake = true;
 	
 	public enum ControlState{
-		Manual, PathFollowing, Neutral, StraightPath, AdjustTargetDistance
+		Manual, PathFollowing, Neutral, StraightPath, AdjustTargetDistance, TurnInPlace
 	}
 	private ControlState currentState = ControlState.Manual;
 	public ControlState getState(){
@@ -104,8 +105,11 @@ public class Swerve extends Subsystem{
 	}
 	private SynchronousPID headingPID = new SynchronousPID(0.001, 0.0, 0.0007, 0.0);
 	private SynchronousPID strongHeadingPID = new SynchronousPID(0.008, 0.0, 0.0, 0.0);
-	private SynchronousPID snapPID = new SynchronousPID(0.0075, 0.0, 0.1, 0.2);//(0.01, 0.0, 0.1, 0.2);
+	private SynchronousPID snapPID = new SynchronousPID(0.0075, 0.0, 0.1, 0.2);
+	private SynchronousPID reversibleSnapPID = new SynchronousPID(0.005, 0.0, 0.01, 0.0);
 	private int cyclesLeft = 1;
+	
+	//305.2586 54.74135
 	
 	double robotX = 0.0;
 	double robotY = 0.0;
@@ -151,6 +155,7 @@ public class Swerve extends Subsystem{
 		generatePaths();
 		
 		snapPID.setOutputRange(-0.5, 0.5);
+		reversibleSnapPID.setOutputRange(-0.7, 0.7);
 		
 	}
 	public static Swerve getInstance(){
@@ -214,6 +219,7 @@ public class Swerve extends Subsystem{
 	
 	public void sendInput(double x, double y, double rotate, boolean robotCentric, boolean lowPower){
 		double angle = pidgey.getAngle()/180.0*Math.PI;
+		inputMagnitude = Math.hypot(x, y);
 		if(robotCentric){
 			xInput = x;
 			yInput = y;
@@ -348,12 +354,36 @@ public class Swerve extends Subsystem{
 		}
 	}
 	
+	public void turnInPlace(double goalHeading){
+		setState(ControlState.TurnInPlace);
+		setTargetHeading(goalHeading);
+		double deltaAngle = Math.toRadians(goalHeading - pidgey.getAngle());
+		double swerveRadius = Math.hypot(HALF_LENGTH, HALF_WIDTH);
+		double arcLength = deltaAngle * swerveRadius;
+		frontRight.setModuleAngle(305.2586);
+		frontLeft.setModuleAngle(54.74135);
+		rearLeft.setModuleAngle(305.2586);
+		rearRight.setModuleAngle(54.74135);
+		frontRight.moveInches(-arcLength);
+		frontLeft.moveInches(arcLength);
+		rearLeft.moveInches(arcLength);
+		rearRight.moveInches(-arcLength);
+	}
+	
 	public boolean distanceOnTarget(){
 		boolean onTarget = true;
 		for(SwerveDriveModule m : modules){
 			if(!m.onDistanceTarget()) onTarget = false;
 		}
 		return onTarget;
+	}
+	
+	public void rotate(double targetHeading){
+		if(inputMagnitude <= 0.1){
+			turnInPlace(targetHeading);
+		}else{
+			setSnapAngle(targetHeading);
+		}
 	}
 	
 	private final Loop swerveLoop = new Loop(){
@@ -410,7 +440,8 @@ public class Swerve extends Subsystem{
 				SmartDashboard.putString("Heading Controller", "Stabilize");
 				break;
 			case Snap:
-				rotationCorrection = snapPID.calculate(getHeadingError());
+				//rotationCorrection = snapPID.calculate(getHeadingError());
+				rotationCorrection = reversibleSnapPID.calculate(getHeadingError());
 				if(Math.abs(getHeadingError()) < 2){
 					cyclesLeft--;
 				}else{
@@ -496,7 +527,13 @@ public class Swerve extends Subsystem{
 /**/
 			    double pathWheelAngle = (frFollower.getHeading() + flFollower.getHeading() + 
 			    		blFollower.getHeading() + brFollower.getHeading())/4;
-			    kinematics.calculate(Math.sin(pathWheelAngle+Math.toRadians(pidgey.getAngle())), Math.cos(pathWheelAngle+Math.toRadians(pidgey.getAngle())), rotationCorrection);
+			    double pidgeyAngle = Math.toRadians(pidgey.getAngle());
+			    double x = Math.sin(pathWheelAngle);
+			    double y = Math.cos(pathWheelAngle);
+			    double tmp = (y* Math.cos(pidgeyAngle)) + (x * Math.sin(pidgeyAngle));
+				xInput = (-y * Math.sin(pidgeyAngle)) + (x * Math.cos(pidgeyAngle));
+				yInput = tmp;	
+			    kinematics.calculate(xInput, yInput, rotationCorrection);
 			    
 				/*frontRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(frFollower.getHeading())));
 				frontLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(flFollower.getHeading())));
@@ -544,6 +581,11 @@ public class Swerve extends Subsystem{
 				break;
 			case AdjustTargetDistance:
 				
+				break;
+			case TurnInPlace:
+				if(distanceOnTarget()){
+					turnInPlace(targetHeadingAngle);
+				}
 				break;
 			case Neutral:
 				stop();

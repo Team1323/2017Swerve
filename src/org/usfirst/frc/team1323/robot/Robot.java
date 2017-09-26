@@ -271,9 +271,9 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(driver.getPOV() == 90){
-			
+			robot.swerve.baseLock();
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.Path.RED_HOPPER, false, 180);
+			robot.swerve.followPath(Swerve.Path.TEST, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
 		}else if(driver.getPOV() == 270){
 			//robot.retractBallFlap();
 		}
@@ -319,6 +319,7 @@ public class Robot extends IterativeRobot {
 		
 		if(coDriver.getBackButton()){
 			sweeperCanTurnOn = false;
+			sweeperNeedsToStop = false;
 			coDriverStop();
 			robot.swerve.setLowPower(false);
 			robot.extendBallFlap();
@@ -354,10 +355,14 @@ public class Robot extends IterativeRobot {
 			robot.turret.lock();
 		}
 		
-		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.isStationary() && robotState.getVisionAngle() < 1.5 && robot.swerve.distanceOnTarget()){
-			coDriver.rumble(1, 1);
-			driver.rumble(1,  1);
-			cyclesReadyForShooting++;
+		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.isStationary() && robotState.getVisionAngle() < 1.5){
+			if(Math.abs(robotState.getTargetDistance() - Constants.kOptimalShootingDistance) <= 1.0){
+				coDriver.rumble(1, 1);
+				driver.rumble(1,  1);
+				cyclesReadyForShooting++;
+			}else if(robot.swerve.distanceOnTarget()){
+				robot.swerve.moveDistance(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle(), robot.turret.getTrueVisionDistance() - Constants.kOptimalShootingDistance);
+			}
 		}else{
 			cyclesReadyForShooting = 0;
 		}
@@ -369,6 +374,7 @@ public class Robot extends IterativeRobot {
 		//Shooter
 		if(coDriver.getTriggerAxis(Hand.kLeft) > 0 || cyclesReadyForShooting >= 3){
 			robot.turret.gyroLock();
+			robot.swerve.baseLock();
 			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
 			sweeperCanTurnOn = true;
 			cyclesReadyForShooting = 0;

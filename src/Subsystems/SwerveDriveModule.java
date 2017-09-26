@@ -109,6 +109,10 @@ public class SwerveDriveModule extends Subsystem{
 		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
     	driveMotor.set(driveMotor.getPosition() + inchesToRotations(inches));
 	}
+	public void lockPosition(){
+		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
+		driveMotor.set(driveMotor.getPosition());
+	}
 	public boolean onDistanceTarget(){
 		return (driveMotor.getControlMode() == TalonControlMode.MotionMagic) && 
 				Math.abs(rotationsToInches(driveMotor.getSetpoint()) - rotationsToInches(driveMotor.getPosition())) < 1.0;

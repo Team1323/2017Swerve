@@ -41,7 +41,7 @@ public class FollowPathAction implements Action{
 	
 	@Override
 	public void start(){
-		robot.swerve.followPath(path, false, heading);
+		robot.swerve.followPath(path, heading);
 	}
 	
 }

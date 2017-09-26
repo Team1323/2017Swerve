@@ -28,11 +28,11 @@ public class Intake extends Subsystem{
 	}
 	
 	public void intakeForward(){
-		intakeMotor.set(-0.7); 
+		intakeMotor.set(-1.0); 
 		isForward = true;
 	}
 	public void intakeReverse(){
-		intakeMotor.set(0.7);
+		intakeMotor.set(1.0);
 		isReversed = true;
 	}
 	public void toggleForward(){

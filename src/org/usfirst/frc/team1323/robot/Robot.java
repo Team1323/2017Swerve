@@ -355,6 +355,17 @@ public class Robot extends IterativeRobot {
 			robot.turret.lock();
 		}
 		
+		if(robotState.getTargetVisbility()){
+			double optimalTurretAngle = Util.boundAngle0to360Degrees(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle());
+			if(optimalTurretAngle >= 180 &&
+					optimalTurretAngle <= 270){
+				double magnitude = robot.turret.getTrueVisionDistance() + Constants.kCameraYOffset;
+				double theta = Math.toRadians(90 - (optimalTurretAngle - 180));
+				double robotX = Math.cos(theta) * magnitude;
+				double robotY = Math.sin(theta) * magnitude;
+			}
+		}
+		
 		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.isStationary() && robotState.getVisionAngle() < 1.5){
 			if(Math.abs(robotState.getTargetDistance() - Constants.kOptimalShootingDistance) <= 1.0){
 				coDriver.rumble(1, 1);

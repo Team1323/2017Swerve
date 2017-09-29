@@ -17,6 +17,9 @@ public class SwerveDriveModule extends Subsystem{
 	private CANTalon rotationMotor;
 	public CANTalon driveMotor;
 	private int moduleID;
+	public int arrayIndex(){
+		return moduleID - 1;
+	}
 	private int absolutePosition;
 	private double offset = 0.0;
 	public double pathFollowingOffset = 0.0;
@@ -24,8 +27,14 @@ public class SwerveDriveModule extends Subsystem{
 	private double lastDistance = 0.0;
 	private double currentX = 0;
 	private double currentY = 0;
+	private double defaultX = 0;
+	private double defaultY = 0;
 	public boolean hasBraked = false;
 	public boolean hasBraked(){return hasBraked;}
+	private boolean isReversed = false;
+	public void reverseOutput(boolean reversed){
+		isReversed = reversed;
+	}
 	public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
 		rotationMotor = new CANTalon(rotationMotorPort);
 		driveMotor = new CANTalon(driveMotorPort);
@@ -85,7 +94,11 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	public void setDriveSpeed(double power){
 		driveMotor.changeControlMode(TalonControlMode.PercentVbus);
-		driveMotor.set(power);
+		if(isReversed){
+			driveMotor.set(-power);
+		}else{
+			driveMotor.set(power);
+		}
 	}
 	public double getEncoderDistanceInches(){
 		return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
@@ -120,6 +133,8 @@ public class SwerveDriveModule extends Subsystem{
 	public void setOriginCoordinates(double x, double y){
 		currentX = x;
 		currentY = y;
+		defaultX = x;
+		defaultY = y;
 	}
 	public double getX(){return currentX;}
 	public double getY(){return currentY;}
@@ -145,9 +160,10 @@ public class SwerveDriveModule extends Subsystem{
 	@Override
 	public synchronized void zeroSensors(){
 		driveMotor.setEncPosition(0);
-/*		currentX = Math.sin(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
-		currentY = Math.cos(90 - (180 - (pidgey.getAngle() + 90) + Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH)))) * Math.hypot(HALF_LENGTH, HALF_WIDTH);
-/**/	}
+		driveMotor.setPosition(0);
+		currentX = defaultX;
+		currentY = defaultY;
+	}
 	@Override
 	public void outputToSmartDashboard(){
 		String smallX = Float.toString((float)(Math.round(getX() * 100.0) / 100.0));

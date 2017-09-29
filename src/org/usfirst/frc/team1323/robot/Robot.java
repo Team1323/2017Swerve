@@ -91,9 +91,9 @@ public class Robot extends IterativeRobot {
 	        		robot.pidgey.setAngle(0);
 	        		robot.turret.resetAngle(-90);
 	        	}
-	        }else if(smartDashboardInteractions.getSelectedMode().equals("Gear")){
+	        }else if(smartDashboardInteractions.getSelectedMode().equals("Gear and Hopper")){
 	        	robot.pidgey.setAngle(0);
-	        	robot.turret.resetAngle(-90);
+	        	robot.turret.resetAngle(90);
 	        }
 	        
 	        VisionServer.getInstance();
@@ -105,7 +105,7 @@ public class Robot extends IterativeRobot {
 	public void zeroAllSensors(){
 		robot.swerve.zeroSensors();
 		//robot.pidgey.setAngle(0);
-		robotState.reset(Timer.getFPGATimestamp(), new RigidTransform2d(), new Rotation2d());
+		//robotState.reset(Timer.getFPGATimestamp(), new RigidTransform2d(), new Rotation2d());
 	}
 	public void outputAllToSmartDashboard(){
 		robot.swerve.outputToSmartDashboard();
@@ -163,7 +163,7 @@ public class Robot extends IterativeRobot {
 			}
 			autoModeExecuter = null;
 			
-			zeroAllSensors();
+			//zeroAllSensors();
 			
 			disabledLooper.stop();
 			enabledLooper.start();
@@ -271,11 +271,11 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(driver.getPOV() == 90){
-			robot.swerve.baseLock();
+			robot.swerve.rotateAboutModule(false);
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.Path.TEST, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
+			robot.swerve.followPath(Swerve.Path.TEST, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
 		}else if(driver.getPOV() == 270){
-			//robot.retractBallFlap();
+			robot.swerve.rotateAboutModule(true);
 		}
 		
 		//Gear Score
@@ -355,7 +355,7 @@ public class Robot extends IterativeRobot {
 			robot.turret.lock();
 		}
 		
-		if(robotState.getTargetVisbility()){
+		/*if(robotState.getTargetVisbility()){
 			double optimalTurretAngle = Util.boundAngle0to360Degrees(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle());
 			if(optimalTurretAngle >= 180 &&
 					optimalTurretAngle <= 270){
@@ -364,7 +364,7 @@ public class Robot extends IterativeRobot {
 				double robotX = Math.cos(theta) * magnitude;
 				double robotY = Math.sin(theta) * magnitude;
 			}
-		}
+		}*/
 		
 		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.isStationary() && robotState.getVisionAngle() < 1.5){
 			if(Math.abs(robotState.getTargetDistance() - Constants.kOptimalShootingDistance) <= 1.0){

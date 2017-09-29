@@ -1,6 +1,6 @@
 package Auto;
 
-import Auto.Modes.GearMode;
+import Auto.Modes.BlueGearAndHopperMode;
 import Auto.Modes.HopperMode;
 import Auto.Modes.StandStillMode;
 import Subsystems.Swerve;
@@ -22,7 +22,7 @@ public class SmartDashboardInteractions {
     public void initWithDefaults(){
     	modeChooser = new SendableChooser();
     	modeChooser.addDefault("Hopper", DEFAULT_MODE);
-    	modeChooser.addObject("Gear", AutoOption.GEAR);
+    	modeChooser.addObject("Gear and Hopper", AutoOption.GEAR_AND_HOPPER);
     	sideChooser = new SendableChooser();
     	sideChooser.addDefault("Blue", DEFAULT_SIDE);
     	sideChooser.addObject("Red", AutoSide.RED);
@@ -51,7 +51,7 @@ public class SmartDashboardInteractions {
     
     enum AutoOption{
     	HOPPER("Hopper"), 
-    	GEAR("Gear"),
+    	GEAR_AND_HOPPER("Gear and Hopper"),
     	STAND_STILL("Stand Still");
     	
     	public final String name;
@@ -79,8 +79,10 @@ public class SmartDashboardInteractions {
     			}else{
     				return new HopperMode(Swerve.Path.RED_HOPPER, -90, 0);
     			}
-    		case GEAR:
-    			return new GearMode();
+    		case GEAR_AND_HOPPER:
+    			if(side == AutoSide.BLUE){
+    				return new BlueGearAndHopperMode();
+    			}
     		case STAND_STILL: // fallthrough
             default:
                 System.out.println("ERROR: unexpected auto mode: " + option);

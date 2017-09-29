@@ -204,6 +204,17 @@ public class Util {
 		return calc;
 	}
     
+    public static int boundWithinModuleIndexRange(int index){
+    	while(index > 3){
+    		index -= 4;
+    	}
+    	while(index < 0){
+    		index += 4;
+    	}
+    	
+    	return index;
+    }
+    
     public static double BoundPigeonAngle(double angle){
     	double newAngle;
     	newAngle = boundAngle0to360Degrees(angle);

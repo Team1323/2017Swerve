@@ -2,10 +2,10 @@ package Subsystems;
 
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import Utilities.Constants;
 import Utilities.InterpolatingDouble;
@@ -17,6 +17,7 @@ import Utilities.Translation2d;
 import Vision.GoalTrack;
 import Vision.GoalTrack.TrackReport;
 import Vision.TargetInfo;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class RobotState {
@@ -33,6 +34,11 @@ public class RobotState {
     protected InterpolatingTreeMap<InterpolatingDouble, RigidTransform2d> fieldToVehicle;
     protected RigidTransform2d.Delta vehicleVelocity;
     protected InterpolatingTreeMap<InterpolatingDouble, Rotation2d> turretRotation;
+    Map<Double, Double> mObservedAngles = new TreeMap<>();
+    double smoothedAngle;
+    public double getSmoothedVisionAngle(){
+    	return smoothedAngle;
+    }
     protected GoalTrack goalTrack;
     private int nextID;
     protected Rotation2d cameraPitchCorrection;
@@ -176,16 +182,20 @@ public class RobotState {
                     visionAngle = newAngle.getDegrees();
                     distanceToTarget = distance;
                     originalVisionAngle = angle.getDegrees();
+                    mObservedAngles.put(timestamp, visionAngle);
+                    pruneByTime();
                     SmartDashboard.putNumber("Vision Angle", visionAngle);
                     SmartDashboard.putNumber("Original Vision Angle", angle.getDegrees());
                     SmartDashboard.putNumber("Vision Distance", distance);
                     SmartDashboard.putString("Vision Translation", transform.toString());
+                    SmartDashboard.putNumber("Vision Smoothed Angle", smoothedAngle);
                     seesTarget = true;
                 }
             }
         }else{
         	visionAngle = Double.POSITIVE_INFINITY;
         	seesTarget = false;
+        	pruneByTime();
         }
         synchronized (this) {
         	if(field_to_goals.size() > 0){
@@ -196,6 +206,32 @@ public class RobotState {
 	        		goalTrack.tryUpdate(timestamp, field_to_goals.get(0));
 	        	}
         	}
+        }
+    }
+    
+    void pruneByTime() {
+        double delete_before = Timer.getFPGATimestamp() - Constants.kMaxGoalTrackAge;
+        for (Iterator<Map.Entry<Double, Double>> it = mObservedAngles.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<Double, Double> entry = it.next();
+            if (entry.getKey() < delete_before) {
+                it.remove();
+            }
+        }
+        if (mObservedAngles.isEmpty()) {
+            smoothedAngle = Double.POSITIVE_INFINITY;
+        } else {
+            smooth();
+        }
+    }
+    
+    void smooth() {
+        if (mObservedAngles.size() > 0) {
+            double x = 0;
+            for (Map.Entry<Double, Double> entry : mObservedAngles.entrySet()) {
+                x += entry.getValue();
+            }
+            x /= mObservedAngles.size();
+            smoothedAngle = x;
         }
     }
     

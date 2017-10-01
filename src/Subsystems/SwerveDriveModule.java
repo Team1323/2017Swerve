@@ -163,6 +163,7 @@ public class SwerveDriveModule extends Subsystem{
 		driveMotor.setPosition(0);
 		currentX = defaultX;
 		currentY = defaultY;
+		lastDistance = 0;
 	}
 	@Override
 	public void outputToSmartDashboard(){

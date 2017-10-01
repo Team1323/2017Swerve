@@ -69,7 +69,7 @@ public class Constants {
 	//Vision
 	public static final int kAndroidAppTcpPort = 8254;
 	public static final double kMaxTrackerDistance = 18.0;
-	public static final double kMaxGoalTrackAge = 0.3;
+	public static final double kMaxGoalTrackAge = 1.0;
 	public static double kCameraFrameRate = 30.0;
 	public static final double kOptimalShootingDistance = 67.4;
 	

@@ -120,8 +120,8 @@ public class GearIntake extends Subsystem{
 				SmartDashboard.putString("Gear Intake Status", "RETRACTED OFF");
 				break;
 			case RETRACTED_HOLDING:
-				retractCylinder();
 				hold();
+				retractCylinder();
 				if(intake.getOutputCurrent() < Constants.GEAR_PRESENT_CURRENT){
 					cyclesWithLostGear++;
 					if(cyclesWithLostGear >= Constants.CYCLES_FOR_LOST_GEAR){

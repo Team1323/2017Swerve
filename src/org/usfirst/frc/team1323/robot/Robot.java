@@ -163,7 +163,7 @@ public class Robot extends IterativeRobot {
 			}
 			autoModeExecuter = null;
 			
-			//zeroAllSensors();
+			zeroAllSensors();
 			
 			disabledLooper.stop();
 			enabledLooper.start();
@@ -276,6 +276,8 @@ public class Robot extends IterativeRobot {
 			robot.swerve.followPath(Swerve.Path.TEST, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
 		}else if(driver.getPOV() == 270){
 			robot.swerve.rotateAboutModule(true);
+		}else if(driver.getPOV() == 0){
+			zeroAllSensors();
 		}
 		
 		//Gear Score

@@ -78,7 +78,7 @@ public class Swerve extends Subsystem{
 	double maxJerk = 84;
 	Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, maxVel, maxAccel, maxJerk);
 	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, maxVel, maxAccel, maxJerk);
-	Trajectory.Config gearConfig =  new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, 3.0, maxAccel, maxJerk);
+	Trajectory.Config gearConfig =  new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, 7.5, maxAccel, maxJerk);
 	SwerveModifier.Mode mode = SwerveModifier.Mode.SWERVE_DEFAULT;
 	Trajectory redHopperTrajectory;
 	Trajectory testTrajectory;
@@ -203,9 +203,17 @@ public class Swerve extends Subsystem{
 				new Waypoint(5.55, 3.1, Pathfinder.d2r(130)),
 				new Waypoint(3.8, 3.09, Pathfinder.d2r(180))
 		};
+		/*Waypoint[] leftPegPoints = new Waypoint[]{
+				new Waypoint(0,0,0),
+				new Waypoint(7.95, 2.0, Pathfinder.d2r(60))
+		};*/
+		double straightDistance = 1.25;
+		double pegForwardDistance = 7.7;
+		double pegSideDistance = 2.2;
 		Waypoint[] leftPegPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
-				new Waypoint(8.0, 2.0, Pathfinder.d2r(60))
+				new Waypoint(pegForwardDistance - (straightDistance/2), pegSideDistance - (straightDistance/2*Math.sqrt(3)), Pathfinder.d2r(60)),
+				new Waypoint(pegForwardDistance, pegSideDistance, Pathfinder.d2r(60))
 		};
 		Waypoint[] leftPegToHopperPoints = new Waypoint[]{
 				new Waypoint(0,0,-90),
@@ -217,7 +225,7 @@ public class Swerve extends Subsystem{
 		//redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
 		//blueHopperTrajectory = Pathfinder.generate(bluePoints, stableConfig);
 		testTrajectory = Pathfinder.generate(leftPegPoints, stableConfig);
-		leftPegTrajectory = Pathfinder.generate(leftPegPoints, stableConfig);
+		leftPegTrajectory = Pathfinder.generate(leftPegPoints, gearConfig);
 		leftPegToHopperTrajectory = Pathfinder.generate(leftPegToHopperPoints, stableConfig);
 		/*for (int i = 0; i < forwardTrajectory.length(); i++) {
 		    Trajectory.Segment seg = forwardTrajectory.get(i);
@@ -265,7 +273,11 @@ public class Swerve extends Subsystem{
 			shouldBrake = false;
 			setState(ControlState.Manual);
 		}else if(rotateInput != 0){
-			shouldBrake = true;
+			if(Math.abs(frontRight.getModuleInchesPerSecond()) < 24){
+				shouldBrake = false;
+			}else{
+				shouldBrake = true;
+			}
 			if(currentState != ControlState.ModuleRotation){
 				setState(ControlState.Manual);
 			}

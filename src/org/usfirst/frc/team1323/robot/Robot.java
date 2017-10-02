@@ -1,5 +1,7 @@
 package org.usfirst.frc.team1323.robot;
 
+import java.util.Optional;
+
 import Auto.AutoModeExecuter;
 import Auto.SmartDashboardInteractions;
 import IO.LogitechJoystick;
@@ -17,8 +19,7 @@ import Subsystems.Turret;
 import Utilities.Constants;
 import Utilities.CrashTracker;
 import Utilities.Logger;
-import Utilities.RigidTransform2d;
-import Utilities.Rotation2d;
+import Utilities.ShooterAimingParameters;
 import Utilities.Util;
 import Vision.VisionServer;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
@@ -69,11 +70,11 @@ public class Robot extends IterativeRobot {
 	        robot.turret.resetAngle(90);
 	        enabledLooper.register(VisionProcessor.getInstance());
             enabledLooper.register(RobotStateEstimator.getInstance());
-	        //enabledLooper.register(robot.swerve.getLoop());
 	        enabledLooper.register(robot.pidgey.getLoop());
 	        enabledLooper.register(robot.turret.getLoop());
 	        enabledLooper.register(robot.hanger.getLoop());
 	        enabledLooper.register(robot.gearIntake.getLoop());
+	        enabledLooper.register(robot.shooter.getLoop());
 	        swerveLooper.register(robot.swerve.getLoop());
 	        disabledLooper.register(robot.pidgey.getLoop());
 	        disabledLooper.register(VisionProcessor.getInstance());
@@ -349,10 +350,14 @@ public class Robot extends IterativeRobot {
 		}else if(coDriver.getPOV() == 270){
 			robot.turret.setMotionMagic(45);
 		}else if(coDriver.xButton.wasPressed()){
-			if(robotState.getTargetVisbility() && robot.turret.isStationary()){
+			/*if(robotState.getTargetVisbility() && robot.turret.isStationary()){
 				robot.swerve.moveDistance(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle(), robot.turret.getTrueVisionDistance() - Constants.kOptimalShootingDistance);
 			}
-			robot.turret.enableVision();
+			robot.turret.enableVision();*/
+			Optional<ShooterAimingParameters> params = RobotState.getInstance().getAimingParameters(Timer.getFPGATimestamp());
+			if(params.isPresent()){
+				robot.turret.setAngle(-params.get().getTurretAngle().getDegrees());
+			}
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}
@@ -388,13 +393,14 @@ public class Robot extends IterativeRobot {
 		if(coDriver.getTriggerAxis(Hand.kLeft) > 0 || cyclesReadyForShooting >= 3){
 			robot.turret.gyroLock();
 			robot.swerve.baseLock();
-			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
+			robot.shooter.setSpinUp(Constants.SHOOTING_SPEED);
 			sweeperCanTurnOn = true;
+			sweeperNeedsToStop = false;
 			cyclesReadyForShooting = 0;
 		}
 		
 		//Sweeper
-		if(((coDriver.getTriggerAxis(Hand.kRight) > 0) || sweeperCanTurnOn) && (robot.shooter.onTarget())){
+		if(((coDriver.getTriggerAxis(Hand.kRight) > 0) || sweeperCanTurnOn) && robot.shooter.onTarget() && !robot.sweeper.isFeeding()){
 			robot.sweeper.startSweeper();
 		}
 		if(coDriver.getYButton()){

@@ -23,6 +23,10 @@ public class Sweeper extends Subsystem{
 		return instance;
 	}
 	public boolean isInThread = false;
+	private boolean isFeeding = false;
+	public boolean isFeeding(){
+		return isFeeding;
+	}
 	
 	public void armForward(){
 		sweeperArm.set(Constants.SWEEPER_FORWARD);
@@ -38,6 +42,7 @@ public class Sweeper extends Subsystem{
 			SweeperSequence sequence = new SweeperSequence();
 			sequence.start();
 		}
+		isFeeding = true;
 	}
 	public class SweeperSequence extends Thread{
 		public void run(){
@@ -52,6 +57,7 @@ public class Sweeper extends Subsystem{
 	public synchronized void stop(){
 		sweeperArm.set(0);
 		sweeperRoller.set(0);
+		isFeeding = false;
 	}
 	@Override
 	public synchronized void zeroSensors(){

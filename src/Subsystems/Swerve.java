@@ -442,10 +442,6 @@ public class Swerve extends Subsystem{
 		centerOfRotationModule.setFieldRelativeAngle(0);
 		
 		setHeadingController(HeadingController.Off);
-		
-		/*frontRight.moveInches(2 * Math.PI * Math.hypot(Constants.WHEELBASE_LENGTH, Constants.WHEELBASE_WIDTH));
-		frontLeft.moveInches(2 * Math.PI * Constants.WHEELBASE_LENGTH);
-		rearRight.moveInches(2 * Math.PI * Constants.WHEELBASE_WIDTH);*/
 	}
 	
 	public boolean distanceOnTarget(){

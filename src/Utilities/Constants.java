@@ -48,7 +48,7 @@ public class Constants {
 	
 	//Shooter Constants
 	public static final double SHOOTING_SPEED = 2650; // 2650
-	public static final double SHOOTER_ALLOWABLE_ERROR = 100;
+	public static final double SHOOTER_ALLOWABLE_ERROR = 50;//100
 	
 	//Sweeper Constants
 	public static final double SWEEPER_FORWARD = 0.7;
@@ -74,11 +74,11 @@ public class Constants {
 	public static final double kOptimalShootingDistance = 67.4;
 	
 	// Pose of the camera frame w.r.t. the turret frame
-    public static double kCameraXOffset = -2.25;//-2.25;
-    public static double kCameraYOffset = 9.875;
-    public static double kCameraZOffset = 23;
-    public static double kCameraPitchAngleDegrees = 90-58.5; // 35.75
-    public static double kCameraYawAngleDegrees = 0.0;  //2.5 //positive moves the turret to the left
-    public static double kCameraDeadband = 0.0;
-    public static double kCenterOfTargetHeight = 88.0; // inches      
+    public static final double kCameraXOffset = -2.25;//-2.25;
+    public static final double kCameraYOffset = 9.875;
+    public static final double kCameraZOffset = 23;
+    public static final double kCameraPitchAngleDegrees = 90-58.5; // 35.75
+    public static final double kCameraYawAngleDegrees = 0.0;
+    public static final double kCameraDeadband = 0.0;
+    public static final double kCenterOfTargetHeight = 88.0; // inches      
 }

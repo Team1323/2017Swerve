@@ -350,14 +350,18 @@ public class Robot extends IterativeRobot {
 		}else if(coDriver.getPOV() == 270){
 			robot.turret.setMotionMagic(45);
 		}else if(coDriver.xButton.wasPressed()){
-			/*if(robotState.getTargetVisbility() && robot.turret.isStationary()){
-				robot.swerve.moveDistance(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle(), robot.turret.getTrueVisionDistance() - Constants.kOptimalShootingDistance);
+			if(!robot.shooter.isShooting()){
+				if(robotState.getTargetVisbility() && robot.turret.isStationary()){
+					robot.swerve.moveDistance(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle(), robot.turret.getTrueVisionDistance() - Constants.kOptimalShootingDistance);
+				}
+				robot.turret.enableVision();
+			}else{
+				robot.turret.trackWhileShooting();
 			}
-			robot.turret.enableVision();*/
-			Optional<ShooterAimingParameters> params = RobotState.getInstance().getAimingParameters(Timer.getFPGATimestamp());
+			/*Optional<ShooterAimingParameters> params = RobotState.getInstance().getAimingParameters(Timer.getFPGATimestamp());
 			if(params.isPresent()){
 				robot.turret.setAngle(-params.get().getTurretAngle().getDegrees());
-			}
+			}*/
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}

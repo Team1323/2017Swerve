@@ -65,7 +65,7 @@ public class RobotState {
     }
     
     protected RobotState() {
-        reset(0, new RigidTransform2d(), new Rotation2d());
+        reset(0, new RigidTransform2d(), Rotation2d.fromDegrees(-90));
     }
 
     public synchronized void reset(double start_time, RigidTransform2d initial_field_to_vehicle,
@@ -88,7 +88,7 @@ public class RobotState {
             Rotation2d.fromDegrees(90));
 
     public static final RigidTransform2d kTurretRotatingToCamera = new RigidTransform2d(
-            new Translation2d(-Constants.kCameraYOffset, -Constants.kCameraXOffset), new Rotation2d());
+            new Translation2d(Constants.kCameraXOffset, Constants.kCameraYOffset), new Rotation2d());
     
     public synchronized RigidTransform2d getFieldToVehicle(double timestamp) {
         return fieldToVehicle.getInterpolated(new InterpolatingDouble(timestamp));
@@ -123,7 +123,7 @@ public class RobotState {
     		RigidTransform2d latest_turret_fixed_to_goal = getLatestFieldToVehicle().getValue()
     				.transformBy(kVehicleToTurretFixed).inverse()
     				.transformBy(RigidTransform2d.fromTranslation(report.field_to_goal));
-    		
+    		SmartDashboard.putString("Boiler Position", "(" + report.field_to_goal.getX() + ", " + report.field_to_goal.getY() + ")");
     		ShooterAimingParameters params = new ShooterAimingParameters(latest_turret_fixed_to_goal.getTranslation().norm(),
     				new Rotation2d(latest_turret_fixed_to_goal.getTranslation().getX(), latest_turret_fixed_to_goal.getTranslation().getY(), true),
     				report.id);
@@ -137,6 +137,7 @@ public class RobotState {
     public void addVisionUpdate(double timestamp, List<TargetInfo> vision_update) {
         List<Translation2d> field_to_goals = new ArrayList<>();
         RigidTransform2d field_to_camera = getFieldToCamera(timestamp);
+        RigidTransform2d field_to_turret = getFieldToTurretRotated(timestamp);
         
         if (!(vision_update == null || vision_update.isEmpty())) {
             for (TargetInfo target : vision_update) {
@@ -160,22 +161,23 @@ public class RobotState {
                     double scaling = differentialHeight / zr;
                     double distance = Math.hypot(xr, yr) * scaling;
                     Rotation2d angle = new Rotation2d(xr, yr, true);
-                    field_to_goals.add(field_to_camera
-                            .transformBy(RigidTransform2d
-                                    .fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())))
-                            .getTranslation());
-                    Translation2d transform = RigidTransform2d.fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())).getTranslation();
-                    //field_to_goals.add(RigidTransform2d.fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())).getTranslation());
                     Rotation2d newAngle = new Rotation2d(Math.cos(-angle.getRadians())*distance + Constants.kCameraYOffset, Math.sin(-angle.getRadians())*distance + Constants.kCameraXOffset, true);
                     visionAngle = newAngle.getDegrees();
                     distanceToTarget = distance;
                     originalVisionAngle = angle.getDegrees();
                     mObservedAngles.put(timestamp, visionAngle);
+                    field_to_goals.add(field_to_camera
+                            .transformBy(RigidTransform2d
+                                    .fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())))
+                            .getTranslation());
+                    /*field_to_goals.add(field_to_turret
+                            .transformBy(RigidTransform2d
+                                    .fromTranslation(new Translation2d(distance * newAngle.cos(), distance * -newAngle.sin())))
+                            .getTranslation());*/
                     pruneByTime();
                     SmartDashboard.putNumber("Vision Angle", visionAngle);
                     SmartDashboard.putNumber("Original Vision Angle", angle.getDegrees());
                     SmartDashboard.putNumber("Vision Distance", distance);
-                    SmartDashboard.putString("Vision Translation", transform.toString());
                     SmartDashboard.putNumber("Vision Smoothed Angle", smoothedAngle);
                     seesTarget = true;
                 }
@@ -186,20 +188,12 @@ public class RobotState {
         	pruneByTime();
         }
         synchronized (this) {
-        	/*if(field_to_goals.size() > 0){
-	        	if(goalTrack == null || !goalTrack.isAlive()){
-	        		goalTrack = GoalTrack.makeNewTrack(timestamp, field_to_goals.get(0), nextID);
-	        		++nextID;
-	        	}else{
-	        		goalTrack.tryUpdate(timestamp, field_to_goals.get(0));
-	        	}
-        	}*/
         	goalTracker.update(timestamp, field_to_goals);
         }
     }
     
     void pruneByTime() {
-        double delete_before = Timer.getFPGATimestamp() - Constants.kMaxGoalTrackAge;
+        double delete_before = Timer.getFPGATimestamp() - Constants.kMaxAngleAge;
         for (Iterator<Map.Entry<Double, Double>> it = mObservedAngles.entrySet().iterator(); it.hasNext();) {
             Map.Entry<Double, Double> entry = it.next();
             if (entry.getKey() < delete_before) {
@@ -246,7 +240,7 @@ public class RobotState {
     	if(getAimingParameters(time).isPresent()){
     		SmartDashboard.putNumber("Turret To Goal Angle", getAimingParameters(Timer.getFPGATimestamp()).get().getTurretAngle().getDegrees());
     	}
-    	SmartDashboard.putString("Turret Field Angle", "(" + turretPose.getTranslation().getX() + ", " +
+    	SmartDashboard.putString("Turret Field Pose", "(" + turretPose.getTranslation().getX() + ", " +
     	    	turretPose.getTranslation().getY() + ", " + turretPose.getRotation().getDegrees());
     	SmartDashboard.putString("Field To Vehicle Pose", "(" + robotPose.getTranslation().getX() + ", " +
     			robotPose.getTranslation().getY() + ", " + robotPose.getRotation().getDegrees());

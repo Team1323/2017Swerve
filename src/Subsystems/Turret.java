@@ -20,6 +20,7 @@ public class Turret extends Subsystem{
 	private double gyroLockedHeading = 0.0;
 	private double gyroLockedTurretAngle = 0.0;
 	private int onTargetCheck = 0;
+	private double lastTrackWhileShooting = Double.POSITIVE_INFINITY;
 	
 	public double goalX = 0.0;
 	public double goalY = 0.0;
@@ -55,7 +56,7 @@ public class Turret extends Subsystem{
 		motor.setReverseSoftLimit((-Constants.TURRET_MAX_ANGLE/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV);
 	}
 	public enum ControlState{
-		Off, VisionTracking, Manual, GyroComp, CalculatedTracking, MotionMagic
+		Off, VisionTracking, Manual, GyroComp, CalculatedTracking, MotionMagic, TrackingWhileShooting
 	}
 	public ControlState currentState = ControlState.MotionMagic;
 	public static Turret getInstance(){
@@ -131,7 +132,12 @@ public class Turret extends Subsystem{
 	}
 	public void enableVision(){
 		setState(ControlState.VisionTracking);
-		//moveDegrees(robotState.getVisionAngle());
+		moveDegrees(robotState.getVisionAngle());
+	}
+	public void trackWhileShooting(){
+		moveDegrees(robotState.getSmoothedVisionAngle());
+		lastTrackWhileShooting = Timer.getFPGATimestamp();
+		setState(ControlState.TrackingWhileShooting);
 	}
 	public double getTrueVisionDistance(){
 		double modVisionAngle = Math.toRadians(robotState.getVisionAngle());
@@ -165,6 +171,14 @@ public class Turret extends Subsystem{
 					//moveDegrees(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
 				}
 				SmartDashboard.putString("Turret Control State", "VisionTracking");
+				break;
+			case TrackingWhileShooting:
+				double time = Timer.getFPGATimestamp();
+				if(onTarget() && isStationary() && time - lastTrackWhileShooting > (Constants.kMaxAngleAge + 0.25)){
+					moveDegrees(robotState.getSmoothedVisionAngle());
+					lastTrackWhileShooting = time;
+				}
+				SmartDashboard.putString("Turret Control State", "TrackingWhileShooting");
 				break;
 			case MotionMagic:
 				motor.setProfile(1);

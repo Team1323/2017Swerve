@@ -223,6 +223,10 @@ public class Shooter extends Subsystem{
 		return ((master.getControlMode() == CANTalon.TalonControlMode.Speed)
 				&& (getError() < Constants.SHOOTER_ALLOWABLE_ERROR));
 	}
+	public boolean isShooting(){
+		return master.getControlMode() == CANTalon.TalonControlMode.Speed
+				&& master.getSetpoint() != 0;
+	}
 	
 	@Override
 	public synchronized void stop(){

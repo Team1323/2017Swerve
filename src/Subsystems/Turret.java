@@ -1,5 +1,7 @@
 package Subsystems;
 
+import java.util.Optional;
+
 import com.ctre.CANTalon;
 import com.ctre.CANTalon.FeedbackDevice;
 import com.ctre.CANTalon.TalonControlMode;
@@ -7,6 +9,7 @@ import com.ctre.CANTalon.TalonControlMode;
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.Ports;
+import Utilities.ShooterAimingParameters;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -132,7 +135,10 @@ public class Turret extends Subsystem{
 	}
 	public void enableVision(){
 		setState(ControlState.VisionTracking);
-		moveDegrees(robotState.getVisionAngle());
+		Optional<ShooterAimingParameters> params = RobotState.getInstance().getAimingParameters(Timer.getFPGATimestamp());
+		if(params.isPresent()){
+			setAngle(-params.get().getTurretAngle().getDegrees());
+		}
 	}
 	public void trackWhileShooting(){
 		moveDegrees(robotState.getSmoothedVisionAngle());
@@ -167,8 +173,10 @@ public class Turret extends Subsystem{
 			case VisionTracking:
 				motor.setProfile(0);
 				if(onTarget() && isStationary() && robotState.getTargetVisbility()){
-					moveDegrees(robotState.getVisionAngle());
-					//moveDegrees(robotState.getAimingParameters(Timer.getFPGATimestamp()).getTurretAngle().getDegrees());
+					Optional<ShooterAimingParameters> params = RobotState.getInstance().getAimingParameters(Timer.getFPGATimestamp());
+					if(params.isPresent()){
+						setAngle(-params.get().getTurretAngle().getDegrees());
+					}
 				}
 				SmartDashboard.putString("Turret Control State", "VisionTracking");
 				break;
@@ -199,12 +207,7 @@ public class Turret extends Subsystem{
 		return (getGoal() - getAngle());
 	}
 	public boolean onTarget(){
-		if(Math.abs(getError()) < 1.5){
-			onTargetCheck--;
-		}else{
-			onTargetCheck = Constants.TURRET_ONTARGET_THRESH;
-		}
-		return onTargetCheck <= 0;
+		return (Math.abs(getError()) < 1.0) && isStationary();
 	}
 	public double getTurretDegreesPerSecond(){
 		return motor.getSpeed()/Constants.TURRET_REVS_PER_DEGREE/60;
@@ -212,12 +215,18 @@ public class Turret extends Subsystem{
 	public boolean isStationary(){
 		return Math.abs(getTurretDegreesPerSecond()) < 1; 
 	}
+	public boolean isTracking(){
+		return getCurrentState() == ControlState.VisionTracking;
+	}
 	public void resetAngle(double angle){
 		motor.setPosition((angle/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV);
 	}
 	public synchronized void setPercentVBus(double speed){
 		motor.changeControlMode(TalonControlMode.PercentVbus);
 		motor.set(speed);
+	}
+	public double turretAngleToWheelAngle(double turretAngle){
+		return turretAngle - 90;
 	}
 	private final Loop turretLoop = new Loop(){
 		@Override
@@ -256,6 +265,10 @@ public class Turret extends Subsystem{
 		SmartDashboard.putNumber("Turret Speed", getTurretDegreesPerSecond());
 		SmartDashboard.putNumber("Turret Current", motor.getOutputCurrent());
 		SmartDashboard.putNumber("Turret Voltage", motor.getOutputVoltage());
-		SmartDashboard.putNumber("True Vision Distance", getTrueVisionDistance());
+		Optional<ShooterAimingParameters> params = RobotState.getInstance().getAimingParameters(Timer.getFPGATimestamp());
+		if(params.isPresent()){
+			SmartDashboard.putNumber("True Vision Distance", params.get().getRange());
+		}
+		//SmartDashboard.putNumber("True Vision Distance", getTrueVisionDistance());
 	}
 }

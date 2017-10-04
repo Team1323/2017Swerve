@@ -355,7 +355,7 @@ public class Swerve extends Subsystem{
 	public void moveDistance(double wheelAngle, double distance){
 		setState(ControlState.AdjustTargetDistance);
 		for(SwerveDriveModule m : modules){
-			m.setFieldRelativeAngle(wheelAngle);
+			m.setModuleAngle(wheelAngle);
 		}
 		for(SwerveDriveModule m : modules){
 			m.moveInches(distance);

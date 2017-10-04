@@ -72,7 +72,7 @@ public class Constants {
 	public static final double kMaxGoalTrackAge = 1.0;
 	public static final double kMaxAngleAge = 0.5;
 	public static double kCameraFrameRate = 30.0;
-	public static final double kOptimalShootingDistance = 67.4;
+	public static final double kOptimalShootingDistance = 77.3;
 	
 	// Pose of the camera frame w.r.t. the turret frame
     public static final double kCameraXOffset = -2.25;//-2.25;

@@ -15,7 +15,6 @@ import Utilities.RigidTransform2d;
 import Utilities.Rotation2d;
 import Utilities.ShooterAimingParameters;
 import Utilities.Translation2d;
-import Vision.GoalTrack;
 import Vision.GoalTracker;
 import Vision.GoalTracker.TrackReport;
 import Vision.TargetInfo;
@@ -41,9 +40,7 @@ public class RobotState {
     public double getSmoothedVisionAngle(){
     	return smoothedAngle;
     }
-    protected GoalTrack goalTrack;
     private GoalTracker goalTracker;
-    private int nextID;
     protected Rotation2d cameraPitchCorrection;
     protected Rotation2d cameraYawCorrection;
     protected double differentialHeight;
@@ -65,7 +62,7 @@ public class RobotState {
     }
     
     protected RobotState() {
-        reset(0, new RigidTransform2d(), Rotation2d.fromDegrees(-90));
+        reset(0, RigidTransform2d.fromRotation(Rotation2d.fromDegrees(90)), Rotation2d.fromDegrees(-90));
     }
 
     public synchronized void reset(double start_time, RigidTransform2d initial_field_to_vehicle,
@@ -75,9 +72,7 @@ public class RobotState {
     	vehicleVelocity = new RigidTransform2d.Delta(0, 0, 0);
     	turretRotation = new InterpolatingTreeMap<>(kObservationBufferSize);
     	turretRotation.put(new InterpolatingDouble(start_time), initial_turret_rotation);
-    	goalTrack = null;
     	goalTracker = new GoalTracker();
-    	nextID = 0;
     	cameraPitchCorrection = Rotation2d.fromDegrees(-Constants.kCameraPitchAngleDegrees);
     	cameraYawCorrection = Rotation2d.fromDegrees(-Constants.kCameraYawAngleDegrees);
     	differentialHeight = Constants.kCenterOfTargetHeight - Constants.kCameraZOffset;
@@ -88,7 +83,7 @@ public class RobotState {
             Rotation2d.fromDegrees(90));
 
     public static final RigidTransform2d kTurretRotatingToCamera = new RigidTransform2d(
-            new Translation2d(Constants.kCameraXOffset, Constants.kCameraYOffset), new Rotation2d());
+            new Translation2d(Constants.kCameraYOffset, -Constants.kCameraXOffset), new Rotation2d());
     
     public synchronized RigidTransform2d getFieldToVehicle(double timestamp) {
         return fieldToVehicle.getInterpolated(new InterpolatingDouble(timestamp));
@@ -137,7 +132,6 @@ public class RobotState {
     public void addVisionUpdate(double timestamp, List<TargetInfo> vision_update) {
         List<Translation2d> field_to_goals = new ArrayList<>();
         RigidTransform2d field_to_camera = getFieldToCamera(timestamp);
-        RigidTransform2d field_to_turret = getFieldToTurretRotated(timestamp);
         
         if (!(vision_update == null || vision_update.isEmpty())) {
             for (TargetInfo target : vision_update) {
@@ -170,10 +164,6 @@ public class RobotState {
                             .transformBy(RigidTransform2d
                                     .fromTranslation(new Translation2d(distance * angle.cos(), distance * angle.sin())))
                             .getTranslation());
-                    /*field_to_goals.add(field_to_turret
-                            .transformBy(RigidTransform2d
-                                    .fromTranslation(new Translation2d(distance * newAngle.cos(), distance * -newAngle.sin())))
-                            .getTranslation());*/
                     pruneByTime();
                     SmartDashboard.putNumber("Vision Angle", visionAngle);
                     SmartDashboard.putNumber("Original Vision Angle", angle.getDegrees());

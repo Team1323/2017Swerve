@@ -45,8 +45,9 @@ public class Robot extends IterativeRobot {
 	Looper disabledLooper = new Looper();
 	AutoModeExecuter autoModeExecuter = null;
 	private boolean sweeperNeedsToStop = false;
-	private boolean sweeperCanTurnOn = false;
+	private boolean sweeperUnjamComplete = false;
 	private int cyclesReadyForShooting = 0;
+	int cycles = 0;
 	VisionServer visionServer = VisionServer.getInstance();
 	
 	SmartDashboardInteractions smartDashboardInteractions = new SmartDashboardInteractions();
@@ -233,9 +234,7 @@ public class Robot extends IterativeRobot {
 			coDriver.update();
 			
 			driverXboxControls();
-			//driverFlightStickControls();
 			coDriverXboxControls();
-			//oneControllerMode();
 			
 			outputAllToSmartDashboard();
 		}catch(Throwable t){
@@ -293,35 +292,11 @@ public class Robot extends IterativeRobot {
 			robot.retractBallFlap();
 		}
 	}
-	public void driverFlightStickControls(){
-		//Swerve
-		robot.swerve.sendInput(leftDriver.getXAxis(), -leftDriver.getYAxis(), rightDriver.getX(), false, leftDriver.getTriggerButton());
-		if(leftDriver.getDownButton()){
-			robot.pidgey.setAngle(0);
-			robot.swerve.setTargetHeading(0.0);
-		}
-		if(rightDriver.getDownButton() || rightDriver.getPOV() == 180){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
-		}else if(rightDriver.getLeftButton() || rightDriver.getPOV() == 90){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
-		}else if(rightDriver.getRightButton() || rightDriver.getPOV() == 270){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
-		}else if(rightDriver.getPOV() == 0){
-			robot.swerve.setSnapAngle(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
-		}
-		if(leftDriver.getPOV() >= 0){
-			robot.pidgey.setAngle((leftDriver.getPOV()));
-			robot.swerve.setTargetHeading(leftDriver.getPOV());
-		}
-		//Gear Score
-		if(rightDriver.getTriggerButton()){
-			robot.gearIntake.score();
-		}
-	}
+	
 	public void coDriverXboxControls(){
 		
 		if(coDriver.getBackButton()){
-			sweeperCanTurnOn = false;
+			sweeperUnjamComplete = false;
 			sweeperNeedsToStop = false;
 			coDriverStop();
 			robot.swerve.setLowPower(false);
@@ -335,6 +310,9 @@ public class Robot extends IterativeRobot {
     	}else if(coDriver.getBumper(Hand.kLeft)){
     		robot.intake.intakeReverse();
     	}
+		
+		//Vision
+		
 		
 		//Turret
 		if(Math.abs(coDriver.getX(Hand.kRight)) > 0){
@@ -350,18 +328,13 @@ public class Robot extends IterativeRobot {
 		}else if(coDriver.getPOV() == 270){
 			robot.turret.setMotionMagic(45);
 		}else if(coDriver.xButton.wasPressed()){
-			if(!robot.shooter.isShooting()){
-				if(robotState.getTargetVisbility() && robot.turret.isStationary()){
-					robot.swerve.moveDistance(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle(), robot.turret.getTrueVisionDistance() - Constants.kOptimalShootingDistance);
+			if(robot.turret.isStationary()){
+				Optional<ShooterAimingParameters> params = robotState.getAimingParameters(Timer.getFPGATimestamp());
+				if(params.isPresent()){
+					robot.swerve.moveDistance(Util.boundAngle0to360Degrees(robot.turret.turretAngleToWheelAngle(-params.get().getTurretAngle().getDegrees())), params.get().getRange() - Constants.kOptimalShootingDistance);
 				}
-				robot.turret.enableVision();
-			}else{
-				robot.turret.trackWhileShooting();
 			}
-			/*Optional<ShooterAimingParameters> params = RobotState.getInstance().getAimingParameters(Timer.getFPGATimestamp());
-			if(params.isPresent()){
-				robot.turret.setAngle(-params.get().getTurretAngle().getDegrees());
-			}*/
+			robot.turret.enableVision();
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}
@@ -377,15 +350,18 @@ public class Robot extends IterativeRobot {
 			}
 		}*/
 		
-		if(robot.turret.getCurrentState() == Turret.ControlState.VisionTracking && robotState.getTargetVisbility() && robot.turret.isStationary() && robotState.getVisionAngle() < 1.5){
-			if(Math.abs(robotState.getTargetDistance() - Constants.kOptimalShootingDistance) <= 1.0){
-				coDriver.rumble(1, 1);
-				driver.rumble(1,  1);
-				cyclesReadyForShooting++;
-			}else if(robot.swerve.distanceOnTarget()){
-				robot.swerve.moveDistance(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle(), robot.turret.getTrueVisionDistance() - Constants.kOptimalShootingDistance);
+		if(robot.turret.isTracking() && robot.turret.onTarget() && !robot.sweeper.isFeeding()){
+			Optional<ShooterAimingParameters> params = robotState.getAimingParameters(Timer.getFPGATimestamp());
+			if(params.isPresent()){
+				if(Math.abs(params.get().getRange() - Constants.kOptimalShootingDistance) <= 1.0){
+					coDriver.rumble(1, 1);
+					driver.rumble(1,  1);
+					cyclesReadyForShooting++;
+				}else if(robot.swerve.distanceOnTarget()){
+					robot.swerve.moveDistance(robot.turret.turretAngleToWheelAngle(-params.get().getTurretAngle().getDegrees()), params.get().getRange() - Constants.kOptimalShootingDistance);
+				}
 			}
-		}else{
+		}else if(robot.sweeper.isFeeding()){
 			cyclesReadyForShooting = 0;
 		}
 		
@@ -398,24 +374,24 @@ public class Robot extends IterativeRobot {
 			robot.turret.gyroLock();
 			robot.swerve.baseLock();
 			robot.shooter.setSpinUp(Constants.SHOOTING_SPEED);
-			sweeperCanTurnOn = true;
 			sweeperNeedsToStop = false;
-			cyclesReadyForShooting = 0;
 		}
 		
 		//Sweeper
-		if(((coDriver.getTriggerAxis(Hand.kRight) > 0) || sweeperCanTurnOn) && robot.shooter.onTarget() && !robot.sweeper.isFeeding()){
+		if(((coDriver.getTriggerAxis(Hand.kRight) > 0) || sweeperUnjamComplete || cyclesReadyForShooting >= 3) 
+				&& robot.shooter.onTarget() && !robot.sweeper.isFeeding()){
 			robot.sweeper.startSweeper();
+			cyclesReadyForShooting = 0;
 		}
 		if(coDriver.getYButton()){
-			sweeperCanTurnOn = false;
+			sweeperUnjamComplete = false;
 			robot.sweeper.stop();
 			robot.sweeper.rollerReverse();
 			sweeperNeedsToStop = true;
 		}else if(sweeperNeedsToStop){
 			robot.sweeper.stop();
 			sweeperNeedsToStop = false;
-			sweeperCanTurnOn = true;
+			sweeperUnjamComplete = true;
 		}
 		
 		//Ball Flap
@@ -447,6 +423,7 @@ public class Robot extends IterativeRobot {
 			robot.swerve.setLowPower(true);
 			robot.retractBallFlap();
 		}
+		cycles++;
 	}
 	public void oneControllerMode(){
 		//Swerve
@@ -499,18 +476,18 @@ public class Robot extends IterativeRobot {
 		if(driver.rightTrigger.longPressed()){
 			robot.turret.fieldPositionLock();
 			robot.shooter.setSpeed(Constants.SHOOTING_SPEED);
-			sweeperCanTurnOn = true;
+			sweeperUnjamComplete = true;
 		}
 		//Sweeper
-		if(sweeperCanTurnOn && robot.shooter.onTarget()){
+		if(sweeperUnjamComplete && robot.shooter.onTarget()){
 			robot.sweeper.startSweeper();
-			sweeperCanTurnOn = false;
+			sweeperUnjamComplete = false;
 		}
 		if(driver.yButton.wasPressed()){
 			if(sweeperNeedsToStop){
 				robot.sweeper.stop();
 				sweeperNeedsToStop = false;
-				sweeperCanTurnOn =  true;
+				sweeperUnjamComplete =  true;
 			}else{
 				robot.sweeper.stop();
 				robot.sweeper.rollerReverse();

@@ -65,8 +65,6 @@ public class Robot extends IterativeRobot {
 			visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 			driver = new Xbox(0);
 	        coDriver = new Xbox(1);
-	        /*leftDriver = new SimpleFlightStick(2);
-	        rightDriver = new SimpleFlightStick(3);*/
 	        zeroAllSensors();
 	        robot.turret.resetAngle(90);
 	        enabledLooper.register(VisionProcessor.getInstance());
@@ -89,13 +87,16 @@ public class Robot extends IterativeRobot {
 	        	if(smartDashboardInteractions.getSelectedSide().equals("Blue")){
 	        		robot.pidgey.setAngle(180);
 	        		robot.turret.resetAngle(90);
+	        		robot.swerve.zeroSensors(-90);
 	        	}else{
 	        		robot.pidgey.setAngle(0);
 	        		robot.turret.resetAngle(-90);
+	        		robot.swerve.zeroSensors(90);
 	        	}
 	        }else if(smartDashboardInteractions.getSelectedMode().equals("Gear and Hopper")){
 	        	robot.pidgey.setAngle(0);
 	        	robot.turret.resetAngle(90);
+	        	robot.swerve.zeroSensors(90);
 	        }
 	        
 	        VisionServer.getInstance();
@@ -277,7 +278,7 @@ public class Robot extends IterativeRobot {
 		}else if(driver.getPOV() == 270){
 			robot.swerve.rotateAboutModule(true);
 		}else if(driver.getPOV() == 0){
-			zeroAllSensors();
+			robot.swerve.zeroSensors(robot.pidgey.getRealMathAngle());
 		}
 		
 		//Gear Score

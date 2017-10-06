@@ -161,10 +161,10 @@ public class Swerve extends Subsystem{
 		frontLeft.reverseOutput(true);
 		rearLeft.reverseOutput(true);
 		
-		frontRight.setOriginCoordinates(HALF_WIDTH, HALF_LENGTH);
-		frontLeft.setOriginCoordinates(-HALF_WIDTH, HALF_LENGTH);
-		rearLeft.setOriginCoordinates(-HALF_WIDTH, -HALF_LENGTH);
-		rearRight.setOriginCoordinates(HALF_WIDTH, -HALF_LENGTH);
+		frontRight.setOriginCoordinates(HALF_LENGTH, -HALF_WIDTH);
+		frontLeft.setOriginCoordinates(HALF_LENGTH, HALF_WIDTH);
+		rearLeft.setOriginCoordinates(-HALF_LENGTH, HALF_WIDTH);
+		rearRight.setOriginCoordinates(-HALF_LENGTH, -HALF_WIDTH);
 		
 		modules = new ArrayList<>(4);
 		modules.add(frontRight);
@@ -675,8 +675,11 @@ public class Swerve extends Subsystem{
 	}
 	@Override
 	public synchronized void zeroSensors(){
+		zeroSensors(90);
+	}
+	public synchronized void zeroSensors(double heading){
 		for(SwerveDriveModule m : modules){
-			m.zeroSensors();
+			m.zeroSensors(heading);
 		}
 		robotX = 0;
 		robotY = 0;

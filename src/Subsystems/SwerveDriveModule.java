@@ -5,6 +5,9 @@ import com.ctre.CANTalon.FeedbackDevice;
 import com.ctre.CANTalon.TalonControlMode;
 
 import Utilities.Constants;
+import Utilities.RigidTransform2d;
+import Utilities.Rotation2d;
+import Utilities.Translation2d;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -159,10 +162,15 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	@Override
 	public synchronized void zeroSensors(){
+		zeroSensors(90);
+	}
+	public synchronized void zeroSensors(double heading){
 		driveMotor.setEncPosition(0);
 		driveMotor.setPosition(0);
-		currentX = defaultX;
-		currentY = defaultY;
+		RigidTransform2d robotPose = RigidTransform2d.fromRotation(Rotation2d.fromDegrees(heading));
+		RigidTransform2d modulePose = robotPose.transformBy(RigidTransform2d.fromTranslation(new Translation2d(defaultX, defaultY)));
+		currentX = modulePose.getTranslation().getX();
+		currentY = modulePose.getTranslation().getY();
 		lastDistance = 0;
 	}
 	@Override

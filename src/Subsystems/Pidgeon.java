@@ -76,6 +76,9 @@ public class Pidgeon {
 	public double getAngle(){
 		return currentAngle;
 	}
+	public double getRealMathAngle(){
+		return -currentAngle + 90;
+	}
 	public double getAngularRate(){
 		return currentAngularRate;
 	}

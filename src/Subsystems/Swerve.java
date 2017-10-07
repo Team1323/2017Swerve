@@ -626,10 +626,10 @@ public class Swerve extends Subsystem{
 			    rearLeft.setFieldRelativeAngle(kinematics.rlSteeringAngle());
 			    rearRight.setFieldRelativeAngle(kinematics.rrSteeringAngle());
 /**/
-				frontRight.setDriveSpeed(fro);
-				frontLeft.setDriveSpeed(flo);
-				rearRight.setDriveSpeed(bro);
-				rearLeft.setDriveSpeed(blo);
+				frontRight.setVoltage(fro*12);
+				frontLeft.setVoltage(flo*12);
+				rearRight.setVoltage(bro*12);
+				rearLeft.setVoltage(blo*12);
 				
 				if(brFollower.isFinished()){
 					setState(ControlState.Neutral);

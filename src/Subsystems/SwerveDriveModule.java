@@ -103,6 +103,10 @@ public class SwerveDriveModule extends Subsystem{
 			driveMotor.set(power);
 		}
 	}
+	public void setVoltage(double voltage){
+		driveMotor.changeControlMode(TalonControlMode.Voltage);
+		driveMotor.set(voltage);
+	}
 	public double getEncoderDistanceInches(){
 		return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
 	}

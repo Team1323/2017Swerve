@@ -15,14 +15,18 @@ public class Constants {
 	public static final double ANGLE_FRONT_MODULE_CENTER = Math.atan(WHEELBASE_LENGTH/WHEELBASE_WIDTH);
 	
     // Swerve Module Wheel Offsets
-	public static final double FRONT_RIGHT_TURN_OFFSET = 56.25;
-    public static final double FRONT_LEFT_TURN_OFFSET  = 99.84;
-    public static final double REAR_LEFT_TURN_OFFSET   = 278.43;
-    public static final double REAR_RIGHT_TURN_OFFSET  = 355.42;
+	public static final double FRONT_RIGHT_TURN_OFFSET = 55.5468;
+    public static final double FRONT_LEFT_TURN_OFFSET  = 98.789;
+    public static final double REAR_LEFT_TURN_OFFSET   = 278.0859;
+    public static final double REAR_RIGHT_TURN_OFFSET  = 355.78125;
     
     //rpm 3844 4033 3900 4179 3989
     //native units 9226 9680 9362 10030 9574
     //f gain 0.10685189053687069145602673908502
+    
+    //module rpm 126140
+    //native units 600
+    //f gain 1.705
     
     public static final double SWERVE_WHEEL_DIAMETER = 2.5;
     public static final double SWERVE_ENCODER_REVS_PER_WHEEL_REV = 4.0;//4.307692308;

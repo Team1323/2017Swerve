@@ -194,7 +194,7 @@ public class Robot extends IterativeRobot {
 			enabledLooper.start();
 			swerveLooper.start();
 			
-			robot.swerve.setState(Swerve.ControlState.Manual);
+			robot.swerve.setState(Swerve.ControlState.Neutral);
 			robot.swerve.setTargetHeading(robot.pidgey.getAngle());
 		}catch(Throwable t){
 			CrashTracker.logThrowableCrash(t);

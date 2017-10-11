@@ -56,16 +56,18 @@ public class SwerveDriveModule extends Subsystem{
     	rotationMotor.configNominalOutputVoltage(+0f, -0f);
     	rotationMotor.configPeakOutputVoltage(+7f, -7f);
     	rotationMotor.setAllowableClosedLoopErr(0); 
-    	rotationMotor.changeControlMode(TalonControlMode.Position);
-    	rotationMotor.setPID(5.0, 0.0, 40.0, 0.00, 0, 0.0, 0);
-    	rotationMotor.setProfile(0);
-    	rotationMotor.set(rotationMotor.get());
+    	rotationMotor.changeControlMode(TalonControlMode.MotionMagic);
+    	rotationMotor.setMotionMagicCruiseVelocity(63070);
+    	rotationMotor.setMotionMagicAcceleration(63070*10);
+    	rotationMotor.setPID(5.0, 0.0, 40.0, 0.0, 0, 0.0, 0);
+    	rotationMotor.setPID(5.0, 0.0, 160.0, 1.705, 0, 0.0, 1);
+    	rotationMotor.setProfile(1);
+    	rotationMotor.set(rotationMotor.getPosition());
     	driveMotor.setEncPosition(0);
     	driveMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
     	driveMotor.configEncoderCodesPerRev(360);
-    	driveMotor.setStatusFrameRateMs(CANTalon.StatusFrameRate.QuadEncoder, 10);
+    	driveMotor.setStatusFrameRateMs(CANTalon.StatusFrameRate.Feedback, 10);
     	driveMotor.configNominalOutputVoltage(+0f, -0f);
-    	driveMotor.configPeakOutputVoltage(+12f, -12f);
     	driveMotor.setVoltageRampRate(0.0);
     	driveMotor.setAllowableClosedLoopErr(0);
     	driveMotor.changeControlMode(TalonControlMode.PercentVbus);
@@ -77,7 +79,7 @@ public class SwerveDriveModule extends Subsystem{
     	driveMotor.setMotionMagicAcceleration(4500);
 	}
 	public double getRawAngle(){
-		return rotationMotor.get();
+		return rotationMotor.getPosition();
 	}
 	public double getModuleAngle(){
 		return Util.boundAngle0to360Degrees(getRawAngle() - offset);
@@ -89,8 +91,13 @@ public class SwerveDriveModule extends Subsystem{
 		setModuleAngle(Util.boundAngle0to360Degrees(fieldAngle - Util.boundAngle0to360Degrees(pidgey.getAngle())));
 	}
 	public void setModuleAngle(double goalAngle){
-		double newAngle = Util.continousAngle(goalAngle+offset,getRawAngle());
+		rotationMotor.changeControlMode(TalonControlMode.MotionMagic);
+		double newAngle = Util.placeInAppropriate0To360Scope(getRawAngle(), goalAngle+offset);
 		rotationMotor.set(newAngle);
+	}
+	public void setRotationOpenLoop(double power){
+		rotationMotor.changeControlMode(TalonControlMode.PercentVbus);
+		rotationMotor.set(power);
 	}
 	public double getGoal(){
 		return Util.boundAngle0to360Degrees(rotationMotor.getSetpoint() - offset);
@@ -105,7 +112,11 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	public void setVoltage(double voltage){
 		driveMotor.changeControlMode(TalonControlMode.Voltage);
-		driveMotor.set(voltage);
+		if(isReversed){
+			driveMotor.set(-voltage);
+		}else{
+			driveMotor.set(voltage);
+		}
 	}
 	public double getEncoderDistanceInches(){
 		return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
@@ -161,8 +172,8 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	@Override
 	public synchronized void stop(){
-		rotationMotor.set(rotationMotor.get());
-		driveMotor.set(0);
+		setRotationOpenLoop(0.0);
+		setDriveSpeed(0.0);
 	}
 	@Override
 	public synchronized void zeroSensors(){
@@ -182,14 +193,16 @@ public class SwerveDriveModule extends Subsystem{
 		String smallX = Float.toString((float)(Math.round(getX() * 100.0) / 100.0));
 		String smallY = Float.toString((float)(Math.round(getY() * 100.0) / 100.0));
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle());
-		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", getGoal());
+		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", rotationMotor.getSetpoint());
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceFeet());
 		SmartDashboard.putString("Module " + Integer.toString(moduleID) + " Coordinates ", "("+smallX+" , "+smallY+")");
+		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + "Speed", getModuleFeetPerSecond());
+		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Error", rotationMotor.getSetpoint() - rotationMotor.getPosition());
 		if(moduleID == 4){
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " X", currentX);
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Y", currentY);
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Field Relative Angle", getFieldRelativeAngle());
-			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + "Speed", getModuleFeetPerSecond());
+			
 		}
 	}
 }

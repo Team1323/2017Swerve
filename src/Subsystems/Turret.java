@@ -22,7 +22,7 @@ public class Turret extends Subsystem{
 	private CANTalon motor;
 	private double gyroLockedHeading = 0.0;
 	private double gyroLockedTurretAngle = 0.0;
-	private int onTargetCheck = 0;
+	private double stateStartTime = 0.0;
 	private double lastTrackWhileShooting = Double.POSITIVE_INFINITY;
 	
 	public double goalX = 0.0;
@@ -49,7 +49,6 @@ public class Turret extends Subsystem{
     	motor.setPID(4.0, 0.0, 100.0, 0.8184, 0, 0.0, 1);
 		motor.setMotionMagicCruiseVelocity(300);
 		motor.setMotionMagicAcceleration(800);
-    	//motor.setPID(5.0, 0.00, Constants.TURRET_SMALL_D, 0.0, 0, 0.0, 1);
     	motor.setProfile(0);
 		motor.enableBrakeMode(true);
 		motor.setNominalClosedLoopVoltage(12);
@@ -59,7 +58,7 @@ public class Turret extends Subsystem{
 		motor.setReverseSoftLimit((-Constants.TURRET_MAX_ANGLE/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV);
 	}
 	public enum ControlState{
-		Off, VisionTracking, Manual, GyroComp, CalculatedTracking, MotionMagic, TrackingWhileShooting
+		Off, VisionTracking, Manual, GyroComp, CalculatedTracking, MotionMagic, TrackingWhileShooting, Locked
 	}
 	public ControlState currentState = ControlState.MotionMagic;
 	public static Turret getInstance(){
@@ -67,6 +66,7 @@ public class Turret extends Subsystem{
 	}	
 	public void setState(ControlState newState){
 		currentState = newState;
+		stateStartTime = Timer.getFPGATimestamp();
 	}
 	public ControlState getCurrentState(){
 		return currentState;
@@ -79,7 +79,6 @@ public class Turret extends Subsystem{
 		if(angle < -Constants.TURRET_MAX_ANGLE)
 			angle = -Constants.TURRET_MAX_ANGLE;
 		motor.set(angle*Constants.TURRET_REVS_PER_DEGREE);
-		onTargetCheck = Constants.TURRET_ONTARGET_THRESH;
 	}
 	public void setMotionMagic(double angle){
 		setState(ControlState.MotionMagic);
@@ -116,8 +115,7 @@ public class Turret extends Subsystem{
 		return ((motor.getSetpoint()/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
 	}
 	public void lock(){
-		setState(ControlState.MotionMagic);
-		setAngle(getAngle());
+		setState(ControlState.Locked);
 	}
 	public void gyroLock(){
 		setState(ControlState.GyroComp);
@@ -161,17 +159,17 @@ public class Turret extends Subsystem{
 	public void update(){
 		switch(currentState){
 			case GyroComp:
-				motor.setProfile(0);
+				motor.setProfile(1);
 				setAngle(gyroLockedTurretAngle - (pidgey.getAngle() - gyroLockedHeading));
 				SmartDashboard.putString("Turret Control State", "GyroComp");
 				break;
 			case CalculatedTracking:
-				motor.setProfile(0);
+				motor.setProfile(1);
 				faceTarget();
 				SmartDashboard.putString("Turret Control State", "CalculatedTracking");
 				break;
 			case VisionTracking:
-				motor.setProfile(0);
+				motor.setProfile(1);
 				if(onTarget() && isStationary() && robotState.getTargetVisbility()){
 					Optional<ShooterAimingParameters> params = RobotState.getInstance().getAimingParameters(Timer.getFPGATimestamp());
 					if(params.isPresent()){
@@ -191,6 +189,13 @@ public class Turret extends Subsystem{
 			case MotionMagic:
 				motor.setProfile(1);
 				SmartDashboard.putString("Turret Control State", "MotionMagic");
+				break;
+			case Locked:
+				setPercentVBus(0);
+				if((Timer.getFPGATimestamp() - stateStartTime) > 0.25){
+					setAngle(getAngle());
+					setState(ControlState.MotionMagic);
+				}
 				break;
 			case Manual:
 				SmartDashboard.putString("Turret Control State", "Manual");
@@ -231,7 +236,7 @@ public class Turret extends Subsystem{
 	private final Loop turretLoop = new Loop(){
 		@Override
 		public void onStart(){
-			lock();
+			stop();
 		}
 		@Override
 		public void onLoop(){

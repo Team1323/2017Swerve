@@ -2,13 +2,8 @@ package Subsystems;
 
 import java.util.ArrayList;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.FeedbackDevice;
-import com.ctre.CANTalon.TalonControlMode;
-
 import Loops.Loop;
 import Utilities.Constants;
-import Utilities.Logger;
 import Utilities.Ports;
 import Utilities.SynchronousPID;
 import Utilities.Util;
@@ -120,10 +115,10 @@ public class Swerve extends Subsystem{
 		targetHeadingAngle = target;
 		setHeadingController(HeadingController.Snap);
 	}
-	private SynchronousPID headingPID = new SynchronousPID(0.001, 0.0, 0.0007, 0.0);
-	private SynchronousPID strongHeadingPID = new SynchronousPID(0.008, 0.0, 0.0, 0.0);
+	private SynchronousPID headingPID = new SynchronousPID/*(0.002, 0.0, 0.0007, 0.0);*/(0.001, 0.0, 0.0007, 0.0);
+	private SynchronousPID strongHeadingPID = new SynchronousPID(0.016, 0.0, 0.16, 0.0);/*(0.008, 0.0, 0.0, 0.0);*/
 	private SynchronousPID snapPID = new SynchronousPID(0.0075, 0.0, 0.1, 0.2);
-	private SynchronousPID reversibleSnapPID = new SynchronousPID(0.005, 0.0, 0.01, 0.0);
+	private SynchronousPID reversibleSnapPID = new SynchronousPID(0.005, 0.0, 0.02, 0.0);
 	private int cyclesLeft = 1;
 	
 	//305.2586 54.74135
@@ -225,8 +220,8 @@ public class Swerve extends Subsystem{
 		//redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
 		//blueHopperTrajectory = Pathfinder.generate(bluePoints, stableConfig);
 		testTrajectory = Pathfinder.generate(leftPegPoints, stableConfig);
-		leftPegTrajectory = Pathfinder.generate(leftPegPoints, gearConfig);
-		leftPegToHopperTrajectory = Pathfinder.generate(leftPegToHopperPoints, stableConfig);
+		//leftPegTrajectory = Pathfinder.generate(leftPegPoints, gearConfig);
+		//leftPegToHopperTrajectory = Pathfinder.generate(leftPegToHopperPoints, stableConfig);
 		/*for (int i = 0; i < forwardTrajectory.length(); i++) {
 		    Trajectory.Segment seg = forwardTrajectory.get(i);
 		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
@@ -236,7 +231,6 @@ public class Swerve extends Subsystem{
 	
 	public void sendInput(double x, double y, double rotate, boolean robotCentric, boolean lowPower){
 		double angle = pidgey.getAngle()/180.0*Math.PI;
-		inputMagnitude = Math.hypot(x, y);
 		if(robotCentric){
 			xInput = x;
 			yInput = y;
@@ -253,7 +247,13 @@ public class Swerve extends Subsystem{
 			xInput *= 0.45;
 			yInput *= 0.45;
 		}
+		inputMagnitude = Math.hypot(xInput, yInput);
 		rotateInput = rotate*0.8;
+		/*double theta = Math.atan2(yInput, xInput);
+		double rotationOffset = Math.PI/2*rotateInput/(inputMagnitude*2);
+		theta += rotationOffset;
+		xInput = Math.cos(theta)*inputMagnitude;
+		yInput = Math.sin(theta)*inputMagnitude;*/
 		
 		if(rotateInput == 0){
 			if(isManuallyRotating){
@@ -516,15 +516,21 @@ public class Swerve extends Subsystem{
 				}
 				if(stabilizationTargetSet){
 					if(Math.abs(getHeadingError()) > 5){
-						rotationCorrection = strongHeadingPID.calculate(getHeadingError());
+						//headingPID.setPID(0.012, 0.0, 0.1, 0.0);
+						headingPID.setPID(0.012, 0.0, 0.08, 0.0);
+						//rotationCorrection = strongHeadingPID.calculate(getHeadingError());
+						rotationCorrection = headingPID.calculate(getHeadingError());
 					}else if(Math.abs(getHeadingError()) > 0.5){
+						headingPID.setPID(0.004, 0.0, 0.0, 0.0);
 						rotationCorrection = headingPID.calculate(getHeadingError());
 					}
 				}
 				break;
 			case Snap:
 				//rotationCorrection = snapPID.calculate(getHeadingError());
-				rotationCorrection = reversibleSnapPID.calculate(getHeadingError());
+				//rotationCorrection = reversibleSnapPID.calculate(getHeadingError());
+				headingPID.setPID(0.005, 0.0, 0.02, 0.0);
+				rotationCorrection = headingPID.calculate(getHeadingError());
 				if(Math.abs(getHeadingError()) < 2){
 					cyclesLeft--;
 				}else{

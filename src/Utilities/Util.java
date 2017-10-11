@@ -190,7 +190,7 @@ public class Util {
     	double angleDifference = Math.abs(goalAngle - currentAngle);
     	double reversedAngleDifference = Math.abs(goalAngle - reversedAngle);
     	angleDifference = (angleDifference > 180) ? 360-angleDifference : angleDifference;
-    	reversedAngle = (reversedAngleDifference > 180) ? 360-reversedAngleDifference : reversedAngleDifference;
+    	reversedAngleDifference = (reversedAngleDifference > 180) ? 360-reversedAngleDifference : reversedAngleDifference;
     	return reversedAngleDifference < angleDifference;
     }
     public static double calcPID(double p, double i, double d, double f, double error, double rate, double cap){

@@ -117,8 +117,8 @@ public class GoalTrack {
             double x = 0;
             double y = 0;
             for (Map.Entry<Double, Translation2d> entry : mObservedPositions.entrySet()) {
-                x += entry.getValue().getX();
-                y += entry.getValue().getY();
+                x += entry.getValue().x();
+                y += entry.getValue().y();
             }
             x /= mObservedPositions.size();
             y /= mObservedPositions.size();

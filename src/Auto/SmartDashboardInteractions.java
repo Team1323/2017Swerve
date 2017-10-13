@@ -2,6 +2,7 @@ package Auto;
 
 import Auto.Modes.BlueGearAndHopperMode;
 import Auto.Modes.HopperMode;
+import Auto.Modes.MiddleGearMode;
 import Auto.Modes.StandStillMode;
 import Subsystems.Swerve;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -23,6 +24,7 @@ public class SmartDashboardInteractions {
     	modeChooser = new SendableChooser();
     	modeChooser.addDefault("Hopper", DEFAULT_MODE);
     	modeChooser.addObject("Gear and Hopper", AutoOption.GEAR_AND_HOPPER);
+    	modeChooser.addObject("Middle Gear", AutoOption.MIDDLE_GEAR);
     	sideChooser = new SendableChooser();
     	sideChooser.addDefault("Blue", DEFAULT_SIDE);
     	sideChooser.addObject("Red", AutoSide.RED);
@@ -52,6 +54,7 @@ public class SmartDashboardInteractions {
     enum AutoOption{
     	HOPPER("Hopper"), 
     	GEAR_AND_HOPPER("Gear and Hopper"),
+    	MIDDLE_GEAR("Middle Gear"),
     	STAND_STILL("Stand Still");
     	
     	public final String name;
@@ -83,6 +86,8 @@ public class SmartDashboardInteractions {
     			if(side == AutoSide.BLUE){
     				return new BlueGearAndHopperMode();
     			}
+    		case MIDDLE_GEAR:
+    			return new MiddleGearMode();
     		case STAND_STILL: // fallthrough
             default:
                 System.out.println("ERROR: unexpected auto mode: " + option);

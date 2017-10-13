@@ -16,6 +16,7 @@ import Subsystems.RoboSystem;
 import Subsystems.RobotState;
 import Subsystems.Swerve;
 import Subsystems.Turret;
+import Utilities.CheesyDriveHelper;
 import Utilities.Constants;
 import Utilities.CrashTracker;
 import Utilities.Logger;
@@ -48,6 +49,7 @@ public class Robot extends IterativeRobot {
 	private boolean sweeperUnjamComplete = false;
 	private int cyclesReadyForShooting = 0;
 	int cycles = 0;
+	CheesyDriveHelper cheesyDriveHelper = new CheesyDriveHelper();
 	VisionServer visionServer = VisionServer.getInstance();
 	
 	SmartDashboardInteractions smartDashboardInteractions = new SmartDashboardInteractions();
@@ -65,6 +67,8 @@ public class Robot extends IterativeRobot {
 			visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 			driver = new Xbox(0);
 	        coDriver = new Xbox(1);
+	        steeringWheel = new SteeringWheel(2);
+	        driverJoystick = new LogitechJoystick(3);
 	        zeroAllSensors();
 	        robot.turret.resetAngle(90);
 	        enabledLooper.register(VisionProcessor.getInstance());
@@ -97,6 +101,10 @@ public class Robot extends IterativeRobot {
 	        	robot.pidgey.setAngle(0);
 	        	robot.turret.resetAngle(90);
 	        	robot.swerve.zeroSensors(90);
+	        }else if(smartDashboardInteractions.getSelectedMode().equals("Middle Gear")){
+	        	robot.pidgey.setAngle(0);
+        		robot.turret.resetAngle(-90);
+        		robot.swerve.zeroSensors(90);
 	        }
 	        
 	        VisionServer.getInstance();
@@ -233,6 +241,8 @@ public class Robot extends IterativeRobot {
 		try{
 			driver.update();
 			coDriver.update();
+			//driverJoystick.update();
+			//steeringWheel.update();
 			
 			driverXboxControls();
 			coDriverXboxControls();
@@ -245,7 +255,11 @@ public class Robot extends IterativeRobot {
 	}
 	public void driverXboxControls(){
 		//Swerve
-		robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false, driver.getTriggerAxis(Hand.kLeft) > 0);
+		if(robot.swerve.getState() == Swerve.ControlState.Tank){
+			robot.swerve.setTankOpenLoop(cheesyDriveHelper.cheesyDrive(-driverJoystick.getY(), steeringWheel.getWheelTurn(), steeringWheel.leftBumper.isBeingPressed(), true));
+		}else{
+			robot.swerve.sendInput(driver.getX(Hand.kLeft), -driver.getY(Hand.kLeft), driver.getX(Hand.kRight), false, driver.getTriggerAxis(Hand.kLeft) > 0);
+		}
 		if(driver.leftCenterClick.wasPressed()){
 			robot.swerve.toggleSuperSlow();
 		}
@@ -339,17 +353,6 @@ public class Robot extends IterativeRobot {
 		}else if(robot.turret.getCurrentState() == Turret.ControlState.Manual){
 			robot.turret.lock();
 		}
-		
-		/*if(robotState.getTargetVisbility()){
-			double optimalTurretAngle = Util.boundAngle0to360Degrees(robot.turret.getFieldRelativeAngle() + robotState.getVisionAngle());
-			if(optimalTurretAngle >= 180 &&
-					optimalTurretAngle <= 270){
-				double magnitude = robot.turret.getTrueVisionDistance() + Constants.kCameraYOffset;
-				double theta = Math.toRadians(90 - (optimalTurretAngle - 180));
-				double robotX = Math.cos(theta) * magnitude;
-				double robotY = Math.sin(theta) * magnitude;
-			}
-		}*/
 		
 		if(robot.turret.isTracking() && robot.turret.onTarget() && !robot.sweeper.isFeeding()){
 			Optional<ShooterAimingParameters> params = robotState.getAimingParameters(Timer.getFPGATimestamp());

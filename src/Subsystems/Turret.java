@@ -60,7 +60,7 @@ public class Turret extends Subsystem{
 	public enum ControlState{
 		Off, VisionTracking, Manual, GyroComp, CalculatedTracking, MotionMagic, TrackingWhileShooting, Locked
 	}
-	public ControlState currentState = ControlState.MotionMagic;
+	public ControlState currentState = ControlState.Off;
 	public static Turret getInstance(){
 		return instance;
 	}	

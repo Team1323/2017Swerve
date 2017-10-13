@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import Loops.Loop;
 import Utilities.Constants;
+import Utilities.DriveSignal;
 import Utilities.Ports;
 import Utilities.SynchronousPID;
 import Utilities.Util;
@@ -54,7 +55,7 @@ public class Swerve extends Subsystem{
 		Manual("Manual"), PathFollowing("PathFollowing"), Neutral("Neutral")
 		, AdjustTargetDistance("AdjustTargetDistance"),
 		TurnInPlace("TurnInPlace"), BaseLock("BaseLock"), 
-		ModuleRotation("Clockwise");
+		ModuleRotation("Clockwise"), Tank("TankDrive");
 		
 		public final String name;
 		private ControlState(String name){
@@ -660,12 +661,24 @@ public class Swerve extends Subsystem{
 				centerOfRotationModule.setDriveSpeed(0);
 				centerOfRotationModule.setFieldRelativeAngle(0);
 				break;
+			case Tank:
+				for(SwerveDriveModule m : modules){
+					m.setModuleAngle(0);
+				}
+				break;
 			case Neutral:
 				stop();
 				break;
 		}
 		dt = now - timestamp;
 		timestamp = now;
+	}
+	
+	public void setTankOpenLoop(DriveSignal signal){
+		frontRight.setDriveSpeed(signal.rightMotor);
+		rearRight.setDriveSpeed(signal.rightMotor);
+		frontLeft.setDriveSpeed(signal.leftMotor);
+		rearLeft.setDriveSpeed(signal.leftMotor);
 	}
 	public void setModuleAngles(double angle){
 		for(SwerveDriveModule m : modules){

@@ -33,7 +33,6 @@ public class RobotState {
     
  // FPGATimestamp -> RigidTransform2d or Rotation2d
     protected InterpolatingTreeMap<InterpolatingDouble, RigidTransform2d> fieldToVehicle;
-    protected RigidTransform2d.Delta vehicleVelocity;
     protected InterpolatingTreeMap<InterpolatingDouble, Rotation2d> turretRotation;
     Map<Double, Double> mObservedAngles = new TreeMap<>();
     double smoothedAngle;
@@ -69,7 +68,6 @@ public class RobotState {
             Rotation2d initial_turret_rotation) {
     	fieldToVehicle = new InterpolatingTreeMap<>(kObservationBufferSize);
     	fieldToVehicle.put(new InterpolatingDouble(start_time), initial_field_to_vehicle);
-    	vehicleVelocity = new RigidTransform2d.Delta(0, 0, 0);
     	turretRotation = new InterpolatingTreeMap<>(kObservationBufferSize);
     	turretRotation.put(new InterpolatingDouble(start_time), initial_turret_rotation);
     	goalTracker = new GoalTracker();
@@ -118,9 +116,9 @@ public class RobotState {
     		RigidTransform2d latest_turret_fixed_to_goal = getLatestFieldToVehicle().getValue()
     				.transformBy(kVehicleToTurretFixed).inverse()
     				.transformBy(RigidTransform2d.fromTranslation(report.field_to_goal));
-    		SmartDashboard.putString("Boiler Position", "(" + report.field_to_goal.getX() + ", " + report.field_to_goal.getY() + ")");
+    		SmartDashboard.putString("Boiler Position", "(" + report.field_to_goal.x() + ", " + report.field_to_goal.y() + ")");
     		ShooterAimingParameters params = new ShooterAimingParameters(latest_turret_fixed_to_goal.getTranslation().norm(),
-    				new Rotation2d(latest_turret_fixed_to_goal.getTranslation().getX(), latest_turret_fixed_to_goal.getTranslation().getY(), true),
+    				new Rotation2d(latest_turret_fixed_to_goal.getTranslation().x(), latest_turret_fixed_to_goal.getTranslation().y(), true),
     				report.id);
     		
     		return Optional.of(params);
@@ -230,11 +228,11 @@ public class RobotState {
     	if(getAimingParameters(time).isPresent()){
     		SmartDashboard.putNumber("Turret To Goal Angle", getAimingParameters(Timer.getFPGATimestamp()).get().getTurretAngle().getDegrees());
     	}
-    	SmartDashboard.putString("Turret Field Pose", "(" + turretPose.getTranslation().getX() + ", " +
-    	    	turretPose.getTranslation().getY() + ", " + turretPose.getRotation().getDegrees());
-    	SmartDashboard.putString("Field To Vehicle Pose", "(" + robotPose.getTranslation().getX() + ", " +
-    			robotPose.getTranslation().getY() + ", " + robotPose.getRotation().getDegrees());
-    	SmartDashboard.putString("Field to Camera Pose", "(" + cameraPose.getTranslation().getX() + ", " +
-    	    	cameraPose.getTranslation().getY() + ", " + cameraPose.getRotation().getDegrees());
+    	SmartDashboard.putString("Turret Field Pose", "(" + turretPose.getTranslation().x() + ", " +
+    	    	turretPose.getTranslation().y() + ", " + turretPose.getRotation().getDegrees());
+    	SmartDashboard.putString("Field To Vehicle Pose", "(" + robotPose.getTranslation().x() + ", " +
+    			robotPose.getTranslation().y() + ", " + robotPose.getRotation().getDegrees());
+    	SmartDashboard.putString("Field to Camera Pose", "(" + cameraPose.getTranslation().x() + ", " +
+    	    	cameraPose.getTranslation().y() + ", " + cameraPose.getRotation().getDegrees());
     }
 }

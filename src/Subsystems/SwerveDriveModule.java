@@ -184,8 +184,8 @@ public class SwerveDriveModule extends Subsystem{
 		driveMotor.setPosition(0);
 		RigidTransform2d robotPose = RigidTransform2d.fromRotation(Rotation2d.fromDegrees(heading));
 		RigidTransform2d modulePose = robotPose.transformBy(RigidTransform2d.fromTranslation(new Translation2d(defaultX, defaultY)));
-		currentX = modulePose.getTranslation().getX();
-		currentY = modulePose.getTranslation().getY();
+		currentX = modulePose.getTranslation().x();
+		currentY = modulePose.getTranslation().y();
 		lastDistance = 0;
 	}
 	@Override

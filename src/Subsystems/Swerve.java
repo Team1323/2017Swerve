@@ -28,6 +28,7 @@ public class Swerve extends Subsystem{
 	private double inputMagnitude = 0;
 	private double rotateInput = 0;
 	private double rotationCorrection = 0;
+	private double desiredWheelHeading = 0;
 	private SwerveDriveModule frontLeft;
 	private SwerveDriveModule frontRight;
 	private SwerveDriveModule rearLeft;
@@ -361,6 +362,9 @@ public class Swerve extends Subsystem{
 		for(SwerveDriveModule m : modules){
 			m.moveInches(distance);
 		}
+		desiredWheelHeading = wheelAngle;
+		setTargetHeading(pidgey.getAngle());
+		setHeadingController(HeadingController.Stabilize);
 	}
 	
 	public void turnInPlace(double goalHeading){
@@ -571,29 +575,16 @@ public class Swerve extends Subsystem{
 			    			modules.get(i).setModuleAngle(kinematics.wheelAngles[i]);
 			    		}
 			    	}
-			    	/*if(Util.shouldReverse(kinematics.frSteeringAngle(), frontRight.getModuleAngle())){
-			    		frontRight.setModuleAngle(kinematics.frSteeringAngle() + 180);
-			    		System.out.println("Is reversing");
-			    	}else{
-			    		frontRight.setModuleAngle(kinematics.frSteeringAngle());
-			    	}*/
-				    /*frontRight.setModuleAngle(kinematics.frSteeringAngle());
-				    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
-				    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
-				    rearRight.setModuleAngle(kinematics.rrSteeringAngle());*/
 			    }
 			    for(int i=0; i<4; i++){
 		    		if(Util.shouldReverse(kinematics.wheelAngles[i], modules.get(i).getModuleAngle())){
-		    			modules.get(i).setDriveSpeed(-kinematics.wheelSpeeds[i]);
+		    			//modules.get(i).setDriveOpenLoop(-kinematics.wheelSpeeds[i]);
+		    			modules.get(i).setDriveVelocity(-kinematics.wheelSpeeds[i]*Constants.SWERVE_DRIVE_MAX_RPM);
 		    		}else{
-		    			modules.get(i).setDriveSpeed(kinematics.wheelSpeeds[i]);
+		    			//modules.get(i).setDriveOpenLoop(kinematics.wheelSpeeds[i]);
+		    			modules.get(i).setDriveVelocity(kinematics.wheelSpeeds[i]*Constants.SWERVE_DRIVE_MAX_RPM);
 		    		}
 			    }
-			    
-			    /*frontRight.setDriveSpeed(kinematics.frWheelSpeed());
-			    frontLeft.setDriveSpeed(-kinematics.flWheelSpeed());
-			    rearLeft.setDriveSpeed(-kinematics.rlWheelSpeed());
-			    rearRight.setDriveSpeed(kinematics.rrWheelSpeed());*/
 				break;
 			case PathFollowing:
 /*/
@@ -616,11 +607,6 @@ public class Swerve extends Subsystem{
 				yInput = tmp;	
 			    kinematics.calculate(xInput, yInput, rotationCorrection);
 			    
-				/*frontRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(frFollower.getHeading())));
-				frontLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(flFollower.getHeading())));
-				rearLeft.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(blFollower.getHeading())));
-				rearRight.setModuleAngle(Util.boundAngle0to360Degrees(Math.toDegrees(brFollower.getHeading())));*/
-			    
 /**/
 			    frontRight.setModuleAngle(kinematics.frSteeringAngle());
 			    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
@@ -633,10 +619,10 @@ public class Swerve extends Subsystem{
 			    rearLeft.setFieldRelativeAngle(kinematics.rlSteeringAngle());
 			    rearRight.setFieldRelativeAngle(kinematics.rrSteeringAngle());
 /**/
-				frontRight.setVoltage(fro*12);
-				frontLeft.setVoltage(flo*12);
-				rearRight.setVoltage(bro*12);
-				rearLeft.setVoltage(blo*12);
+				frontRight.setDriveVoltage(fro*12);
+				frontLeft.setDriveVoltage(flo*12);
+				rearRight.setDriveVoltage(bro*12);
+				rearLeft.setDriveVoltage(blo*12);
 				
 				if(brFollower.isFinished()){
 					setState(ControlState.Neutral);
@@ -644,7 +630,18 @@ public class Swerve extends Subsystem{
 				
 				break;
 			case AdjustTargetDistance:
-				
+			    pidgeyAngle = Math.toRadians(pidgey.getAngle());
+			    x = Math.sin(Math.toRadians(desiredWheelHeading));
+			    y = Math.cos(Math.toRadians(desiredWheelHeading));
+			    tmp = (y* Math.cos(pidgeyAngle)) + (x * Math.sin(pidgeyAngle));
+				xInput = (-y * Math.sin(pidgeyAngle)) + (x * Math.cos(pidgeyAngle));
+				yInput = tmp;	
+			    kinematics.calculate(xInput, yInput, rotationCorrection);
+			    
+			    frontRight.setModuleAngle(kinematics.frSteeringAngle());
+			    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
+			    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
+			    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
 				break;
 			case TurnInPlace:
 				if(distanceOnTarget()){
@@ -655,10 +652,10 @@ public class Swerve extends Subsystem{
 	
 				break;
 			case ModuleRotation:
-				oppositeModule.setDriveSpeed(rotateInput);
-				lengthwiseModule.setDriveSpeed(rotateInput * (Constants.WHEELBASE_LENGTH/Constants.SWERVE_R));
-				widthwiseModule.setDriveSpeed(rotateInput * (Constants.WHEELBASE_WIDTH/Constants.SWERVE_R));
-				centerOfRotationModule.setDriveSpeed(0);
+				oppositeModule.setDriveOpenLoop(rotateInput);
+				lengthwiseModule.setDriveOpenLoop(rotateInput * (Constants.WHEELBASE_LENGTH/Constants.SWERVE_R));
+				widthwiseModule.setDriveOpenLoop(rotateInput * (Constants.WHEELBASE_WIDTH/Constants.SWERVE_R));
+				centerOfRotationModule.setDriveOpenLoop(0);
 				centerOfRotationModule.setFieldRelativeAngle(0);
 				break;
 			case Tank:
@@ -675,10 +672,10 @@ public class Swerve extends Subsystem{
 	}
 	
 	public void setTankOpenLoop(DriveSignal signal){
-		frontRight.setDriveSpeed(signal.rightMotor);
-		rearRight.setDriveSpeed(signal.rightMotor);
-		frontLeft.setDriveSpeed(signal.leftMotor);
-		rearLeft.setDriveSpeed(signal.leftMotor);
+		frontRight.setDriveOpenLoop(signal.rightMotor);
+		rearRight.setDriveOpenLoop(signal.rightMotor);
+		frontLeft.setDriveOpenLoop(signal.leftMotor);
+		rearLeft.setDriveOpenLoop(signal.leftMotor);
 	}
 	public void setModuleAngles(double angle){
 		for(SwerveDriveModule m : modules){

@@ -28,6 +28,8 @@ public class Constants {
     //native units 600
     //f gain 1.705
     
+    public static final double SWERVE_DRIVE_MAX_RPM = 3989.0;
+    
     public static final double SWERVE_WHEEL_DIAMETER = 2.5;
     public static final double SWERVE_ENCODER_REVS_PER_WHEEL_REV = 4.0;//4.307692308;
     public static final double SWERVE_ENCODER_REVS_PER_INCH = SWERVE_ENCODER_REVS_PER_WHEEL_REV/(Math.PI*SWERVE_WHEEL_DIAMETER);

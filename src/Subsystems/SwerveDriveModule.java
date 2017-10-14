@@ -68,6 +68,7 @@ public class SwerveDriveModule extends Subsystem{
     	driveMotor.configEncoderCodesPerRev(360);
     	driveMotor.setStatusFrameRateMs(CANTalon.StatusFrameRate.Feedback, 10);
     	driveMotor.configNominalOutputVoltage(+0f, -0f);
+    	driveMotor.setNominalClosedLoopVoltage(12.0f);
     	driveMotor.setVoltageRampRate(0.0);
     	driveMotor.setAllowableClosedLoopErr(0);
     	driveMotor.changeControlMode(TalonControlMode.PercentVbus);
@@ -77,6 +78,7 @@ public class SwerveDriveModule extends Subsystem{
     	driveMotor.setPID(0.5, 0, 80.0, 0.10685189, 0, 0.0, 0);
     	driveMotor.setMotionMagicCruiseVelocity(3200);
     	driveMotor.setMotionMagicAcceleration(4500);
+    	driveMotor.setPID(1.0, 0.0, 10.0, 0.10685189, 0, 0.0, 1);
 	}
 	public double getRawAngle(){
 		return rotationMotor.getPosition();
@@ -102,7 +104,7 @@ public class SwerveDriveModule extends Subsystem{
 	public double getGoal(){
 		return Util.boundAngle0to360Degrees(rotationMotor.getSetpoint() - offset);
 	}
-	public void setDriveSpeed(double power){
+	public void setDriveOpenLoop(double power){
 		driveMotor.changeControlMode(TalonControlMode.PercentVbus);
 		if(isReversed){
 			driveMotor.set(-power);
@@ -110,13 +112,28 @@ public class SwerveDriveModule extends Subsystem{
 			driveMotor.set(power);
 		}
 	}
-	public void setVoltage(double voltage){
+	public void setDriveVoltage(double voltage){
 		driveMotor.changeControlMode(TalonControlMode.Voltage);
 		if(isReversed){
 			driveMotor.set(-voltage);
 		}else{
 			driveMotor.set(voltage);
 		}
+	}
+	public void moveInches(double inches){
+		driveMotor.setProfile(0);
+		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
+    	driveMotor.set(driveMotor.getPosition() + inchesToRotations(inches));
+	}
+	public void lockPosition(){
+		driveMotor.setProfile(0);
+		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
+		driveMotor.set(driveMotor.getPosition());
+	}
+	public void setDriveVelocity(double rpm){
+		driveMotor.setProfile(1);
+		driveMotor.changeControlMode(TalonControlMode.Speed);
+		driveMotor.set(rpm);
 	}
 	public double getEncoderDistanceInches(){
 		return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
@@ -135,14 +152,6 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	public double rotationsToInches(double rotations){
 		return rotations/Constants.SWERVE_ENCODER_REVS_PER_INCH;
-	}
-	public void moveInches(double inches){
-		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
-    	driveMotor.set(driveMotor.getPosition() + inchesToRotations(inches));
-	}
-	public void lockPosition(){
-		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
-		driveMotor.set(driveMotor.getPosition());
 	}
 	public boolean onDistanceTarget(){
 		return (driveMotor.getControlMode() == TalonControlMode.MotionMagic) && 
@@ -173,7 +182,7 @@ public class SwerveDriveModule extends Subsystem{
 	@Override
 	public synchronized void stop(){
 		setRotationOpenLoop(0.0);
-		setDriveSpeed(0.0);
+		setDriveOpenLoop(0.0);
 	}
 	@Override
 	public synchronized void zeroSensors(){
@@ -197,7 +206,7 @@ public class SwerveDriveModule extends Subsystem{
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceFeet());
 		SmartDashboard.putString("Module " + Integer.toString(moduleID) + " Coordinates ", "("+smallX+" , "+smallY+")");
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + "Speed", getModuleFeetPerSecond());
-		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Error", rotationMotor.getSetpoint() - rotationMotor.getPosition());
+		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Error", driveMotor.getSetpoint() - driveMotor.getSpeed());
 		if(moduleID == 4){
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " X", currentX);
 			SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Y", currentY);

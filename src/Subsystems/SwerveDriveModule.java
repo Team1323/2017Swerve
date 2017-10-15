@@ -35,7 +35,7 @@ public class SwerveDriveModule extends Subsystem{
 	public boolean hasBraked = false;
 	public boolean hasBraked(){return hasBraked;}
 	private boolean isReversed = false;
-	public void reverseOutput(boolean reversed){
+	public void reverseOpenLoop(boolean reversed){
 		isReversed = reversed;
 	}
 	public SwerveDriveModule(int rotationMotorPort, int driveMotorPort,int moduleNum,double _offSet){
@@ -78,7 +78,7 @@ public class SwerveDriveModule extends Subsystem{
     	driveMotor.setPID(0.5, 0, 80.0, 0.10685189, 0, 0.0, 0);
     	driveMotor.setMotionMagicCruiseVelocity(3200);
     	driveMotor.setMotionMagicAcceleration(4500);
-    	driveMotor.setPID(1.0, 0.0, 10.0, 0.10685189, 0, 0.0, 1);
+    	driveMotor.setPID(1.2, 0.0, 21.0, 0.10685189, 0, 0.0, 1);
 	}
 	public double getRawAngle(){
 		return rotationMotor.getPosition();
@@ -87,7 +87,7 @@ public class SwerveDriveModule extends Subsystem{
 		return Util.boundAngle0to360Degrees(getRawAngle() - offset);
 	}
 	public double getFieldRelativeAngle(){
-		return Util.boundAngle0to360Degrees(getModuleAngle() + Util.boundAngle0to360Degrees(pidgey.getAngle()));
+		return Util.boundAngle0to360Degrees(-getModuleAngle() - Util.boundAngle0to360Degrees(pidgey.getAngle()));
 	}
 	public void setFieldRelativeAngle(double fieldAngle){
 		setModuleAngle(Util.boundAngle0to360Degrees(fieldAngle - Util.boundAngle0to360Degrees(pidgey.getAngle())));
@@ -130,10 +130,10 @@ public class SwerveDriveModule extends Subsystem{
 		driveMotor.changeControlMode(TalonControlMode.MotionMagic);
 		driveMotor.set(driveMotor.getPosition());
 	}
-	public void setDriveVelocity(double rpm){
+	public void setDriveVelocity(double inchesPerSecond){
 		driveMotor.setProfile(1);
 		driveMotor.changeControlMode(TalonControlMode.Speed);
-		driveMotor.set(rpm);
+		driveMotor.set(inchesPerSecondToRpm(inchesPerSecond));
 	}
 	public double getEncoderDistanceInches(){
 		return driveMotor.getPosition()/Constants.SWERVE_ENCODER_REVS_PER_INCH;
@@ -153,6 +153,9 @@ public class SwerveDriveModule extends Subsystem{
 	public double rotationsToInches(double rotations){
 		return rotations/Constants.SWERVE_ENCODER_REVS_PER_INCH;
 	}
+	public double inchesPerSecondToRpm(double inchesPerSecond){
+		return inchesToRotations(inchesPerSecond)*60;
+	}
 	public boolean onDistanceTarget(){
 		return (driveMotor.getControlMode() == TalonControlMode.MotionMagic) && 
 				Math.abs(rotationsToInches(driveMotor.getSetpoint()) - rotationsToInches(driveMotor.getPosition())) < 1.0;
@@ -168,16 +171,10 @@ public class SwerveDriveModule extends Subsystem{
 	public void update(){
 		currentDistance = getEncoderDistanceInches();
 		double distanceTraveled = currentDistance - lastDistance;
-		double angle = Math.toRadians(90 - getFieldRelativeAngle());
+		double angle = Math.toRadians(getFieldRelativeAngle());
 		currentX += Math.cos(angle) * distanceTraveled;
 		currentY += Math.sin(angle) * distanceTraveled;
 		lastDistance = currentDistance;
-		
-		double halfDiagonal = Math.toDegrees(Math.atan(HALF_WIDTH/HALF_LENGTH));
-		double robotAngle = Math.toRadians(180 - ((180-Util.boundAngle0to360Degrees(pidgey.getAngle()))+halfDiagonal));
-		/*robotX = currentX + (Math.sin(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));
-		robotY = currentY + (Math.cos(robotAngle) * Math.hypot(HALF_LENGTH, HALF_WIDTH));*/
-		
 	}
 	@Override
 	public synchronized void stop(){

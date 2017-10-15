@@ -46,6 +46,17 @@ public class Constants {
     public static double kPathFollowingGoalVelTolerance = 12.0;
     public static double kPathStopSteeringDistance = 9.0;
     
+ // Path following constants
+    public static double kMinLookAhead = 6.0; // inches
+    public static double kMinLookAheadSpeed = 9.0; // inches per second
+    public static double kMaxLookAhead = 12.0; // inches
+    public static double kMaxLookAheadSpeed = 120.0; // inches per second
+    public static double kDeltaLookAhead = kMaxLookAhead - kMinLookAhead;
+    public static double kDeltaLookAheadSpeed = kMaxLookAheadSpeed - kMinLookAheadSpeed;
+    public static double kInertiaSteeringGain = 0.0; // angular velocity command is multiplied by this gain *
+    // our speed
+    // in inches per sec
+    
     //Looper Rate
     public static final double kLooperDt = 0.01;
     

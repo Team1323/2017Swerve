@@ -7,6 +7,7 @@ import com.team254.lib.util.motion.MotionState;
 import com.team254.lib.util.motion.ProfileFollower;
 
 import Utilities.RigidTransform2d;
+import Utilities.Translation2d;
 import Utilities.Twist2d;
 
 /**
@@ -120,8 +121,8 @@ public class PathFollower {
      * @return The velocity command to apply
      */
     public synchronized Twist2d update(double t, RigidTransform2d pose, double displacement, double velocity) {
+    	final AdaptivePurePursuitController.Command steering_command = mSteeringController.update(pose);
         if (!mSteeringController.isFinished()) {
-            final AdaptivePurePursuitController.Command steering_command = mSteeringController.update(pose);
             mDebugOutput.lookahead_point_x = steering_command.lookahead_point.x();
             mDebugOutput.lookahead_point_y = steering_command.lookahead_point.y();
             mDebugOutput.lookahead_point_velocity = steering_command.end_velocity;
@@ -130,8 +131,9 @@ public class PathFollower {
             mDebugOutput.steering_command_dtheta = steering_command.delta.dtheta;
             mCrossTrackError = steering_command.cross_track_error;
             mLastSteeringDelta = steering_command.delta;
+            Translation2d robotToLookahead = pose.getTranslation().inverse().translateBy(steering_command.lookahead_point);
             mVelocityController.setGoalAndConstraints(
-                    new MotionProfileGoal(displacement + steering_command.delta.dx,
+                    new MotionProfileGoal(displacement + robotToLookahead.norm(),
                             Math.abs(steering_command.end_velocity), CompletionBehavior.VIOLATE_MAX_ACCEL,
                             mGoalPosTolerance, mGoalVelTolerance),
                     new MotionProfileConstraints(Math.min(mMaxProfileVel, steering_command.max_velocity),
@@ -152,7 +154,10 @@ public class PathFollower {
             dtheta = mLastSteeringDelta.dx * curvature * (1.0 + mInertiaGain * abs_velocity_setpoint);
         }
         final double scale = velocity_command / mLastSteeringDelta.dx;
-        final Twist2d rv = new Twist2d(mLastSteeringDelta.dx * scale, 0.0, dtheta * scale);
+        double robotToLookaheadSlope = (steering_command.lookahead_point.y() - pose.getTranslation().y())/
+        		(steering_command.lookahead_point.x() - pose.getTranslation().x());
+        dtheta = Math.atan2(robotToLookaheadSlope, 1);
+        final Twist2d rv = new Twist2d(velocity_command, 0.0, dtheta);
 
         // Fill out debug.
         mDebugOutput.t = t;

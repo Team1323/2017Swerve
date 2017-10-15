@@ -6,18 +6,18 @@ import Subsystems.Swerve;
 public class FollowPathAction implements Action{
 	private RoboSystem robot;
 	
-	private Swerve.Path path;
+	private Swerve.PathfinderPath path;
 	private boolean hasStarted;
 	private double heading;
 	
-	public FollowPathAction(Swerve.Path mPath){
+	public FollowPathAction(Swerve.PathfinderPath mPath){
 		robot = RoboSystem.getInstance();
 		path = mPath;
 		hasStarted = false;
 		heading = robot.pidgey.getAngle();
 	}
 	
-	public FollowPathAction(Swerve.Path mPath, double heading){
+	public FollowPathAction(Swerve.PathfinderPath mPath, double heading){
 		path = mPath;
 		hasStarted = false;
 		robot = RoboSystem.getInstance();

@@ -78,9 +78,9 @@ public class SmartDashboardInteractions {
     	switch(option){
     		case HOPPER:
     			if(side == AutoSide.BLUE){
-    				return new HopperMode(Swerve.Path.BLUE_HOPPER, 90, 180);
+    				return new HopperMode(Swerve.PathfinderPath.BLUE_HOPPER, 90, 180);
     			}else{
-    				return new HopperMode(Swerve.Path.RED_HOPPER, -90, 0);
+    				return new HopperMode(Swerve.PathfinderPath.RED_HOPPER, -90, 0);
     			}
     		case GEAR_AND_HOPPER:
     			if(side == AutoSide.BLUE){

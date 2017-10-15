@@ -24,9 +24,9 @@ public class BlueGearAndHopperMode extends AutoModeBase{
 		robot.pidgey.setAngle(0);
 		robot.turret.resetAngle(90);
 		robot.gearIntake.setState(GearIntake.State.EXTENDED_INTAKING);
-		runAction(new ParallelAction(Arrays.asList(new FollowPathAction(Swerve.Path.LEFT_PEG, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60)), 
+		runAction(new ParallelAction(Arrays.asList(new FollowPathAction(Swerve.PathfinderPath.LEFT_PEG, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60)), 
 				new PickUpGearAction())));
 		robot.gearIntake.setState(GearIntake.State.SCORING);
-		runAction(new FollowPathAction(Swerve.Path.LEFT_PEG_TO_HOPPER, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180)));
+		runAction(new FollowPathAction(Swerve.PathfinderPath.LEFT_PEG_TO_HOPPER, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180)));
 	}
 }

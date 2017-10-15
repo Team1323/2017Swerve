@@ -2,6 +2,10 @@ package org.usfirst.frc.team1323.robot;
 
 import java.util.Optional;
 
+import com.team1323.frc2017.paths.PathContainer;
+import com.team1323.frc2017.paths.StartToBoilerGearBlue;
+import com.team254.lib.util.control.Path;
+
 import Auto.AutoModeExecuter;
 import Auto.SmartDashboardInteractions;
 import IO.LogitechJoystick;
@@ -20,6 +24,8 @@ import Utilities.CheesyDriveHelper;
 import Utilities.Constants;
 import Utilities.CrashTracker;
 import Utilities.Logger;
+import Utilities.RigidTransform2d;
+import Utilities.Rotation2d;
 import Utilities.ShooterAimingParameters;
 import Utilities.Util;
 import Vision.VisionServer;
@@ -53,6 +59,9 @@ public class Robot extends IterativeRobot {
 	VisionServer visionServer = VisionServer.getInstance();
 	
 	SmartDashboardInteractions smartDashboardInteractions = new SmartDashboardInteractions();
+	
+	PathContainer container = new StartToBoilerGearBlue();
+	Path path;
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -91,21 +100,23 @@ public class Robot extends IterativeRobot {
 	        	if(smartDashboardInteractions.getSelectedSide().equals("Blue")){
 	        		robot.pidgey.setAngle(180);
 	        		robot.turret.resetAngle(90);
-	        		robot.swerve.zeroSensors(-90);
+	        		robot.swerve.zeroSensors(180);
 	        	}else{
 	        		robot.pidgey.setAngle(0);
 	        		robot.turret.resetAngle(-90);
-	        		robot.swerve.zeroSensors(90);
+	        		robot.swerve.zeroSensors(0);
 	        	}
 	        }else if(smartDashboardInteractions.getSelectedMode().equals("Gear and Hopper")){
 	        	robot.pidgey.setAngle(0);
 	        	robot.turret.resetAngle(90);
-	        	robot.swerve.zeroSensors(90);
+	        	robot.swerve.zeroSensors(0);
 	        }else if(smartDashboardInteractions.getSelectedMode().equals("Middle Gear")){
 	        	robot.pidgey.setAngle(0);
         		robot.turret.resetAngle(-90);
-        		robot.swerve.zeroSensors(90);
+        		robot.swerve.zeroSensors(0);
 	        }
+	        
+	        path = container.buildPath();
 	        
 	        VisionServer.getInstance();
 		}catch(Throwable t){
@@ -116,7 +127,7 @@ public class Robot extends IterativeRobot {
 	public void zeroAllSensors(){
 		robot.swerve.zeroSensors();
 		//robot.pidgey.setAngle(0);
-		//robotState.reset(Timer.getFPGATimestamp(), new RigidTransform2d(), new Rotation2d());
+		robotState.reset(Timer.getFPGATimestamp(), new RigidTransform2d(), new Rotation2d());
 	}
 	public void outputAllToSmartDashboard(){
 		robot.swerve.outputToSmartDashboard();
@@ -288,11 +299,11 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			robot.swerve.rotateAboutModule(false);
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.Path.TEST, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
+			robot.swerve.followPath(Swerve.PathfinderPath.TEST, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
 		}else if(driver.getPOV() == 270){
 			robot.swerve.rotateAboutModule(true);
 		}else if(driver.getPOV() == 0){
-			robot.swerve.zeroSensors(robot.pidgey.getRealMathAngle());
+			robot.swerve.purePursuit(path);
 		}
 		
 		//Gear Score

@@ -35,7 +35,7 @@ public class RobotStateEstimator implements Loop{
 		double time = Timer.getFPGATimestamp();
 		double robotX = swerve.getX();
 		double robotY = swerve.getY();
-		Rotation2d pidgeonAngle = Rotation2d.fromDegrees(-pidgey.getAngle() + 90);
+		Rotation2d pidgeonAngle = Rotation2d.fromDegrees(-pidgey.getAngle());
 		Rotation2d turretAngle = Rotation2d.fromDegrees(-turret.getAngle());
 		RigidTransform2d odometry = new RigidTransform2d(new Translation2d(robotX, robotY), pidgeonAngle);
 		robotState.addObservations(time, odometry, turretAngle);

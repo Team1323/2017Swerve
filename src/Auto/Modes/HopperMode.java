@@ -19,12 +19,12 @@ import Subsystems.RoboSystem;
 import Subsystems.Swerve;
 
 public class HopperMode extends AutoModeBase{
-	private Swerve.Path path;
+	private Swerve.PathfinderPath path;
 	private RoboSystem robot;
 	private double turretAngle;
 	private int pigeonAngle;
 	
-	public HopperMode(Swerve.Path path, double turretAngle, int pigeonAngle){
+	public HopperMode(Swerve.PathfinderPath path, double turretAngle, int pigeonAngle){
 		this.path = path;
 		this.turretAngle = turretAngle;
 		this.pigeonAngle = pigeonAngle;

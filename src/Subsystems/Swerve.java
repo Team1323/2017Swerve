@@ -2,11 +2,19 @@ package Subsystems;
 
 import java.util.ArrayList;
 
+import com.team254.lib.util.control.Lookahead;
+import com.team254.lib.util.control.Path;
+import com.team254.lib.util.control.PathFollower;
+
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.DriveSignal;
 import Utilities.Ports;
+import Utilities.RigidTransform2d;
+import Utilities.Rotation2d;
 import Utilities.SynchronousPID;
+import Utilities.Translation2d;
+import Utilities.Twist2d;
 import Utilities.Util;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -56,7 +64,8 @@ public class Swerve extends Subsystem{
 		Manual("Manual"), PathFollowing("PathFollowing"), Neutral("Neutral")
 		, AdjustTargetDistance("AdjustTargetDistance"),
 		TurnInPlace("TurnInPlace"), BaseLock("BaseLock"), 
-		ModuleRotation("Clockwise"), Tank("TankDrive");
+		ModuleRotation("Clockwise"), Tank("TankDrive"),
+		PurePursuit("PurePursuit");
 		
 		public final String name;
 		private ControlState(String name){
@@ -70,6 +79,10 @@ public class Swerve extends Subsystem{
 	public void setState(ControlState newState){
 		currentState = newState;
 	}
+	
+	PathFollower mPathFollower;
+	Path currentPath;
+	
 	double maxVel = 10.0;//13.89;
 	double maxAccel = 10.0;//16;
 	double maxJerk = 84;
@@ -92,7 +105,7 @@ public class Swerve extends Subsystem{
 	public double dt;
 	double timestamp;
 	
-	public enum Path{
+	public enum PathfinderPath{
 		BLUE_HOPPER, RED_HOPPER, TEST, LEFT_PEG, LEFT_PEG_TO_HOPPER
 	}
 	
@@ -146,8 +159,8 @@ public class Swerve extends Subsystem{
 	public Swerve(){
 		pidgey = Pidgeon.getInstance();
 		
-		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2,Constants.FRONT_LEFT_TURN_OFFSET);
 		frontRight = new SwerveDriveModule(Ports.FRONT_RIGHT_ROTATION,Ports.FRONT_RIGHT_DRIVE,1,Constants.FRONT_RIGHT_TURN_OFFSET);
+		frontLeft  = new SwerveDriveModule(Ports.FRONT_LEFT_ROTATION,Ports.FRONT_LEFT_DRIVE,2,Constants.FRONT_LEFT_TURN_OFFSET);
 		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3,Constants.REAR_LEFT_TURN_OFFSET);
 		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4,Constants.REAR_RIGHT_TURN_OFFSET);
 		
@@ -155,8 +168,8 @@ public class Swerve extends Subsystem{
 		frontLeft.driveMotor.reverseOutput(true);
 		rearLeft.driveMotor.reverseOutput(true);
 		
-		frontLeft.reverseOutput(true);
-		rearLeft.reverseOutput(true);
+		frontLeft.reverseOpenLoop(true);
+		rearLeft.reverseOpenLoop(true);
 		
 		frontRight.setOriginCoordinates(HALF_LENGTH, -HALF_WIDTH);
 		frontLeft.setOriginCoordinates(HALF_LENGTH, HALF_WIDTH);
@@ -286,7 +299,7 @@ public class Swerve extends Subsystem{
 		}
 	}
 	
-	public void followPath(Path path, double heading){
+	public void followPath(PathfinderPath path, double heading){
 		switch(path){
 		case BLUE_HOPPER:
 			modifier = new SwerveModifier(blueHopperTrajectory);
@@ -340,7 +353,7 @@ public class Swerve extends Subsystem{
 		setState(ControlState.PathFollowing);
 	}
 	
-	public void followPath(Path path){
+	public void followPath(PathfinderPath path){
 		followPath(path, pidgey.getAngle());
 	}
 	
@@ -476,6 +489,26 @@ public class Swerve extends Subsystem{
 		}
 	}
 	
+	public void purePursuit(Path path){
+		if(currentState != ControlState.PurePursuit){
+            zeroSensors();
+            mPathFollower = new PathFollower(path, false,
+                    new PathFollower.Parameters(
+                            new Lookahead(Constants.kMinLookAhead, Constants.kMaxLookAhead,
+                                    Constants.kMinLookAheadSpeed, Constants.kMaxLookAheadSpeed),
+                            Constants.kInertiaSteeringGain, Constants.kPathFollowingProfileKp,
+                            Constants.kPathFollowingProfileKi, Constants.kPathFollowingProfileKv,
+                            Constants.kPathFollowingProfileKffv, Constants.kPathFollowingProfileKffa,
+                            Constants.kPathFollowingMaxVel, Constants.kPathFollowingMaxAccel,
+                            Constants.kPathFollowingGoalPosTolerance, Constants.kPathFollowingGoalVelTolerance,
+                            Constants.kPathStopSteeringDistance));
+            setTargetHeading(0.0);
+            setHeadingController(HeadingController.Stabilize);
+            setState(ControlState.PurePursuit);
+            currentPath = path;
+		}
+	}
+	
 	private final Loop swerveLoop = new Loop(){
 		@Override
 		public void onStart(){
@@ -483,7 +516,6 @@ public class Swerve extends Subsystem{
 		}
 		@Override
 		public void onLoop(){
-			update();
 			double x = 0;
 			double y = 0;
 			for(SwerveDriveModule m : modules){
@@ -494,6 +526,7 @@ public class Swerve extends Subsystem{
 			distanceTraveled += Math.hypot(robotX - (x/4), robotY - (y/4));
 			robotX = x/4;
 			robotY = y/4;
+			update();
 		}
 		@Override
 		public void onStop(){
@@ -568,7 +601,7 @@ public class Swerve extends Subsystem{
 			    	for(SwerveDriveModule m : modules){
 			    		m.hasBraked = false;
 			    	}
-			    	for(int i=0; i<4; i++){
+			    	for(int i=0; i<modules.size(); i++){
 			    		if(Util.shouldReverse(kinematics.wheelAngles[i], modules.get(i).getModuleAngle())){
 			    			modules.get(i).setModuleAngle(kinematics.wheelAngles[i] + 180);
 			    		}else{
@@ -576,13 +609,13 @@ public class Swerve extends Subsystem{
 			    		}
 			    	}
 			    }
-			    for(int i=0; i<4; i++){
+			    for(int i=0; i<modules.size(); i++){
 		    		if(Util.shouldReverse(kinematics.wheelAngles[i], modules.get(i).getModuleAngle())){
-		    			//modules.get(i).setDriveOpenLoop(-kinematics.wheelSpeeds[i]);
-		    			modules.get(i).setDriveVelocity(-kinematics.wheelSpeeds[i]*Constants.SWERVE_DRIVE_MAX_RPM);
+		    			modules.get(i).setDriveOpenLoop(-kinematics.wheelSpeeds[i]);
+		    			//modules.get(i).setDriveVelocity(-6);
 		    		}else{
-		    			//modules.get(i).setDriveOpenLoop(kinematics.wheelSpeeds[i]);
-		    			modules.get(i).setDriveVelocity(kinematics.wheelSpeeds[i]*Constants.SWERVE_DRIVE_MAX_RPM);
+		    			modules.get(i).setDriveOpenLoop(kinematics.wheelSpeeds[i]);
+		    			//modules.get(i).setDriveVelocity(6);
 		    		}
 			    }
 				break;
@@ -608,10 +641,7 @@ public class Swerve extends Subsystem{
 			    kinematics.calculate(xInput, yInput, rotationCorrection);
 			    
 /**/
-			    frontRight.setModuleAngle(kinematics.frSteeringAngle());
-			    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
-			    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
-			    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
+			    setKinematicsAngles();
 /*/
 			    
 			    frontRight.setFieldRelativeAngle(kinematics.frSteeringAngle());
@@ -629,6 +659,32 @@ public class Swerve extends Subsystem{
 				}
 				
 				break;
+			case PurePursuit:
+				double averageWheelHeading = -(frontRight.getModuleAngle() + frontLeft.getModuleAngle() + 
+						rearLeft.getModuleAngle() + rearRight.getModuleAngle())/4;
+				RigidTransform2d robot_pose = new RigidTransform2d(new Translation2d(robotX, robotY), Rotation2d.fromDegrees(averageWheelHeading));
+		        Twist2d command = mPathFollower.update(Timer.getFPGATimestamp(), robot_pose,
+		                distanceTraveled, rearRight.getModuleInchesPerSecond());
+		        if (!mPathFollower.isFinished()) {
+		            double goalAngle = -command.dtheta;
+		            pidgeyAngle = Math.toRadians(pidgey.getAngle());
+				    x = Math.sin(goalAngle);
+				    y = Math.cos(goalAngle);
+				    tmp = (y* Math.cos(pidgeyAngle)) + (x * Math.sin(pidgeyAngle));
+					xInput = (-y * Math.sin(pidgeyAngle)) + (x * Math.cos(pidgeyAngle));
+					yInput = tmp;	
+				    kinematics.calculate(xInput, yInput, rotationCorrection);
+				    System.out.println(-Math.toDegrees(command.dtheta));
+				    setKinematicsAngles();
+				    for(SwerveDriveModule m : modules){
+				    	//m.setDriveVelocity(command.dx);
+				    	m.setDriveVoltage(12 * (command.dx/156));
+				    	//m.setFieldRelativeAngle(-command.dtheta);
+				    }
+		        } else {
+		            setState(ControlState.Neutral);
+		        }
+				break;
 			case AdjustTargetDistance:
 			    pidgeyAngle = Math.toRadians(pidgey.getAngle());
 			    x = Math.sin(Math.toRadians(desiredWheelHeading));
@@ -637,11 +693,7 @@ public class Swerve extends Subsystem{
 				xInput = (-y * Math.sin(pidgeyAngle)) + (x * Math.cos(pidgeyAngle));
 				yInput = tmp;	
 			    kinematics.calculate(xInput, yInput, rotationCorrection);
-			    
-			    frontRight.setModuleAngle(kinematics.frSteeringAngle());
-			    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
-			    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
-			    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
+			    setKinematicsAngles();
 				break;
 			case TurnInPlace:
 				if(distanceOnTarget()){
@@ -682,6 +734,12 @@ public class Swerve extends Subsystem{
 			m.setModuleAngle(angle);
 		}
 	}
+	public void setKinematicsAngles(){
+		frontRight.setModuleAngle(kinematics.frSteeringAngle());
+	    frontLeft.setModuleAngle(kinematics.flSteeringAngle());
+	    rearLeft.setModuleAngle(kinematics.rlSteeringAngle());
+	    rearRight.setModuleAngle(kinematics.rrSteeringAngle());
+	}
 	@Override
 	public synchronized void stop(){
 		sendInput(0.0, 0.0, 0.0, false, false);
@@ -691,7 +749,7 @@ public class Swerve extends Subsystem{
 	}
 	@Override
 	public synchronized void zeroSensors(){
-		zeroSensors(90);
+		zeroSensors(0);
 	}
 	public synchronized void zeroSensors(double heading){
 		for(SwerveDriveModule m : modules){

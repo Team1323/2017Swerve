@@ -555,7 +555,7 @@ public class Swerve extends Subsystem{
 				if(stabilizationTargetSet){
 					if(Math.abs(getHeadingError()) > 5){
 						//headingPID.setPID(0.012, 0.0, 0.1, 0.0);
-						headingPID.setPID(0.012, 0.0, 0.08, 0.0);
+						headingPID.setPID(0.008, 0.0, 0.1, 0.0);
 						//rotationCorrection = strongHeadingPID.calculate(getHeadingError());
 						rotationCorrection = headingPID.calculate(getHeadingError());
 					}else if(Math.abs(getHeadingError()) > 0.5){

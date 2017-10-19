@@ -12,7 +12,7 @@ import Utilities.DriveSignal;
 import Utilities.Ports;
 import Utilities.RigidTransform2d;
 import Utilities.Rotation2d;
-import Utilities.SynchronousPID;
+import Utilities.SynchronousPIDF;
 import Utilities.Translation2d;
 import Utilities.Twist2d;
 import Utilities.Util;
@@ -130,10 +130,10 @@ public class Swerve extends Subsystem{
 		targetHeadingAngle = target;
 		setHeadingController(HeadingController.Snap);
 	}
-	private SynchronousPID headingPID = new SynchronousPID/*(0.002, 0.0, 0.0007, 0.0);*/(0.001, 0.0, 0.0007, 0.0);
-	private SynchronousPID strongHeadingPID = new SynchronousPID(0.016, 0.0, 0.16, 0.0);/*(0.008, 0.0, 0.0, 0.0);*/
-	private SynchronousPID snapPID = new SynchronousPID(0.0075, 0.0, 0.1, 0.2);
-	private SynchronousPID reversibleSnapPID = new SynchronousPID(0.005, 0.0, 0.02, 0.0);
+	private SynchronousPIDF headingPID = new SynchronousPIDF/*(0.002, 0.0, 0.0007, 0.0);*/(0.001, 0.0, 0.0007, 0.0);
+	private SynchronousPIDF strongHeadingPID = new SynchronousPIDF(0.016, 0.0, 0.16, 0.0);/*(0.008, 0.0, 0.0, 0.0);*/
+	private SynchronousPIDF snapPID = new SynchronousPIDF(0.0075, 0.0, 0.1, 0.2);
+	private SynchronousPIDF reversibleSnapPID = new SynchronousPIDF(0.005, 0.0, 0.02, 0.0);
 	private int cyclesLeft = 1;
 	
 	//305.2586 54.74135
@@ -543,6 +543,8 @@ public class Swerve extends Subsystem{
 	public void update(){
 		double now = Timer.getFPGATimestamp();
 		rotationCorrection = 0;
+		headingPID.setSetpoint(targetHeadingAngle);
+		double heading = pidgey.getAngle();
 		switch(headingController){
 			case Off:
 				targetHeadingAngle = pidgey.getAngle();
@@ -554,21 +556,19 @@ public class Swerve extends Subsystem{
 				}
 				if(stabilizationTargetSet){
 					if(Math.abs(getHeadingError()) > 5){
-						//headingPID.setPID(0.012, 0.0, 0.1, 0.0);
-						headingPID.setPID(0.008, 0.0, 0.1, 0.0);
-						//rotationCorrection = strongHeadingPID.calculate(getHeadingError());
-						rotationCorrection = headingPID.calculate(getHeadingError());
+						headingPID.setPID(0.012, 0.0, 0.0, 0.0);
+						//headingPID.setPID(0.0, 0.0, 0.0, 0.0);
+						rotationCorrection = headingPID.calculate(heading, dt);
 					}else if(Math.abs(getHeadingError()) > 0.5){
-						headingPID.setPID(0.004, 0.0, 0.0, 0.0);
-						rotationCorrection = headingPID.calculate(getHeadingError());
+						headingPID.setPID(0.006, 0.0, 0.0, 0.0);
+						//headingPID.setPID(0.0, 0.0, 0.0, 0.0);
+						rotationCorrection = headingPID.calculate(heading, dt);
 					}
 				}
 				break;
 			case Snap:
-				//rotationCorrection = snapPID.calculate(getHeadingError());
-				//rotationCorrection = reversibleSnapPID.calculate(getHeadingError());
-				headingPID.setPID(0.005, 0.0, 0.02, 0.0);
-				rotationCorrection = headingPID.calculate(getHeadingError());
+				headingPID.setPID(0.005, 0.0, 0.001, 0.0);
+				rotationCorrection = headingPID.calculate(heading, dt);
 				if(Math.abs(getHeadingError()) < 2){
 					cyclesLeft--;
 				}else{
@@ -687,11 +687,8 @@ public class Swerve extends Subsystem{
 				break;
 			case AdjustTargetDistance:
 			    pidgeyAngle = Math.toRadians(pidgey.getAngle());
-			    x = Math.sin(Math.toRadians(desiredWheelHeading));
-			    y = Math.cos(Math.toRadians(desiredWheelHeading));
-			    tmp = (y* Math.cos(pidgeyAngle)) + (x * Math.sin(pidgeyAngle));
-				xInput = (-y * Math.sin(pidgeyAngle)) + (x * Math.cos(pidgeyAngle));
-				yInput = tmp;	
+			    xInput = Math.sin(Math.toRadians(desiredWheelHeading));
+			    yInput = Math.cos(Math.toRadians(desiredWheelHeading));
 			    kinematics.calculate(xInput, yInput, rotationCorrection);
 			    setKinematicsAngles();
 				break;

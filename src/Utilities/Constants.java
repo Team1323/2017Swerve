@@ -101,7 +101,7 @@ public class Constants {
 	public static final double kMaxGoalTrackAge = 1.0;
 	public static final double kMaxAngleAge = 0.5;
 	public static double kCameraFrameRate = 30.0;
-	public static final double kOptimalShootingDistance = 77.3;
+	public static final double kOptimalShootingDistance = 84.8;
 	
 	// Pose of the camera frame w.r.t. the turret frame
     public static final double kCameraXOffset = -2.25;//-2.25;
@@ -111,4 +111,5 @@ public class Constants {
     public static final double kCameraYawAngleDegrees = 0.0;
     public static final double kCameraDeadband = 0.0;
     public static final double kCenterOfTargetHeight = 88.0; // inches      
+    public static final double kBoilerRadius = 7.5;
 }

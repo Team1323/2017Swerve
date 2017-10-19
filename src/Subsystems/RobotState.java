@@ -151,7 +151,7 @@ public class RobotState {
                 	SmartDashboard.putNumber("Vision xr", xr);
                 	SmartDashboard.putNumber("Vision yr", yr);
                     double scaling = differentialHeight / zr;
-                    double distance = Math.hypot(xr, yr) * scaling;
+                    double distance = Math.hypot(xr, yr) * scaling + Constants.kBoilerRadius;
                     Rotation2d angle = new Rotation2d(xr, yr, true);
                     Rotation2d newAngle = new Rotation2d(Math.cos(-angle.getRadians())*distance + Constants.kCameraYOffset, Math.sin(-angle.getRadians())*distance + Constants.kCameraXOffset, true);
                     visionAngle = newAngle.getDegrees();

@@ -16,6 +16,7 @@ import Loops.Looper;
 import Loops.RobotStateEstimator;
 import Loops.VisionProcessor;
 import Subsystems.GearIntake;
+import Subsystems.Hanger;
 import Subsystems.RoboSystem;
 import Subsystems.RobotState;
 import Subsystems.Swerve;
@@ -277,6 +278,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getBackButton()){
 			robot.pidgey.setAngle(0);
 			robot.swerve.setTargetHeading(0.0);
+			robot.swerve.temporarilyDisable();
 		}
 		if(driver.getAButton()){
 			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
@@ -299,11 +301,11 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			robot.swerve.rotateAboutModule(false);
 		}else if(driver.getPOV() == 180){
-			robot.swerve.followPath(Swerve.PathfinderPath.TEST, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 60));
+			//robot.swerve.followPath(robot.swerve.middleToRedBoilerTrajectory, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
 		}else if(driver.getPOV() == 270){
 			robot.swerve.rotateAboutModule(true);
 		}else if(driver.getPOV() == 0){
-			robot.swerve.purePursuit(path);
+			//robot.swerve.purePursuit(path);
 		}
 		
 		//Gear Score
@@ -410,10 +412,10 @@ public class Robot extends IterativeRobot {
 		}
 		
 		//Ball Flap
-		if(coDriver.POV180.wasPressed()){
+		/*if(coDriver.POV180.wasPressed()){
 			System.out.println("POV Clicked");
 			robot.toggleBallFlap();
-		}
+		}*/
 		
 		//Gear Intake
 		if(coDriver.getAButton()){
@@ -438,7 +440,9 @@ public class Robot extends IterativeRobot {
 			robot.swerve.setLowPower(true);
 			robot.retractBallFlap();
 		}
-		cycles++;
+		if(coDriver.getPOV() == 180){
+			robot.hanger.setState(Hanger.State.WEAK_HANG);
+		}
 	}
 	public void oneControllerMode(){
 		//Swerve

@@ -2,31 +2,34 @@ package Auto.Actions;
 
 import Subsystems.RoboSystem;
 import Subsystems.Swerve;
+import jaci.pathfinder.Trajectory;
 
 public class FollowPathAction implements Action{
 	private RoboSystem robot;
 	
-	private Swerve.PathfinderPath path;
+	private Trajectory trajectory;
 	private boolean hasStarted;
 	private double heading;
+	private double desiredPortionToComplete = 0.98;
 	
-	public FollowPathAction(Swerve.PathfinderPath mPath){
+	public FollowPathAction(Trajectory trajectory){
 		robot = RoboSystem.getInstance();
-		path = mPath;
+		this.trajectory = trajectory;
 		hasStarted = false;
 		heading = robot.pidgey.getAngle();
 	}
 	
-	public FollowPathAction(Swerve.PathfinderPath mPath, double heading){
-		path = mPath;
+	public FollowPathAction(Trajectory trajectory, double heading, double desiredPortionToComplete){
+		this.trajectory = trajectory;
 		hasStarted = false;
 		robot = RoboSystem.getInstance();
 		this.heading = heading;
+		this.desiredPortionToComplete = desiredPortionToComplete;
 	}
 	
 	@Override
 	public boolean isFinished(){
-		return hasStarted && robot.swerve.isFinishedWithPath();
+		return hasStarted && robot.swerve.isFinishedWithPath(desiredPortionToComplete);
 	}
 	
 	@Override
@@ -41,7 +44,7 @@ public class FollowPathAction implements Action{
 	
 	@Override
 	public void start(){
-		robot.swerve.followPath(path, heading);
+		robot.swerve.followPath(trajectory, heading);
 	}
 	
 }

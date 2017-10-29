@@ -21,9 +21,9 @@ public class TurnOnShooterAction implements Action{
 	
 	@Override
 	public void update(){
-		if(robot.turret.onTarget()){
+		/*if(robot.turret.onTarget()){
 			robot.turret.gyroLock();
-		}
+		}*/
 	}
 	
 	@Override
@@ -32,6 +32,6 @@ public class TurnOnShooterAction implements Action{
 	
 	@Override
 	public void start(){
-		robot.shooter.setSpeed(Constants.SHOOTING_SPEED + 25);
+		robot.shooter.setSpinUp(Constants.SHOOTING_SPEED);
 	}
 }

@@ -76,7 +76,7 @@ public class Constants {
 	//native units 1250
 	
 	//Shooter Constants
-	public static final double SHOOTING_SPEED = 2650; // 2650
+	public static final double SHOOTING_SPEED = 2635; // 2650
 	public static final double SHOOTER_ALLOWABLE_ERROR = 50;//100
 	
 	//Sweeper Constants

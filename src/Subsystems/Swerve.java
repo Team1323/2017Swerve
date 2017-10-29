@@ -88,13 +88,16 @@ public class Swerve extends Subsystem{
 	double maxJerk = 84;
 	Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, maxVel, maxAccel, maxJerk);
 	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, maxVel, maxAccel, maxJerk);
-	Trajectory.Config gearConfig =  new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, 7.5, maxAccel, maxJerk);
+	Trajectory.Config gearConfig =  new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, 6.0, maxAccel, maxJerk);
 	SwerveModifier.Mode mode = SwerveModifier.Mode.SWERVE_DEFAULT;
-	Trajectory redHopperTrajectory;
-	Trajectory testTrajectory;
-	Trajectory blueHopperTrajectory;
-	Trajectory leftPegTrajectory;
-	Trajectory leftPegToHopperTrajectory;
+	public Trajectory redHopperTrajectory;
+	public Trajectory testTrajectory;
+	public Trajectory blueHopperTrajectory;
+	public Trajectory leftPegTrajectory;
+	public Trajectory leftPegToHopperTrajectory;
+	public Trajectory middleGearTrajectory;
+	public Trajectory middleToBlueBoilerTrajectory;
+	public Trajectory middleToRedBoilerTrajectory;
 	Trajectory currentTrajectory;
 	SwerveModifier modifier;
 	DistanceFollower flFollower;
@@ -106,11 +109,12 @@ public class Swerve extends Subsystem{
 	double timestamp;
 	
 	public enum PathfinderPath{
-		BLUE_HOPPER, RED_HOPPER, TEST, LEFT_PEG, LEFT_PEG_TO_HOPPER
+		BLUE_HOPPER, RED_HOPPER, TEST, LEFT_PEG, LEFT_PEG_TO_HOPPER, MIDDLE_GEAR
 	}
 	
 	public enum HeadingController{
-		Off("Off"), Stabilize("Stabilize"), Snap("Snap");
+		Off("Off"), Stabilize("Stabilize"), Snap("Snap"),
+		TemporaryDisable("TemporaryDisable");
 		
 		public final String name;
 		private HeadingController(String name){
@@ -130,11 +134,17 @@ public class Swerve extends Subsystem{
 		targetHeadingAngle = target;
 		setHeadingController(HeadingController.Snap);
 	}
+	public void temporarilyDisable(){
+		targetHeadingAngle = pidgey.getAngle();
+		disabledTimestamp = Timer.getFPGATimestamp();
+		setHeadingController(HeadingController.TemporaryDisable);
+	}
 	private SynchronousPIDF headingPID = new SynchronousPIDF/*(0.002, 0.0, 0.0007, 0.0);*/(0.001, 0.0, 0.0007, 0.0);
 	private SynchronousPIDF strongHeadingPID = new SynchronousPIDF(0.016, 0.0, 0.16, 0.0);/*(0.008, 0.0, 0.0, 0.0);*/
 	private SynchronousPIDF snapPID = new SynchronousPIDF(0.0075, 0.0, 0.1, 0.2);
 	private SynchronousPIDF reversibleSnapPID = new SynchronousPIDF(0.005, 0.0, 0.02, 0.0);
 	private int cyclesLeft = 1;
+	private double disabledTimestamp = 0.0;
 	
 	//305.2586 54.74135
 	
@@ -199,19 +209,29 @@ public class Swerve extends Subsystem{
 	private void generatePaths(){
 		Waypoint[] bluePoints = new Waypoint[]{
 				new Waypoint(0,0,0),
-				new Waypoint(-5.0, 1.85, Pathfinder.d2r(130)),
-				new Waypoint(-5.35, 3.1, Pathfinder.d2r(50)),
-				new Waypoint(-3.5, 3.09, Pathfinder.d2r(0))
+				new Waypoint(5.0, -1.85, Pathfinder.d2r(130)),
+				new Waypoint(5.35, -3.1, Pathfinder.d2r(50)),
+				new Waypoint(3.5, -3.09, Pathfinder.d2r(0))
 		};
 		Waypoint[] redPoints = new Waypoint[]{
-				/*new Waypoint(0,0,0),
-				new Waypoint(5.0, 1.35, Pathfinder.d2r(50)),
-				new Waypoint(5.35, 2.6, Pathfinder.d2r(130)),
-				new Waypoint(3.6, 2.58, Pathfinder.d2r(180))*/
 				new Waypoint(0,0,0),
 				new Waypoint(5.2, 1.85, Pathfinder.d2r(50)),
 				new Waypoint(5.55, 3.1, Pathfinder.d2r(130)),
 				new Waypoint(3.8, 3.09, Pathfinder.d2r(180))
+		};
+		Waypoint[] straightGearPath = new Waypoint[]{
+				new Waypoint(0,0,0),
+				new Waypoint(75.0/12.0, 0.0, Pathfinder.d2r(0))
+		};
+		Waypoint[] middleToBlueBoilerPoints = new Waypoint[]{
+				new Waypoint(0,0,0),
+				new Waypoint(-1.5, 0, Pathfinder.d2r(-135)),
+				new Waypoint(-2, -6.5, Pathfinder.d2r(-90))
+		};
+		Waypoint[] middleToRedBoilerPoints = new Waypoint[]{
+				new Waypoint(0,0,0),
+				new Waypoint(-1.5, 0, Pathfinder.d2r(135)),
+				new Waypoint(-2, 6.5, Pathfinder.d2r(90))
 		};
 		/*Waypoint[] leftPegPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
@@ -232,11 +252,14 @@ public class Swerve extends Subsystem{
 		};
 		
 		
-		//redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
-		//blueHopperTrajectory = Pathfinder.generate(bluePoints, stableConfig);
-		testTrajectory = Pathfinder.generate(leftPegPoints, stableConfig);
+		redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
+		blueHopperTrajectory = Pathfinder.generate(bluePoints, stableConfig);
+		//testTrajectory = Pathfinder.generate(bluePoints, stableConfig);
 		//leftPegTrajectory = Pathfinder.generate(leftPegPoints, gearConfig);
 		//leftPegToHopperTrajectory = Pathfinder.generate(leftPegToHopperPoints, stableConfig);
+		middleGearTrajectory = Pathfinder.generate(straightGearPath, gearConfig);
+		middleToBlueBoilerTrajectory = Pathfinder.generate(middleToBlueBoilerPoints, stableConfig);
+		middleToRedBoilerTrajectory = Pathfinder.generate(middleToRedBoilerPoints, stableConfig);
 		/*for (int i = 0; i < forwardTrajectory.length(); i++) {
 		    Trajectory.Segment seg = forwardTrajectory.get(i);
 		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
@@ -299,33 +322,9 @@ public class Swerve extends Subsystem{
 		}
 	}
 	
-	public void followPath(PathfinderPath path, double heading){
-		switch(path){
-		case BLUE_HOPPER:
-			modifier = new SwerveModifier(blueHopperTrajectory);
-			currentTrajectory = blueHopperTrajectory;
-			break;
-		case RED_HOPPER:
-			modifier = new SwerveModifier(redHopperTrajectory);
-			currentTrajectory = redHopperTrajectory;
-			break;
-		case TEST:
-			modifier = new SwerveModifier(testTrajectory);
-			currentTrajectory = testTrajectory;
-			break;
-		case LEFT_PEG:
-			modifier = new SwerveModifier(leftPegTrajectory);
-			currentTrajectory = leftPegTrajectory;
-			break;
-		case LEFT_PEG_TO_HOPPER:
-			modifier = new SwerveModifier(leftPegToHopperTrajectory);
-			currentTrajectory = leftPegToHopperTrajectory;
-			break;
-		default:
-			modifier = new SwerveModifier(blueHopperTrajectory);
-			currentTrajectory = blueHopperTrajectory;
-			break;
-		}
+	public void followPath(Trajectory trajectory, double heading){
+		modifier = new SwerveModifier(trajectory);
+		currentTrajectory = trajectory;
 		
 		modifier.modify(Constants.WHEELBASE_WIDTH/12, Constants.WHEELBASE_LENGTH/12, mode);
 		flFollower = new DistanceFollower(modifier.getFrontLeftTrajectory());
@@ -353,13 +352,16 @@ public class Swerve extends Subsystem{
 		setState(ControlState.PathFollowing);
 	}
 	
-	public void followPath(PathfinderPath path){
-		followPath(path, pidgey.getAngle());
+	public void followPath(Trajectory trajectory){
+		followPath(trajectory, pidgey.getAngle());
 	}
 	
 	public boolean isFinishedWithPath(){
+		return isFinishedWithPath(1.0);
+	}
+	public boolean isFinishedWithPath(double percentCompleted){
 		return (getState() == ControlState.PathFollowing && 
-				brFollower.getSegment().position >= (0.98 * currentTrajectory.get(currentTrajectory.length()-1).position));
+				brFollower.getSegment().position >= (percentCompleted * currentTrajectory.get(currentTrajectory.length()-1).position));
 	}
 	public boolean strictFinishedWithPath(){
 		return (getState() == ControlState.PathFollowing &&
@@ -549,6 +551,12 @@ public class Swerve extends Subsystem{
 			case Off:
 				targetHeadingAngle = pidgey.getAngle();
 				break;
+			case TemporaryDisable:
+				setTargetHeading(pidgey.getAngle());
+				if(now - disabledTimestamp >= 0.2){
+					setHeadingController(HeadingController.Stabilize);
+				}
+				break;
 			case Stabilize:
 				if(!stabilizationTargetSet && (Timer.getFPGATimestamp() - manualRotationStopTime >= 0.45)){
 					targetHeadingAngle = pidgey.getAngle();
@@ -556,7 +564,7 @@ public class Swerve extends Subsystem{
 				}
 				if(stabilizationTargetSet){
 					if(Math.abs(getHeadingError()) > 5){
-						headingPID.setPID(0.012, 0.0, 0.0, 0.0);
+						headingPID.setPID(0.008, 0.0, 0.0, 0.0);
 						//headingPID.setPID(0.0, 0.0, 0.0, 0.0);
 						rotationCorrection = headingPID.calculate(heading, dt);
 					}else if(Math.abs(getHeadingError()) > 0.5){

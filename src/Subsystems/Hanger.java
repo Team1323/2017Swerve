@@ -27,7 +27,7 @@ public class Hanger extends Subsystem{
 	}
 	
 	public enum State{
-		STARTING_HANG, HANGING, HANG_DETECTED, OFF
+		STARTING_HANG, HANGING, HANG_DETECTED, OFF, WEAK_HANG
 	}
 	private State currentState = State.OFF;
 	public State getState(){
@@ -57,6 +57,9 @@ public class Hanger extends Subsystem{
 			case HANG_DETECTED:
 				stop();
 				SmartDashboard.putString(" Hanger Status ", "Hang Complete");
+				break;
+			case WEAK_HANG:
+				motor.set(-4.0/12.0);
 				break;
 		}
 	}

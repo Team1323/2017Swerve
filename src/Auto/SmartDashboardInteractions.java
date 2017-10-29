@@ -1,8 +1,9 @@
 package Auto;
 
 import Auto.Modes.BlueGearAndHopperMode;
+import Auto.Modes.BlueMiddleGearMode;
 import Auto.Modes.HopperMode;
-import Auto.Modes.MiddleGearMode;
+import Auto.Modes.RedMiddleGearMode;
 import Auto.Modes.StandStillMode;
 import Subsystems.Swerve;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -26,8 +27,9 @@ public class SmartDashboardInteractions {
     	modeChooser.addObject("Gear and Hopper", AutoOption.GEAR_AND_HOPPER);
     	modeChooser.addObject("Middle Gear", AutoOption.MIDDLE_GEAR);
     	sideChooser = new SendableChooser();
-    	sideChooser.addDefault("Blue", DEFAULT_SIDE);
-    	sideChooser.addObject("Red", AutoSide.RED);
+    	sideChooser.addDefault("Red", AutoSide.RED);
+    	sideChooser.addObject("Blue", DEFAULT_SIDE);
+    	
     	SmartDashboard.putData("Mode Chooser", modeChooser);
     	SmartDashboard.putData("Side Chooser", sideChooser);
     	SmartDashboard.putString(SELECTED_AUTO_MODE, DEFAULT_MODE.name);
@@ -78,16 +80,20 @@ public class SmartDashboardInteractions {
     	switch(option){
     		case HOPPER:
     			if(side == AutoSide.BLUE){
-    				return new HopperMode(Swerve.PathfinderPath.BLUE_HOPPER, 90, 180);
+    				return new HopperMode(Swerve.getInstance().blueHopperTrajectory, 90, 180);
     			}else{
-    				return new HopperMode(Swerve.PathfinderPath.RED_HOPPER, -90, 0);
+    				return new HopperMode(Swerve.getInstance().redHopperTrajectory, -90, 0);
     			}
     		case GEAR_AND_HOPPER:
     			if(side == AutoSide.BLUE){
     				return new BlueGearAndHopperMode();
     			}
     		case MIDDLE_GEAR:
-    			return new MiddleGearMode();
+    			if(side == AutoSide.BLUE){
+    				return new BlueMiddleGearMode();
+    			}else{
+    				return new RedMiddleGearMode();
+    			}
     		case STAND_STILL: // fallthrough
             default:
                 System.out.println("ERROR: unexpected auto mode: " + option);

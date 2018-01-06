@@ -3,6 +3,7 @@ package Auto;
 import Auto.Modes.BlueGearAndHopperMode;
 import Auto.Modes.BlueMiddleGearMode;
 import Auto.Modes.HopperMode;
+import Auto.Modes.RedGearAndHopperMode;
 import Auto.Modes.RedMiddleGearMode;
 import Auto.Modes.StandStillMode;
 import Subsystems.Swerve;
@@ -87,6 +88,8 @@ public class SmartDashboardInteractions {
     		case GEAR_AND_HOPPER:
     			if(side == AutoSide.BLUE){
     				return new BlueGearAndHopperMode();
+    			}else{
+    				return new RedGearAndHopperMode();
     			}
     		case MIDDLE_GEAR:
     			if(side == AutoSide.BLUE){

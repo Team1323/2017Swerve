@@ -12,6 +12,7 @@ import IO.LogitechJoystick;
 import IO.SimpleFlightStick;
 import IO.SteeringWheel;
 import IO.Xbox;
+import Loops.LimelightProcessor;
 import Loops.Looper;
 import Loops.RobotStateEstimator;
 import Loops.VisionProcessor;
@@ -33,6 +34,7 @@ import Vision.VisionServer;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -81,7 +83,8 @@ public class Robot extends IterativeRobot {
 	        driverJoystick = new LogitechJoystick(3);
 	        zeroAllSensors();
 	        robot.turret.resetAngle(90);
-	        enabledLooper.register(VisionProcessor.getInstance());
+	        //enabledLooper.register(VisionProcessor.getInstance());
+	        enabledLooper.register(LimelightProcessor.getInstance());
             enabledLooper.register(RobotStateEstimator.getInstance());
 	        enabledLooper.register(robot.pidgey.getLoop());
 	        enabledLooper.register(robot.turret.getLoop());
@@ -90,7 +93,8 @@ public class Robot extends IterativeRobot {
 	        enabledLooper.register(robot.shooter.getLoop());
 	        swerveLooper.register(robot.swerve.getLoop());
 	        disabledLooper.register(robot.pidgey.getLoop());
-	        disabledLooper.register(VisionProcessor.getInstance());
+	        //disabledLooper.register(VisionProcessor.getInstance());
+	        disabledLooper.register(LimelightProcessor.getInstance());
 	        disabledLooper.register(RobotStateEstimator.getInstance());
 	        robot.initCamera();
 	        smartDashboardInteractions.initWithDefaults();
@@ -108,9 +112,15 @@ public class Robot extends IterativeRobot {
 	        		robot.swerve.zeroSensors(0);
 	        	}
 	        }else if(smartDashboardInteractions.getSelectedMode().equals("Gear and Hopper")){
-	        	robot.pidgey.setAngle(0);
-	        	robot.turret.resetAngle(90);
-	        	robot.swerve.zeroSensors(0);
+	        	if(smartDashboardInteractions.getSelectedSide().equals("Blue")){
+		        	robot.pidgey.setAngle(0);
+		        	robot.turret.resetAngle(90);
+		        	robot.swerve.zeroSensors(0);
+	        	}else{
+	        		robot.pidgey.setAngle(0);
+		        	robot.turret.resetAngle(-90);
+		        	robot.swerve.zeroSensors(0);
+	        	}
 	        }else if(smartDashboardInteractions.getSelectedMode().equals("Middle Gear")){
 	        	robot.pidgey.setAngle(0);
         		robot.turret.resetAngle(-90);
@@ -216,6 +226,7 @@ public class Robot extends IterativeRobot {
 			
 			robot.swerve.setState(Swerve.ControlState.Neutral);
 			robot.swerve.setTargetHeading(robot.pidgey.getAngle());
+			//robot.gearIntake.setState(GearIntake.State.RETRACTED_HOLDING);
 		}catch(Throwable t){
 			CrashTracker.logThrowableCrash(t);
 			throw(t);
@@ -285,7 +296,14 @@ public class Robot extends IterativeRobot {
 		}else if(driver.getBButton()){
 			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
 		}else if(driver.getXButton()){
-			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
+			//robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
+			if(robot.turret.isStationary()){
+				Optional<ShooterAimingParameters> params = robotState.getAimingParameters(Timer.getFPGATimestamp());
+				if(params.isPresent()){
+					robot.swerve.moveDistance(Util.boundAngle0to360Degrees(robot.turret.turretAngleToWheelAngle(-params.get().getTurretAngle().getDegrees())), params.get().getRange() - Constants.kOptimalShootingDistance);
+				}
+			}
+			robot.turret.enableVision();
 		}else if(driver.getYButton()){
 			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
 		}else if(driver.rightBumper.wasPressed()){
@@ -301,11 +319,22 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			robot.swerve.rotateAboutModule(false);
 		}else if(driver.getPOV() == 180){
-			//robot.swerve.followPath(robot.swerve.middleToRedBoilerTrajectory, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
+			//robot.swerve.followPath(robot.swerve.rightPegTrajectory, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), -60));
 		}else if(driver.getPOV() == 270){
 			robot.swerve.rotateAboutModule(true);
 		}else if(driver.getPOV() == 0){
 			//robot.swerve.purePursuit(path);
+		}
+		
+		if(driver.POV180.wasPressed()){
+			NetworkTable table = NetworkTable.getTable("limelight");
+			if(table.getNumber("ledMode", 0) == 0){
+				table.putNumber("ledMode", 1);
+				table.putNumber("camMode", 1);
+			}else{
+				table.putNumber("ledMode", 0);
+				table.putNumber("camMode", 0);
+			}
 		}
 		
 		//Gear Score
@@ -412,19 +441,23 @@ public class Robot extends IterativeRobot {
 		}
 		
 		//Ball Flap
-		/*if(coDriver.POV180.wasPressed()){
-			System.out.println("POV Clicked");
-			robot.toggleBallFlap();
-		}*/
+		
 		
 		//Gear Intake
 		if(coDriver.getAButton()){
 			robot.gearIntake.extend();
 		}else if(coDriver.getBButton()){
-			robot.gearIntake.retract();
+			if(robot.gearIntake.getState() == GearIntake.State.RETRACTED_HOLDING){
+				robot.gearIntake.setState(GearIntake.State.RETRACTED_SECURING);
+			}else{
+				robot.gearIntake.retract();
+			}
 		}else if(coDriver.getPOV() == 0){
 			robot.gearIntake.setState(GearIntake.State.REVERSED);
+		}else if(robot.gearIntake.getState() == GearIntake.State.RETRACTED_SECURING){
+			robot.gearIntake.setState(GearIntake.State.RETRACTED_HOLDING);
 		}
+		
 		if(robot.gearIntake.needsToNotifyGearAcquired()){
 			coDriver.rumble(3, 2);
 			driver.rumble(3, 2);

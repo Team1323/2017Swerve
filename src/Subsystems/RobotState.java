@@ -109,6 +109,28 @@ public class RobotState {
         return getFieldToTurretRotated(timestamp).transformBy(kTurretRotatingToCamera);
     }
     
+    public void addLimeLightUpdate(double timestamp, double tx, double ty, boolean targetInSight){
+    	List<Translation2d> field_to_goals = new ArrayList<>();
+        RigidTransform2d field_to_camera = getFieldToCamera(timestamp);
+        if(targetInSight){
+        	Rotation2d targetAngleOffset = Rotation2d.fromDegrees(Constants.kCameraPitchAngleDegrees + ty);
+        	double distance = differentialHeight/Math.tan(targetAngleOffset.getRadians()) + Constants.kBoilerRadius;
+        	Rotation2d horizontalAngle = Rotation2d.fromDegrees(tx);
+        	
+        	field_to_goals.add(field_to_camera
+                    .transformBy(RigidTransform2d
+                            .fromTranslation(new Translation2d(distance * horizontalAngle.cos(), distance * horizontalAngle.sin())))
+                    .getTranslation());
+        	
+        	SmartDashboard.putNumber("Vision Distance", distance);
+        	SmartDashboard.putNumber("Vision Angle", tx);
+        	SmartDashboard.putNumber("Original Vision Angle", ty);
+        }
+        synchronized (this) {
+        	//goalTracker.update(timestamp, field_to_goals);
+        }
+    }
+    
     public synchronized Optional<ShooterAimingParameters> getAimingParameters(double current_timestamp) {
     	List<TrackReport> reports = goalTracker.getTracks();
     	if(!reports.isEmpty()){

@@ -76,7 +76,7 @@ public class Constants {
 	//native units 1250
 	
 	//Shooter Constants
-	public static final double SHOOTING_SPEED = 2635; // 2650
+	public static final double SHOOTING_SPEED = 2675; // 2650
 	public static final double SHOOTER_ALLOWABLE_ERROR = 50;//100
 	
 	//Sweeper Constants
@@ -104,7 +104,7 @@ public class Constants {
 	public static final double kOptimalShootingDistance = 84.8;
 	
 	// Pose of the camera frame w.r.t. the turret frame
-    public static final double kCameraXOffset = -2.25;//-2.25;
+    public static final double kCameraXOffset = -0.5;//-2.25;
     public static final double kCameraYOffset = 9.875;
     public static final double kCameraZOffset = 23;
     public static final double kCameraPitchAngleDegrees = 90-58.5; // 35.75

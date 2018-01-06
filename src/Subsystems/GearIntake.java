@@ -63,7 +63,7 @@ public class GearIntake extends Subsystem{
 		OFF,
 		TUCKED, REVERSED,
 		EXTENDED_OFF, EXTENDED_INTAKING, EXTENDED_HOLDING, 
-		RETRACTED_OFF, RETRACTED_HOLDING,
+		RETRACTED_OFF, RETRACTED_HOLDING, RETRACTED_SECURING,
 		SCORING
 	}
 	private State currentState = State.TUCKED;
@@ -135,9 +135,15 @@ public class GearIntake extends Subsystem{
 				}
 				SmartDashboard.putString("Gear Intake Status", "RETRACTED HOLDING");
 				break;
+			case RETRACTED_SECURING:
+				forward();
+				retractCylinder();
+				SmartDashboard.putString("Gear Intake Status", "RETRACTED SECURING");
+				break;
 			case REVERSED:
 				reverse();
 				SmartDashboard.putString("Gear Intake Status", "REVERSED");
+				break;
 			case SCORING:
 				if(!isScoring){
 					ScoreGear scoreAction = new ScoreGear();
@@ -173,12 +179,12 @@ public class GearIntake extends Subsystem{
 	}
 	
 	private void extendCylinder(){
-		cylinder.set(false);
-		extended = !cylinder.get();
+		cylinder.set(true);
+		extended = cylinder.get();
 	}
 	private void retractCylinder(){
-		cylinder.set(true);
-		extended = !cylinder.get();
+		cylinder.set(false);
+		extended = cylinder.get();
 	}
 	private void forward(){
 		intake.changeControlMode(TalonControlMode.PercentVbus);

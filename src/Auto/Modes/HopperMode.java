@@ -38,8 +38,8 @@ public class HopperMode extends AutoModeBase{
 		robot.gearIntake.setState(GearIntake.State.RETRACTED_HOLDING);
 		System.out.println("reached");
 		runAction(new ParallelAction(Arrays.asList(new FollowPathAction(trajectory, -pigeonAngle, 0.95), new ExtendIntakeAction(), 
-				new DeployBallFlapAction(), new StartAutoAimingAction())));
-		runAction(new TurnOnShooterAction());
+				new DeployBallFlapAction(), new TurnOnShooterAction()/*new StartAutoAimingAction()*/)));
+		//runAction(new TurnOnShooterAction());
 		
 		AlignForShootingAction alignAction = new AlignForShootingAction();
 		runAction(alignAction);
@@ -50,8 +50,7 @@ public class HopperMode extends AutoModeBase{
 				robot.turret.setGyroLockAngle(-pigeonAngle, -100);
 			}
 		}
-		runAction(new SeriesAction(Arrays.asList(/*new WaitForAutoAimAction(turretAngle, pigeonAngle),*/ 
-				new TurnOnSweeperAction(), new ReciprocateBallFlapAction(1.5, 3)))); 
+		runAction(new SeriesAction(Arrays.asList(new TurnOnSweeperAction(), new ReciprocateBallFlapAction(1.0, 5)))); 
 	}
 	
 }

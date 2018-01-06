@@ -9,6 +9,7 @@ import com.team254.lib.util.control.PathFollower;
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.DriveSignal;
+import Utilities.Logger;
 import Utilities.Ports;
 import Utilities.RigidTransform2d;
 import Utilities.Rotation2d;
@@ -86,15 +87,18 @@ public class Swerve extends Subsystem{
 	double maxVel = 10.0;//13.89;
 	double maxAccel = 10.0;//16;
 	double maxJerk = 84;
-	Trajectory.Config config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.01, maxVel, maxAccel, maxJerk);
+	Trajectory.Config tolerantConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_LOW, 0.02, 12.0, maxAccel, maxJerk);
 	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, maxVel, maxAccel, maxJerk);
-	Trajectory.Config gearConfig =  new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, 6.0, maxAccel, maxJerk);
+	Trajectory.Config middlePegConfig =  new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_LOW, 0.02, 6.0, maxAccel, maxJerk);
+	Trajectory.Config sidePegConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, 8.0, maxAccel, maxJerk);
 	SwerveModifier.Mode mode = SwerveModifier.Mode.SWERVE_DEFAULT;
 	public Trajectory redHopperTrajectory;
 	public Trajectory testTrajectory;
 	public Trajectory blueHopperTrajectory;
 	public Trajectory leftPegTrajectory;
 	public Trajectory leftPegToHopperTrajectory;
+	public Trajectory rightPegTrajectory;
+	public Trajectory rightPegToHopperTrajectory;
 	public Trajectory middleGearTrajectory;
 	public Trajectory middleToBlueBoilerTrajectory;
 	public Trajectory middleToRedBoilerTrajectory;
@@ -226,19 +230,19 @@ public class Swerve extends Subsystem{
 		Waypoint[] middleToBlueBoilerPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
 				new Waypoint(-1.5, 0, Pathfinder.d2r(-135)),
-				new Waypoint(-2, -6.5, Pathfinder.d2r(-90))
+				new Waypoint(-4, -6.5, Pathfinder.d2r(-90))
 		};
 		Waypoint[] middleToRedBoilerPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
 				new Waypoint(-1.5, 0, Pathfinder.d2r(135)),
-				new Waypoint(-2, 6.5, Pathfinder.d2r(90))
+				new Waypoint(-6.0, 5.5, Pathfinder.d2r(90))
 		};
 		/*Waypoint[] leftPegPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
 				new Waypoint(7.95, 2.0, Pathfinder.d2r(60))
 		};*/
 		double straightDistance = 1.25;
-		double pegForwardDistance = 7.7;
+		double pegForwardDistance = 8.1;
 		double pegSideDistance = 2.2;
 		Waypoint[] leftPegPoints = new Waypoint[]{
 				new Waypoint(0,0,0),
@@ -246,22 +250,37 @@ public class Swerve extends Subsystem{
 				new Waypoint(pegForwardDistance, pegSideDistance, Pathfinder.d2r(60))
 		};
 		Waypoint[] leftPegToHopperPoints = new Waypoint[]{
-				new Waypoint(0,0,-90),
-				new Waypoint(-2.5, -6.75, Pathfinder.d2r(-130)),
-				new Waypoint(-4.0, -6.75, Pathfinder.d2r(180))
+				new Waypoint(0,0,Pathfinder.d2r(-90)),
+				new Waypoint(-2.5, -7.75, Pathfinder.d2r(-130)),
+				new Waypoint(-4.0, -7.5, Pathfinder.d2r(180))
+		};
+		double redStraightDistance = 1.25;
+		double redForwardDistance = 7.9;
+		double redSideDistance = 2.2;
+		Waypoint[] rightPegPoints = new Waypoint[]{
+				new Waypoint(0,0,0),
+				new Waypoint(redForwardDistance - (redStraightDistance/2), -redSideDistance + (redStraightDistance/2*Math.sqrt(3)), Pathfinder.d2r(-60)),
+				new Waypoint(redForwardDistance, -redSideDistance, Pathfinder.d2r(-60))
+		};
+		Waypoint[] rightPegToHopperPoints = new Waypoint[]{
+				new Waypoint(0,0,Pathfinder.d2r(90)),
+				new Waypoint(-1.5, 7.5, Pathfinder.d2r(130)),
+				new Waypoint(-3.0, 7.25, Pathfinder.d2r(180))
 		};
 		
 		
-		redHopperTrajectory = Pathfinder.generate(redPoints, stableConfig);
-		blueHopperTrajectory = Pathfinder.generate(bluePoints, stableConfig);
+		redHopperTrajectory = Pathfinder.generate(redPoints, tolerantConfig);
+		blueHopperTrajectory = Pathfinder.generate(bluePoints, tolerantConfig);
 		//testTrajectory = Pathfinder.generate(bluePoints, stableConfig);
-		//leftPegTrajectory = Pathfinder.generate(leftPegPoints, gearConfig);
-		//leftPegToHopperTrajectory = Pathfinder.generate(leftPegToHopperPoints, stableConfig);
-		middleGearTrajectory = Pathfinder.generate(straightGearPath, gearConfig);
-		middleToBlueBoilerTrajectory = Pathfinder.generate(middleToBlueBoilerPoints, stableConfig);
-		middleToRedBoilerTrajectory = Pathfinder.generate(middleToRedBoilerPoints, stableConfig);
-		/*for (int i = 0; i < forwardTrajectory.length(); i++) {
-		    Trajectory.Segment seg = forwardTrajectory.get(i);
+		leftPegTrajectory = Pathfinder.generate(leftPegPoints, sidePegConfig);
+		leftPegToHopperTrajectory = Pathfinder.generate(leftPegToHopperPoints, tolerantConfig);
+		rightPegTrajectory = Pathfinder.generate(rightPegPoints, sidePegConfig);
+		rightPegToHopperTrajectory = Pathfinder.generate(rightPegToHopperPoints, tolerantConfig); 
+		middleGearTrajectory = Pathfinder.generate(straightGearPath, middlePegConfig);
+		middleToBlueBoilerTrajectory = Pathfinder.generate(middleToBlueBoilerPoints, tolerantConfig);
+		middleToRedBoilerTrajectory = Pathfinder.generate(middleToRedBoilerPoints, tolerantConfig);
+		/*for (int i = 0; i < middleToRedBoilerTrajectory.length(); i++) {
+		    Trajectory.Segment seg = middleToRedBoilerTrajectory.get(i);
 		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
 		}*/
 	}
@@ -564,7 +583,7 @@ public class Swerve extends Subsystem{
 				}
 				if(stabilizationTargetSet){
 					if(Math.abs(getHeadingError()) > 5){
-						headingPID.setPID(0.008, 0.0, 0.0, 0.0);
+						headingPID.setPID(0.006, 0.0, 0.0, 0.0);
 						//headingPID.setPID(0.0, 0.0, 0.0, 0.0);
 						rotationCorrection = headingPID.calculate(heading, dt);
 					}else if(Math.abs(getHeadingError()) > 0.5){

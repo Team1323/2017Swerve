@@ -30,7 +30,7 @@ private RoboSystem robot;
 		runAction(new ParallelAction(Arrays.asList(new FollowPathAction(robot.swerve.middleGearTrajectory), 
 				new ExtendIntakeAction(), new DeployBallFlapAction())));
 		robot.gearIntake.score();
-		robot.turret.setMotionMagic(45);
+		robot.turret.setMotionMagic(25);
 		runAction(new SeriesAction(Arrays.asList(new FollowPathAction(robot.swerve.middleToRedBoilerTrajectory, -180, 0.95), 
 				new AlignForShootingAction(), new TurnOnShooterAction(), new TurnOnSweeperAction())));
 	}

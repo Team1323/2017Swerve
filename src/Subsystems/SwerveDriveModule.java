@@ -158,7 +158,7 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	public boolean onDistanceTarget(){
 		return (driveMotor.getControlMode() == TalonControlMode.MotionMagic) && 
-				Math.abs(rotationsToInches(driveMotor.getSetpoint()) - rotationsToInches(driveMotor.getPosition())) < 1.0;
+				Math.abs(rotationsToInches(driveMotor.getSetpoint()) - rotationsToInches(driveMotor.getPosition())) < 2.0;
 	}
 	public void setOriginCoordinates(double x, double y){
 		currentX = x;

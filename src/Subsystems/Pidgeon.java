@@ -1,13 +1,13 @@
 package Subsystems;
 
-import com.ctre.PigeonImu;
-import com.ctre.PigeonImu.PigeonState;
+import com.ctre.phoenix.sensors.PigeonIMU;
+import com.ctre.phoenix.sensors.PigeonIMU.PigeonState;
 
 import Loops.Loop;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Pidgeon {
-	private PigeonImu pidgey;
+	private PigeonIMU pidgey;
 	private Hanger hanger;
     private double currentAngle = 0.0;
     boolean pidgeonIsGood = false;
@@ -15,8 +15,8 @@ public class Pidgeon {
 	public Pidgeon(){
 		hanger = Hanger.getInstance();
 		try{
-			pidgey = new PigeonImu(hanger.getTalon());
-			pidgey.EnableTemperatureCompensation(true);
+			pidgey = new PigeonIMU(hanger.getTalon());
+			pidgey.configTemperatureCompensationEnable(true, 10);
 		}catch(Exception e){
 			System.out.println(e);
 		}
@@ -30,23 +30,23 @@ public class Pidgeon {
 	}
 	public void update(){
 		try{
-			PigeonImu.GeneralStatus genStatus = new PigeonImu.GeneralStatus();
-			PigeonImu.FusionStatus fusionStatus = new PigeonImu.FusionStatus();
+			PigeonIMU.GeneralStatus genStatus = new PigeonIMU.GeneralStatus();
+			PigeonIMU.FusionStatus fusionStatus = new PigeonIMU.FusionStatus();
 			double [] xyz_dps = new double [3];
-			currentAngle = -pidgey.GetFusedHeading(fusionStatus);
-			pidgey.GetGeneralStatus(genStatus);
-			pidgey.GetRawGyro(xyz_dps);
-			pidgeonIsGood = (pidgey.GetState() == PigeonState.Ready) ? true : false;
+			currentAngle = -pidgey.getFusedHeading(fusionStatus);
+			pidgey.getGeneralStatus(genStatus);
+			pidgey.getRawGyro(xyz_dps);
+			pidgeonIsGood = (pidgey.getState() == PigeonState.Ready) ? true : false;
 			currentAngularRate = -xyz_dps[2];
 			
 			short [] ba_xyz = new short [3];
-			pidgey.GetBiasedAccelerometer(ba_xyz);
+			pidgey.getBiasedAccelerometer(ba_xyz);
 			//SmartDashboard.putNumber("AccX", ba_xyz[0]);
 			//SmartDashboard.putNumber("AccY", ba_xyz[1]);
 			//SmartDashboard.putNumber("AccZ", ba_xyz[2]);
 			
 			double [] ypr = new double [3];
-			pidgey.GetYawPitchRoll(ypr);
+			pidgey.getYawPitchRoll(ypr);
 			//currentAngle = -ypr[0];
 			
 		}catch(Exception e){
@@ -84,17 +84,17 @@ public class Pidgeon {
 	}
 	public void setAngle(int i){
 		if(i == 0){
-			pidgey.SetFusedHeading(i);
-			pidgey.SetYaw(i);
+			pidgey.setFusedHeading(i, 0);
+			pidgey.setYaw(i, 0);
 		}else{
-			pidgey.SetFusedHeading(360-i);
-			pidgey.SetYaw(360-i);
+			pidgey.setFusedHeading(360-i, 0);
+			pidgey.setYaw(360-i, 0);
 		}
 	}
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber(" Heading Angle ", getAngle());
 		SmartDashboard.putNumber(" Pigeon Rate ", getAngularRate());
 		SmartDashboard.putBoolean(" Pigeon Good ", isGood());
-		SmartDashboard.putNumber("Pigeon Temp", pidgey.GetTemp());
+		SmartDashboard.putNumber("Pigeon Temp", pidgey.getTemp());
 	}
 }

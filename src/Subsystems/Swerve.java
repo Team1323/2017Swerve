@@ -9,7 +9,6 @@ import com.team254.lib.util.control.PathFollower;
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.DriveSignal;
-import Utilities.Logger;
 import Utilities.Ports;
 import Utilities.RigidTransform2d;
 import Utilities.Rotation2d;
@@ -178,9 +177,9 @@ public class Swerve extends Subsystem{
 		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3,Constants.REAR_LEFT_TURN_OFFSET);
 		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4,Constants.REAR_RIGHT_TURN_OFFSET);
 		
-		frontRight.driveMotor.reverseSensor(true);
-		frontLeft.driveMotor.reverseOutput(true);
-		rearLeft.driveMotor.reverseOutput(true);
+		frontRight.driveMotor.setInverted(true);
+		frontLeft.driveMotor.setInverted(true);
+		rearLeft.driveMotor.setInverted(true);
 		
 		frontLeft.reverseOpenLoop(true);
 		rearLeft.reverseOpenLoop(true);

@@ -1,28 +1,28 @@
 package Subsystems;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.Ports;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class GearIntake extends Subsystem{
-	private CANTalon intake;
+	private TalonSRX intake;
 	private Solenoid cylinder;
 	private DigitalInput banner;
 	public GearIntake(){
-		intake = new CANTalon(Ports.GEAR_INTAKE);
-		intake.enableBrakeMode(false);
-		intake.reverseOutput(true);
-		intake.setCloseLoopRampRate(12);
-		intake.setCurrentLimit(15);
-		intake.EnableCurrentLimit(true);
+		intake = new TalonSRX(Ports.GEAR_INTAKE);
+		intake.setNeutralMode(NeutralMode.Coast);
+		intake.setInverted(true);
+		intake.configClosedloopRamp(1, 10);
+		intake.configPeakCurrentLimit(15, 10);
+		intake.enableCurrentLimit(true);
 		cylinder = new Solenoid(20, Ports.GEAR_INTAKE_ARM);
 		banner = new DigitalInput(0);
 	}
@@ -187,20 +187,16 @@ public class GearIntake extends Subsystem{
 		extended = cylinder.get();
 	}
 	private void forward(){
-		intake.changeControlMode(TalonControlMode.PercentVbus);
-		intake.set(0.75);
+		intake.set(ControlMode.PercentOutput, 0.75);
 	}
 	private void hold(){
-		intake.changeControlMode(TalonControlMode.PercentVbus);
-		intake.set(0.27);
+		intake.set(ControlMode.PercentOutput, 0.27);
 	}
 	private void reverse(){
-		intake.changeControlMode(TalonControlMode.PercentVbus);
-		intake.set(-0.75);
+		intake.set(ControlMode.PercentOutput, -0.75);
 	}
 	private void stopRoller(){
-		intake.changeControlMode(TalonControlMode.PercentVbus);
-		intake.set(0);
+		intake.set(ControlMode.PercentOutput, 0);
 	}
 	
 	public void extend(){
@@ -254,7 +250,7 @@ public class GearIntake extends Subsystem{
 	}
 	@Override
 	public void outputToSmartDashboard(){
-		SmartDashboard.putNumber("Gear Intake Voltage" , intake.getOutputVoltage());
+		SmartDashboard.putNumber("Gear Intake Voltage" , intake.getMotorOutputVoltage());
 		SmartDashboard.putNumber("Gear Intake Current", intake.getOutputCurrent());
 		SmartDashboard.putBoolean("Has Gear", hasGear);
 		SmartDashboard.putBoolean("Banner", banner.get());

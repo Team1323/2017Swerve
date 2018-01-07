@@ -59,7 +59,7 @@ public class Robot extends IterativeRobot {
 	private int cyclesReadyForShooting = 0;
 	int cycles = 0;
 	CheesyDriveHelper cheesyDriveHelper = new CheesyDriveHelper();
-	VisionServer visionServer = VisionServer.getInstance();
+	//VisionServer visionServer = VisionServer.getInstance();
 	
 	SmartDashboardInteractions smartDashboardInteractions = new SmartDashboardInteractions();
 	
@@ -76,7 +76,7 @@ public class Robot extends IterativeRobot {
 			robot = RoboSystem.getInstance();
 			robotState = RobotState.getInstance();
 			CrashTracker.logRobotInit();
-			visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
+			//visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 			driver = new Xbox(0);
 	        coDriver = new Xbox(1);
 	        steeringWheel = new SteeringWheel(2);
@@ -150,7 +150,7 @@ public class Robot extends IterativeRobot {
 		robot.shooter.outputToSmartDashboard();
 		robot.sweeper.outputToSmartDashboard();
 		robotState.outputToSmartDashboard();
-		visionServer.outputToSmartDashboard();
+		//visionServer.outputToSmartDashboard();
 	}
 	public void stopAll(){
 		robot.swerve.stop();
@@ -412,7 +412,7 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(coDriver.leftCenterClick.wasPressed()){
-			visionServer.requestAppRestart();
+			//visionServer.requestAppRestart();
 		}
 		
 		//Shooter
@@ -522,7 +522,7 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(driver.startButton.longPressed()){
-			visionServer.requestAppRestart();
+			//visionServer.requestAppRestart();
 		}
 		//Shooter
 		if(driver.rightTrigger.longPressed()){

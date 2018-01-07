@@ -1,6 +1,7 @@
 package Subsystems;
 
-import com.ctre.CANTalon;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import Utilities.Constants;
 import Utilities.Ports;
@@ -8,14 +9,14 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Sweeper extends Subsystem{
-	public CANTalon sweeperArm;
-	public CANTalon sweeperRoller;
+	public TalonSRX sweeperArm;
+	public TalonSRX sweeperRoller;
 	public Sweeper(){
-		sweeperArm = new CANTalon(Ports.SWEEPER);
-		sweeperArm.setVoltageRampRate(48);
-		sweeperRoller = new CANTalon(Ports.SWEEPER_ROLLER);
-		sweeperRoller.setCurrentLimit(50);
-		sweeperRoller.EnableCurrentLimit(true);
+		sweeperArm = new TalonSRX(Ports.SWEEPER);
+		sweeperArm.configOpenloopRamp(0.25, 10);
+		sweeperRoller = new TalonSRX(Ports.SWEEPER_ROLLER);
+		sweeperRoller.configPeakCurrentLimit(50, 10);
+		sweeperRoller.enableCurrentLimit(true);
 	}
 	
 	private static Sweeper instance = new Sweeper();
@@ -29,13 +30,13 @@ public class Sweeper extends Subsystem{
 	}
 	
 	public void armForward(){
-		sweeperArm.set(Constants.SWEEPER_FORWARD);
+		sweeperArm.set(ControlMode.PercentOutput, Constants.SWEEPER_FORWARD);
 	}
 	public void rollerForward(){
-		sweeperRoller.set(Constants.SWEEPER_ROLLER_FORWARD);
+		sweeperRoller.set(ControlMode.PercentOutput, Constants.SWEEPER_ROLLER_FORWARD);
 	}
 	public void rollerReverse(){
-		sweeperRoller.set(Constants.SWEEPER_ROLLER_REVERSE);
+		sweeperRoller.set(ControlMode.PercentOutput, Constants.SWEEPER_ROLLER_REVERSE);
 	}
 	public void startSweeper(){
 		if(!isInThread){
@@ -55,8 +56,8 @@ public class Sweeper extends Subsystem{
 	}
 	@Override
 	public synchronized void stop(){
-		sweeperArm.set(0);
-		sweeperRoller.set(0);
+		sweeperArm.set(ControlMode.PercentOutput, 0);
+		sweeperRoller.set(ControlMode.PercentOutput, 0);
 		isFeeding = false;
 	}
 	@Override
@@ -67,7 +68,7 @@ public class Sweeper extends Subsystem{
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber("Sweeper Rotor Current", sweeperArm.getOutputCurrent());
 		SmartDashboard.putNumber("Sweeper Roller Current", sweeperRoller.getOutputCurrent());
-		SmartDashboard.putNumber("Sweeper Rotor Voltage", sweeperArm.getOutputVoltage());
-		SmartDashboard.putNumber("Sweeper Roller Voltage", sweeperRoller.getOutputVoltage());
+		SmartDashboard.putNumber("Sweeper Rotor Voltage", sweeperArm.getMotorOutputVoltage());
+		SmartDashboard.putNumber("Sweeper Roller Voltage", sweeperRoller.getMotorOutputVoltage());
 	}
 }

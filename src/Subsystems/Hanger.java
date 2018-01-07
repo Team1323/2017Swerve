@@ -1,7 +1,8 @@
 package Subsystems;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import Loops.Loop;
 import Utilities.Constants;
@@ -9,8 +10,8 @@ import Utilities.Ports;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Hanger extends Subsystem{
-	private CANTalon motor;
-	public CANTalon getTalon(){
+	private TalonSRX motor;
+	public TalonSRX getTalon(){
 		return motor;
 	}
 	private static Hanger instance = new Hanger();
@@ -18,12 +19,11 @@ public class Hanger extends Subsystem{
 		return instance;
 	}
 	public Hanger(){
-		motor = new CANTalon(Ports.HANGER);
-		motor.reverseOutput(false);
-		motor.enableBrakeMode(true);
-		motor.changeControlMode(TalonControlMode.PercentVbus);
-		motor.setCurrentLimit(70);
-		motor.EnableCurrentLimit(true);
+		motor = new TalonSRX(Ports.HANGER);
+		motor.setInverted(false);
+		motor.setNeutralMode(NeutralMode.Brake);
+		motor.configPeakCurrentLimit(70, 10);
+		motor.enableCurrentLimit(true);
 	}
 	
 	public enum State{
@@ -59,7 +59,7 @@ public class Hanger extends Subsystem{
 				SmartDashboard.putString(" Hanger Status ", "Hang Complete");
 				break;
 			case WEAK_HANG:
-				motor.set(-4.0/12.0);
+				motor.set(ControlMode.PercentOutput, -4.0/12.0);
 				break;
 		}
 	}
@@ -87,7 +87,7 @@ public class Hanger extends Subsystem{
 	}
 	
 	public void on(){
-		motor.set(Constants.HANG_POWER);
+		motor.set(ControlMode.PercentOutput, Constants.HANG_POWER);
 	}
 	
 	public boolean isHanging(){
@@ -97,7 +97,7 @@ public class Hanger extends Subsystem{
 	@Override
 	public synchronized void stop(){
 		setState(State.OFF);
-		motor.set(0);
+		motor.set(ControlMode.PercentOutput, 0);
 	}
 	@Override
 	public synchronized void zeroSensors(){
@@ -106,6 +106,6 @@ public class Hanger extends Subsystem{
 	@Override
 	public void outputToSmartDashboard(){
 		SmartDashboard.putNumber("Hanger Current", motor.getOutputCurrent());
-		SmartDashboard.putNumber("Hanger Voltage", motor.getOutputVoltage());
+		SmartDashboard.putNumber("Hanger Voltage", motor.getMotorOutputVoltage());
 	}
 }

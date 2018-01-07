@@ -1,54 +1,52 @@
 package Subsystems;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.FeedbackDevice;
-import com.ctre.CANTalon.TalonControlMode;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.StatusFrame;
+import com.ctre.phoenix.motorcontrol.VelocityMeasPeriod;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import Loops.Loop;
 import Utilities.CircularBuffer;
 import Utilities.Constants;
 import Utilities.Ports;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Shooter extends Subsystem{
-	private CANTalon master, slave;
+	private TalonSRX master, slave;
 	public Shooter(){
-		master = new CANTalon(Ports.SHOOTER_MOTOR_MASTER);
-		master.setFeedbackDevice(FeedbackDevice.CtreMagEncoder_Relative);
-		master.reverseSensor(true);
-		master.reverseOutput(false);
-		master.configNominalOutputVoltage(+0f, -0f);
-		master.configPeakOutputVoltage(12f, -0f);
-		master.setAllowableClosedLoopErr(0);
-		master.changeControlMode(TalonControlMode.PercentVbus);
-		master.set(0);
-		master.setPID(4.0, 0.00, 40, 0.027, 0, 0.0, 0);
-		//master.setPID(0.08, 0.0, 0.0, 0.027, 0, 60.0, 0);
-		master.setPID(0.0, 0.00, 0, 0.027, 0, 720.0, 1);
-		master.setStatusFrameRateMs(CANTalon.StatusFrameRate.General, 2);
-		master.setStatusFrameRateMs(CANTalon.StatusFrameRate.AnalogTempVbat, 2);
-		master.SetVelocityMeasurementPeriod(CANTalon.VelocityMeasurementPeriod.Period_10Ms);
-		master.SetVelocityMeasurementWindow(32);
-		master.setNominalClosedLoopVoltage(12);
-		master.enableBrakeMode(false);
+		master = new TalonSRX(Ports.SHOOTER_MOTOR_MASTER);
+		master.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
+		master.setSensorPhase(true);
+		master.setInverted(false);
+		master.configNominalOutputForward(0.0, 10);
+		master.configNominalOutputReverse(0.0, 10);
+		master.configPeakOutputForward(1.0, 10);
+		master.configPeakOutputReverse(0.0, 10);
+		master.configAllowableClosedloopError(0, 0, 10);
+		master.set(ControlMode.PercentOutput, 0);
+		/*master.setPID(4.0, 0.00, 40, 0.027, 0, 0.0, 0);
+		master.setPID(0.0, 0.00, 0, 0.027, 0, 720.0, 1);*/
+		master.selectProfileSlot(0, 0);
+		master.config_kP(0, 4.0, 10);
+		master.config_kI(0, 0.0, 10);
+		master.config_kD(0, 40, 10);
+		master.config_kF(0, 0.027, 10);
+		master.setStatusFramePeriod(StatusFrame.Status_1_General, 2, 10);
+		master.setStatusFramePeriod(StatusFrame.Status_4_AinTempVbat, 2, 10);
+		master.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_10Ms, 10);
+		master.configVelocityMeasurementWindow(32, 10);
+		master.enableVoltageCompensation(true);
+		//master.setNominalClosedLoopVoltage(12);
+		master.setNeutralMode(NeutralMode.Coast);
 		
-		if(master.isSensorPresent(CANTalon.FeedbackDevice.CtreMagEncoder_Relative) != CANTalon.FeedbackDeviceStatus.FeedbackStatusPresent){
-			DriverStation.reportError("Could not detect shooter encoder!", false);
-		}
-		
-		slave = new CANTalon(Ports.SHOOTER_MOTOR_SLAVE);
-		slave.changeControlMode(TalonControlMode.Follower);
-		slave.set(Ports.SHOOTER_MOTOR_MASTER);
-		slave.reverseOutput(true);
-		slave.enableBrakeMode(false);
-		slave.configNominalOutputVoltage(+0f, -0f);
-		slave.configPeakOutputVoltage(12f, -0f);
-		slave.setStatusFrameRateMs(CANTalon.StatusFrameRate.General, 2);
-		slave.SetVelocityMeasurementPeriod(CANTalon.VelocityMeasurementPeriod.Period_10Ms);
-		slave.SetVelocityMeasurementWindow(32);
-		slave.setNominalClosedLoopVoltage(12);
+		slave = new TalonSRX(Ports.SHOOTER_MOTOR_SLAVE);
+		slave.set(ControlMode.Follower, Ports.SHOOTER_MOTOR_MASTER);
+		slave.setInverted(true);
+		slave.setNeutralMode(NeutralMode.Coast);
+		slave.enableVoltageCompensation(true);
 		
 		mControlMethod = ControlMethod.OPEN_LOOP;
 	}
@@ -113,7 +111,7 @@ public class Shooter extends Subsystem{
             configureForSpinUp();
         }
         mSetpointRpm = setpointRpm;
-        master.set(mSetpointRpm);
+        master.set(ControlMode.Velocity, mSetpointRpm);
     }
     
     public synchronized void setHoldWhenReady(double setpointRpm) {
@@ -121,29 +119,26 @@ public class Shooter extends Subsystem{
             configureForHoldWhenReady();
         }
         mSetpointRpm = setpointRpm;
-        master.set(mSetpointRpm);
+        master.set(ControlMode.Velocity, mSetpointRpm);
     }
     
     private void configureForSpinUp() {
         mControlMethod = ControlMethod.SPIN_UP;
-        master.changeControlMode(CANTalon.TalonControlMode.Speed);
         //master.DisableNominalClosedLoopVoltage();
-        master.setProfile(0);
+        master.selectProfileSlot(0, 0);
     }
     
     private void configureForHoldWhenReady() {
         mControlMethod = ControlMethod.HOLD_WHEN_READY;
-        master.changeControlMode(CANTalon.TalonControlMode.Speed);
         //master.DisableNominalClosedLoopVoltage();
-        master.setProfile(0);
+        master.selectProfileSlot(0, 0);
     }
     
     private void configureForHold() {
         mControlMethod = ControlMethod.HOLD;
-        master.changeControlMode(CANTalon.TalonControlMode.Speed);
-        master.setProfile(1);
+        /*master.setProfile(1);
         master.setNominalClosedLoopVoltage(12.0);
-        master.setF(mKfEstimator.getAverage());
+        master.setF(mKfEstimator.getAverage());*/
         System.out.println(mKfEstimator.getAverage());
     }
     
@@ -161,12 +156,12 @@ public class Shooter extends Subsystem{
     
     private void handleClosedLoop(double timestamp) {
         final double speed = getSpeed();
-        final double voltage = master.getOutputVoltage();
+        final double voltage = master.getMotorOutputVoltage();
         mLastRpmSpeed = speed;
 
         // See if we should be spinning up or holding.
         if (mControlMethod == ControlMethod.SPIN_UP) {
-            master.set(mSetpointRpm);
+            master.set(ControlMode.Velocity, mSetpointRpm);
             resetHold();
             
         } else if (mControlMethod == ControlMethod.HOLD_WHEN_READY) {
@@ -188,7 +183,7 @@ public class Shooter extends Subsystem{
             if (mKfEstimator.getNumValues() >= 20) {
                 configureForHold();
             } else {
-                master.set(mSetpointRpm);
+                master.set(ControlMode.Velocity, mSetpointRpm);
             }
         }
         // No else because we may have changed control methods above.
@@ -196,36 +191,34 @@ public class Shooter extends Subsystem{
             // Update Kv if we exceed our target velocity. As the system heats up, drag is reduced.
             if (speed > mSetpointRpm) {
                 mKfEstimator.addValue(estimateKf(speed, voltage));
-                master.setF(mKfEstimator.getAverage());
+                //master.setF(mKfEstimator.getAverage());
             }
         }
     }
 	
 	public void setSpeed(double speed){
-		master.changeControlMode(TalonControlMode.Speed);
-		master.set(speed);
+		master.set(ControlMode.Velocity, speed);
 	}
 	public void setOpenLoop(double power){
 		mControlMethod = ControlMethod.OPEN_LOOP;
-		master.changeControlMode(TalonControlMode.PercentVbus);
-		master.set(power);
+		master.set(ControlMode.PercentOutput, power);
 	}
 	public double getSpeed(){
-		return master.getSpeed();
+		return master.getSelectedSensorVelocity(0);
 	}
 	public double getGoal(){
-		return master.getSetpoint();
+		return mSetpointRpm;
 	}
 	public double getError(){
 		return Math.abs(getGoal() - getSpeed());
 	}
 	public boolean onTarget(){
-		return ((master.getControlMode() == CANTalon.TalonControlMode.Speed)
+		return ((master.getControlMode() == ControlMode.Velocity)
 				&& (getError() < Constants.SHOOTER_ALLOWABLE_ERROR));
 	}
 	public boolean isShooting(){
-		return master.getControlMode() == CANTalon.TalonControlMode.Speed
-				&& master.getSetpoint() != 0;
+		return master.getControlMode() == ControlMode.Velocity
+				&& getGoal() != 0;
 	}
 	
 	@Override
@@ -239,7 +232,7 @@ public class Shooter extends Subsystem{
 	}
 	@Override
 	public void outputToSmartDashboard(){
-		SmartDashboard.putNumber("Shooter Voltage", master.getOutputVoltage());
+		SmartDashboard.putNumber("Shooter Voltage", master.getMotorOutputVoltage());
 		SmartDashboard.putNumber("Shooter Current", master.getOutputCurrent());
 		SmartDashboard.putNumber("Shooter Shooter Error", getError());
 		SmartDashboard.putNumber("SHOOTER_SPEED", getSpeed());

@@ -23,11 +23,11 @@ public class Hanger extends Subsystem{
 		motor.setInverted(false);
 		motor.setNeutralMode(NeutralMode.Brake);
 		motor.configPeakCurrentLimit(70, 10);
-		motor.enableCurrentLimit(true);
+		motor.enableCurrentLimit(false);
 	}
 	
 	public enum State{
-		STARTING_HANG, HANGING, HANG_DETECTED, OFF, WEAK_HANG
+		STARTING_HANG, HANGING, HANG_DETECTED, OFF, WEAK_HANG, REVERSED
 	}
 	private State currentState = State.OFF;
 	public State getState(){
@@ -61,6 +61,9 @@ public class Hanger extends Subsystem{
 			case WEAK_HANG:
 				motor.set(ControlMode.PercentOutput, -4.0/12.0);
 				break;
+			case REVERSED:
+				motor.set(ControlMode.PercentOutput, 1.0);
+				break;
 		}
 	}
 	
@@ -88,6 +91,13 @@ public class Hanger extends Subsystem{
 	
 	public void on(){
 		motor.set(ControlMode.PercentOutput, Constants.HANG_POWER);
+	}
+	
+	/**
+	 * Not for conventional use.
+	 */
+	public void reverse(){
+		setState(State.REVERSED);
 	}
 	
 	public boolean isHanging(){

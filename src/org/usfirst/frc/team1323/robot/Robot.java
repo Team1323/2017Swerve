@@ -59,7 +59,7 @@ public class Robot extends IterativeRobot {
 	private int cyclesReadyForShooting = 0;
 	int cycles = 0;
 	CheesyDriveHelper cheesyDriveHelper = new CheesyDriveHelper();
-	//VisionServer visionServer = VisionServer.getInstance();
+	VisionServer visionServer = VisionServer.getInstance();
 	
 	SmartDashboardInteractions smartDashboardInteractions = new SmartDashboardInteractions();
 	
@@ -76,14 +76,14 @@ public class Robot extends IterativeRobot {
 			robot = RoboSystem.getInstance();
 			robotState = RobotState.getInstance();
 			CrashTracker.logRobotInit();
-			//visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
+			visionServer.addVisionUpdateReceiver(VisionProcessor.getInstance());
 			driver = new Xbox(0);
 	        coDriver = new Xbox(1);
 	        steeringWheel = new SteeringWheel(2);
 	        driverJoystick = new LogitechJoystick(3);
 	        zeroAllSensors();
 	        robot.turret.resetAngle(90);
-	        //enabledLooper.register(VisionProcessor.getInstance());
+	        enabledLooper.register(VisionProcessor.getInstance());
 	        enabledLooper.register(LimelightProcessor.getInstance());
             enabledLooper.register(RobotStateEstimator.getInstance());
 	        enabledLooper.register(robot.pidgey.getLoop());
@@ -93,7 +93,7 @@ public class Robot extends IterativeRobot {
 	        enabledLooper.register(robot.shooter.getLoop());
 	        swerveLooper.register(robot.swerve.getLoop());
 	        disabledLooper.register(robot.pidgey.getLoop());
-	        //disabledLooper.register(VisionProcessor.getInstance());
+	        disabledLooper.register(VisionProcessor.getInstance());
 	        disabledLooper.register(LimelightProcessor.getInstance());
 	        disabledLooper.register(RobotStateEstimator.getInstance());
 	        robot.initCamera();
@@ -223,6 +223,8 @@ public class Robot extends IterativeRobot {
 			disabledLooper.stop();
 			enabledLooper.start();
 			swerveLooper.start();
+			
+			//robot.swerve.generatePaths();
 			
 			robot.swerve.setState(Swerve.ControlState.Neutral);
 			robot.swerve.setTargetHeading(robot.pidgey.getAngle());
@@ -357,15 +359,17 @@ public class Robot extends IterativeRobot {
 			sweeperNeedsToStop = false;
 			coDriverStop();
 			robot.swerve.setLowPower(false);
-			robot.extendBallFlap();
+			//robot.extendBallFlap();
 			robot.turret.lock();
 		}
 		
 		//Ball Intake
 		if(coDriver.getBumper(Hand.kRight)){
     		robot.intake.intakeForward();
+    		robot.hanger.startHang();
     	}else if(coDriver.getBumper(Hand.kLeft)){
     		robot.intake.intakeReverse();
+    		robot.hanger.reverse();
     	}
 		
 		//Vision

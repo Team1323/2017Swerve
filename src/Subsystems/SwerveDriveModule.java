@@ -51,10 +51,12 @@ public class SwerveDriveModule extends Subsystem{
 		pidgey = Pidgeon.getInstance();
 	}
 	public final void loadProperties(){
-    	absolutePosition = rotationMotor.getSensorCollection().getPulseWidthPosition() & 0xFFF;
-    	rotationMotor.getSensorCollection().setQuadraturePosition(absolutePosition, 10);
+    	//absolutePosition = rotationMotor.getSensorCollection().getPulseWidthPosition() & 0xFFF;
+		absolutePosition = rotationMotor.getSensorCollection().getAnalogInRaw();
+    	//rotationMotor.getSensorCollection().setAnalogPosition(absolutePosition, 10);
     	rotationMotor.configSelectedFeedbackSensor(FeedbackDevice.Analog, 0, 10);
-    	rotationMotor.setSensorPhase(false);
+    	rotationMotor.setSelectedSensorPosition(absolutePosition, 0, 10);
+    	rotationMotor.setSensorPhase(true);
     	rotationMotor.setInverted(true);
     	//rotationMotor.configPotentiometerTurns(360);
     	rotationMotor.configNominalOutputForward(0.0, 10);
@@ -75,7 +77,6 @@ public class SwerveDriveModule extends Subsystem{
     	rotationMotor.set(ControlMode.MotionMagic, rotationMotor.getSelectedSensorPosition(0));
     	driveMotor.getSensorCollection().setQuadraturePosition(0, 10);
     	driveMotor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10);
-    	//driveMotor.configEncoderCodesPerRev(360);
     	driveMotor.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, 10, 10);
     	driveMotor.configNominalOutputForward(0.0, 10);
     	driveMotor.configNominalOutputReverse(0.0, 10);
@@ -97,8 +98,14 @@ public class SwerveDriveModule extends Subsystem{
     	driveMotor.configMotionCruiseVelocity(3200, 10);
     	driveMotor.configMotionAcceleration(4500, 10);
 	}
+	public double degreesToEncUnits(double degrees){
+		return degrees/360.0*1024.0;
+	}
+	public double encUnitsToDegrees(double encUnits){
+		return encUnits/1024.0*360.0;
+	}
 	public double getRawAngle(){
-		return rotationMotor.getSelectedSensorPosition(0);
+		return encUnitsToDegrees(rotationMotor.getSelectedSensorPosition(0));
 	}
 	public double getModuleAngle(){
 		return Util.boundAngle0to360Degrees(getRawAngle() - offset);
@@ -111,15 +118,15 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	public void setModuleAngle(double goalAngle){
 		double newAngle = Util.placeInAppropriate0To360Scope(getRawAngle(), goalAngle+offset);
-		rotationMotor.set(ControlMode.MotionMagic, newAngle);
-		rotationSetpoint = newAngle;
+		rotationMotor.set(ControlMode.MotionMagic, degreesToEncUnits(newAngle));
+		rotationSetpoint = degreesToEncUnits(newAngle);
 	}
 	public void setRotationOpenLoop(double power){
 		rotationMotor.set(ControlMode.PercentOutput, power);
 		rotationSetpoint = power;
 	}
 	public double getGoal(){
-		return Util.boundAngle0to360Degrees(/*rotationMotor.getSetpoint() - */offset);
+		return Util.boundAngle0to360Degrees(rotationSetpoint);
 	}
 	public void setDriveOpenLoop(double power){
 		if(isReversed){
@@ -211,7 +218,7 @@ public class SwerveDriveModule extends Subsystem{
 	public void outputToSmartDashboard(){
 		String smallX = Float.toString((float)(Math.round(getX() * 100.0) / 100.0));
 		String smallY = Float.toString((float)(Math.round(getY() * 100.0) / 100.0));
-		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle());
+		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle()/*rotationMotor.getSelectedSensorPosition(0)*/);
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", rotationSetpoint);
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceFeet());
 		SmartDashboard.putString("Module " + Integer.toString(moduleID) + " Coordinates ", "("+smallX+" , "+smallY+")");

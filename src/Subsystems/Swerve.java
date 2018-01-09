@@ -9,6 +9,7 @@ import com.team254.lib.util.control.PathFollower;
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.DriveSignal;
+import Utilities.Logger;
 import Utilities.Ports;
 import Utilities.RigidTransform2d;
 import Utilities.Rotation2d;
@@ -177,9 +178,9 @@ public class Swerve extends Subsystem{
 		rearLeft   = new SwerveDriveModule(Ports.REAR_LEFT_ROTATION,Ports.REAR_LEFT_DRIVE,3,Constants.REAR_LEFT_TURN_OFFSET);
 		rearRight  = new SwerveDriveModule(Ports.REAR_RIGHT_ROTATION,Ports.REAR_RIGHT_DRIVE,4,Constants.REAR_RIGHT_TURN_OFFSET);
 		
-		frontRight.driveMotor.setInverted(true);
-		frontLeft.driveMotor.setInverted(true);
-		rearLeft.driveMotor.setInverted(true);
+		frontRight.driveMotor.setInverted(false);
+		frontLeft.driveMotor.setInverted(false);
+		rearLeft.driveMotor.setInverted(false);
 		
 		frontLeft.reverseOpenLoop(true);
 		rearLeft.reverseOpenLoop(true);
@@ -209,7 +210,7 @@ public class Swerve extends Subsystem{
         return instance;
     }
 	
-	private void generatePaths(){
+	public void generatePaths(){
 		Waypoint[] bluePoints = new Waypoint[]{
 				new Waypoint(0,0,0),
 				new Waypoint(5.0, -1.85, Pathfinder.d2r(130)),
@@ -267,21 +268,26 @@ public class Swerve extends Subsystem{
 				new Waypoint(-3.0, 7.25, Pathfinder.d2r(180))
 		};
 		
+		Waypoint[] rightCubeDropoffPoints = new Waypoint[]{
+				new Waypoint(0,0,Pathfinder.d2r(50)),
+				new Waypoint(10.0, 7.5, 0),
+				new Waypoint(16.25, 7.5, 0),
+		};
 		
-		redHopperTrajectory = Pathfinder.generate(redPoints, tolerantConfig);
+		testTrajectory = Pathfinder.generate(rightCubeDropoffPoints, tolerantConfig);
+		/*redHopperTrajectory = Pathfinder.generate(redPoints, tolerantConfig);
 		blueHopperTrajectory = Pathfinder.generate(bluePoints, tolerantConfig);
-		//testTrajectory = Pathfinder.generate(bluePoints, stableConfig);
 		leftPegTrajectory = Pathfinder.generate(leftPegPoints, sidePegConfig);
 		leftPegToHopperTrajectory = Pathfinder.generate(leftPegToHopperPoints, tolerantConfig);
 		rightPegTrajectory = Pathfinder.generate(rightPegPoints, sidePegConfig);
 		rightPegToHopperTrajectory = Pathfinder.generate(rightPegToHopperPoints, tolerantConfig); 
 		middleGearTrajectory = Pathfinder.generate(straightGearPath, middlePegConfig);
 		middleToBlueBoilerTrajectory = Pathfinder.generate(middleToBlueBoilerPoints, tolerantConfig);
-		middleToRedBoilerTrajectory = Pathfinder.generate(middleToRedBoilerPoints, tolerantConfig);
-		/*for (int i = 0; i < middleToRedBoilerTrajectory.length(); i++) {
-		    Trajectory.Segment seg = middleToRedBoilerTrajectory.get(i);
+		middleToRedBoilerTrajectory = Pathfinder.generate(middleToRedBoilerPoints, tolerantConfig);*/
+		for (int i = 0; i < testTrajectory.length(); i++) {
+		    Trajectory.Segment seg = testTrajectory.get(i);
 		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
-		}*/
+		}
 	}
 	
 	

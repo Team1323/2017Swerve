@@ -15,10 +15,10 @@ public class Constants {
 	public static final double ANGLE_FRONT_MODULE_CENTER = Math.atan(WHEELBASE_LENGTH/WHEELBASE_WIDTH);
 	
     // Swerve Module Wheel Offsets
-	public static final double FRONT_RIGHT_TURN_OFFSET = 55.5468;
-    public static final double FRONT_LEFT_TURN_OFFSET  = 98.789;
-    public static final double REAR_LEFT_TURN_OFFSET   = 278.0859;
-    public static final double REAR_RIGHT_TURN_OFFSET  = 355.78125;
+	public static final double FRONT_RIGHT_TURN_OFFSET = 55.19;
+    public static final double FRONT_LEFT_TURN_OFFSET  = 93.0;
+    public static final double REAR_LEFT_TURN_OFFSET   = 278.2;
+    public static final double REAR_RIGHT_TURN_OFFSET  = 358.94;
     
     //rpm 3844 4033 3900 4179 3989
     //native units 9226 9680 9362 10030 9574
@@ -68,7 +68,7 @@ public class Constants {
 	public static final double TURRET_SMALL_D = 10.0;
 	public static final double TURRET_SMALL_PID_THRESH = 5;
 	public static final int    TURRET_ONTARGET_THRESH  = 5;
-	public static final double TURRET_TICKS_PER_REV = 7748.0;
+	public static final double TURRET_TICKS_PER_REV = 7700.0;//7748.0;
 	public static final double TURRET_TICKS_PER_DEGREE = TURRET_TICKS_PER_REV/360;
 	public static final double TURRET_REVS_PER_DEGREE = TURRET_TICKS_PER_DEGREE/1440;
 	public static final double TURRET_ENC_REVS_PER_ACTUAL_REV = TURRET_TICKS_PER_REV/1440;

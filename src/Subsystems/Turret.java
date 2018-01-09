@@ -36,8 +36,8 @@ public class Turret extends Subsystem{
 		swerve = Swerve.getInstance();
 		robotState = RobotState.getInstance();
 		motor = new TalonSRX(Ports.TURRET);
-    	motor.getSensorCollection().setQuadraturePosition(0, 10);
     	motor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 10);
+    	motor.setSelectedSensorPosition(0, 0, 10);
     	motor.setSensorPhase(false);
     	motor.setInverted(false);
     	//motor.configEncoderCodesPerRev(360);
@@ -47,8 +47,6 @@ public class Turret extends Subsystem{
     	motor.configPeakOutputReverse(-5.0/12.0, 10);
     	motor.configAllowableClosedloopError(0, 0, 10);
     	motor.set(ControlMode.PercentOutput, 0);
-    	/*motor.setPID(4.0, 0.0, 160.0, 0.0, 0, 0.0, 0);
-    	motor.setPID(4.0, 0.0, 100.0, 0.8184, 0, 0.0, 1);*/
     	motor.selectProfileSlot(0, 0);
     	motor.config_kP(0, 4.0, 10);
     	motor.config_kI(0, 0.0, 10);
@@ -60,8 +58,8 @@ public class Turret extends Subsystem{
 		motor.enableVoltageCompensation(true);
 		motor.configForwardSoftLimitEnable(true, 10);
 		motor.configReverseSoftLimitEnable(true, 10);
-		motor.configForwardSoftLimitThreshold((int) ((Constants.TURRET_MAX_ANGLE/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV), 10);
-		motor.configReverseSoftLimitThreshold((int) ((-Constants.TURRET_MAX_ANGLE/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV), 10);
+		motor.configForwardSoftLimitThreshold(degreesToEncUnits(Constants.TURRET_MAX_ANGLE), 10);
+		motor.configReverseSoftLimitThreshold(degreesToEncUnits(-Constants.TURRET_MAX_ANGLE), 10);
 	}
 	public enum ControlState{
 		Off, VisionTracking, Manual, GyroComp, CalculatedTracking, MotionMagic, TrackingWhileShooting, Locked
@@ -83,20 +81,20 @@ public class Turret extends Subsystem{
 			angle = Constants.TURRET_MAX_ANGLE;
 		if(angle < -Constants.TURRET_MAX_ANGLE)
 			angle = -Constants.TURRET_MAX_ANGLE;
-		motor.set(ControlMode.MotionMagic, angle*Constants.TURRET_REVS_PER_DEGREE);
-		setpoint = angle*Constants.TURRET_REVS_PER_DEGREE;
+		motor.set(ControlMode.MotionMagic, degreesToEncUnits(angle));
+		setpoint = angle*Constants.TURRET_TICKS_PER_DEGREE;
 	}
 	public void setMotionMagic(double angle){
 		setState(ControlState.MotionMagic);
-		motor.set(ControlMode.MotionMagic, angle*Constants.TURRET_REVS_PER_DEGREE);
-		setpoint = angle*Constants.TURRET_REVS_PER_DEGREE;
+		motor.set(ControlMode.MotionMagic, degreesToEncUnits(angle));
+		setpoint = angle*Constants.TURRET_TICKS_PER_DEGREE;
 	}
 	public void moveDegrees(double degree){
 		double newAngle = getAngle() + degree;
 		setAngle(newAngle);
 	}
 	public double getAngle(){
-		return ((motor.getSelectedSensorPosition(0)/Constants.TURRET_ENC_REVS_PER_ACTUAL_REV)*360);
+		return encUnitsToDegrees(motor.getSelectedSensorPosition(0));
 	}
 	public double getFieldRelativeAngle(){
 		return (getAngle() - 90) + Util.boundAngle0to360Degrees(pidgey.getAngle());
@@ -209,6 +207,12 @@ public class Turret extends Subsystem{
 				break;
 		}
 	}
+	public int degreesToEncUnits(double degrees){
+		return (int) (degrees*Constants.TURRET_TICKS_PER_DEGREE);
+	}
+	public double encUnitsToDegrees(double encUnits){
+		return encUnits/Constants.TURRET_TICKS_PER_DEGREE;
+	}
 	public double getError(){
 		return (getGoal() - getAngle());
 	}
@@ -216,7 +220,7 @@ public class Turret extends Subsystem{
 		return (Math.abs(getError()) < 1.0) && isStationary();
 	}
 	public double getTurretDegreesPerSecond(){
-		return motor.getSelectedSensorVelocity(0)/Constants.TURRET_REVS_PER_DEGREE/60;
+		return encUnitsToDegrees(motor.getSelectedSensorVelocity(0))*10;
 	}
 	public boolean isStationary(){
 		return Math.abs(getTurretDegreesPerSecond()) < 1; 
@@ -225,7 +229,7 @@ public class Turret extends Subsystem{
 		return getCurrentState() == ControlState.VisionTracking;
 	}
 	public void resetAngle(double angle){
-		motor.setSelectedSensorPosition((int) ((angle/360)*Constants.TURRET_ENC_REVS_PER_ACTUAL_REV), 0, 10);
+		motor.setSelectedSensorPosition(degreesToEncUnits(angle), 0, 10);
 	}
 	public synchronized void setPercentVBus(double speed){
 		motor.set(ControlMode.PercentOutput, speed);

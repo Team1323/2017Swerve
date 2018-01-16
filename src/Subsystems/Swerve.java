@@ -9,7 +9,6 @@ import com.team254.lib.util.control.PathFollower;
 import Loops.Loop;
 import Utilities.Constants;
 import Utilities.DriveSignal;
-import Utilities.Logger;
 import Utilities.Ports;
 import Utilities.RigidTransform2d;
 import Utilities.Rotation2d;
@@ -21,6 +20,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import jaci.pathfinder.Pathfinder;
 import jaci.pathfinder.Trajectory;
+import jaci.pathfinder.Trajectory.Segment;
 import jaci.pathfinder.Waypoint;
 import jaci.pathfinder.followers.DistanceFollower;
 import jaci.pathfinder.modifiers.SwerveModifier;
@@ -85,7 +85,7 @@ public class Swerve extends Subsystem{
 	Path currentPath;
 	
 	double maxVel = 10.0;//13.89;
-	double maxAccel = 10.0;//16;
+	double maxAccel = 6.0;//16;
 	double maxJerk = 84;
 	Trajectory.Config tolerantConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_LOW, 0.02, 12.0, maxAccel, maxJerk);
 	Trajectory.Config stableConfig = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, maxVel, maxAccel, maxJerk);
@@ -109,6 +109,7 @@ public class Swerve extends Subsystem{
 	DistanceFollower blFollower;
 	DistanceFollower brFollower;
 	
+	int currentSegment = 0;
 	public double dt;
 	double timestamp;
 	
@@ -271,7 +272,15 @@ public class Swerve extends Subsystem{
 		Waypoint[] rightCubeDropoffPoints = new Waypoint[]{
 				new Waypoint(0,0,Pathfinder.d2r(50)),
 				new Waypoint(10.0, 7.5, 0),
-				new Waypoint(16.25, 7.5, 0),
+				//new Waypoint(16.25, 7.5, 0),
+				//new Waypoint(18.75, 5.0, Pathfinder.d2r(-45))
+		};
+		
+		Waypoint[] leftCubeDropoffPoints = new Waypoint[]{
+				new Waypoint(0,0,Pathfinder.d2r(-50)),
+				new Waypoint(10.0, -7.5, 0),
+				//new Waypoint(16.25, -7.5, 0),
+				//new Waypoint(18.75, -5.0, Pathfinder.d2r(45))
 		};
 		
 		testTrajectory = Pathfinder.generate(rightCubeDropoffPoints, tolerantConfig);
@@ -284,10 +293,13 @@ public class Swerve extends Subsystem{
 		middleGearTrajectory = Pathfinder.generate(straightGearPath, middlePegConfig);
 		middleToBlueBoilerTrajectory = Pathfinder.generate(middleToBlueBoilerPoints, tolerantConfig);
 		middleToRedBoilerTrajectory = Pathfinder.generate(middleToRedBoilerPoints, tolerantConfig);*/
-		for (int i = 0; i < testTrajectory.length(); i++) {
+		/*for (int i = 0; i < testTrajectory.length(); i++) {
 		    Trajectory.Segment seg = testTrajectory.get(i);
-		    Logger.log("(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + "), ");
-		}
+		    String coordinates = "(" + Double.toString(seg.y) + ", " + Double.toString(seg.x) + ")";
+		    if(i != (testTrajectory.length() - 1))
+		    	coordinates += ", ";
+		    Logger.log(coordinates);
+		}*/
 	}
 	
 	
@@ -347,6 +359,8 @@ public class Swerve extends Subsystem{
 	}
 	
 	public void followPath(Trajectory trajectory, double heading){
+		zeroSensors();
+		
 		modifier = new SwerveModifier(trajectory);
 		currentTrajectory = trajectory;
 		
@@ -356,9 +370,9 @@ public class Swerve extends Subsystem{
 		blFollower = new DistanceFollower(modifier.getBackLeftTrajectory());
 		brFollower = new DistanceFollower(modifier.getBackRightTrajectory());
 		
-		double p = 0.7;
+		double p = 1.0;
 		double d = 0.0;
-		double v = 1/(maxVel);
+		double v = 1.0/(13.89);
 		double a = 0.0;
 		
 		flFollower.configurePIDVA(p, 0.0, d, v, a);
@@ -370,6 +384,7 @@ public class Swerve extends Subsystem{
 			m.pathFollowingOffset = m.getEncoderDistanceFeet();
 		}
 		distanceTraveledOffset = distanceTraveled;
+		currentSegment = 0;
 		
 		setTargetHeading(heading);
 		setHeadingController(HeadingController.Stabilize);
@@ -652,18 +667,25 @@ public class Swerve extends Subsystem{
 			    }
 				break;
 			case PathFollowing:
-/*/
-				double fro = frFollower.calculate((frontRight.getEncoderDistanceFeet() - frontRight.pathFollowingOffset));
-			    double flo = flFollower.calculate((rearLeft.getEncoderDistanceFeet() - rearLeft.pathFollowingOffset));
-			    double blo = blFollower.calculate((rearLeft.getEncoderDistanceFeet() - rearLeft.pathFollowingOffset));
-			    double bro = brFollower.calculate((rearRight.getEncoderDistanceFeet() - rearRight.pathFollowingOffset));
-/*/				double fro = frFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
+				int futureSegmentIndex = 0;
+				if((currentSegment + 6) < currentTrajectory.length())
+					futureSegmentIndex = currentSegment + 6;
+				else
+					futureSegmentIndex = currentTrajectory.length() - 1;
+				Segment futureSegment = currentTrajectory.get(futureSegmentIndex);
+				Translation2d futurePos = new Translation2d(futureSegment.x, futureSegment.y);
+				Translation2d currentPos = new Translation2d(robotX/12.0, -robotY/12.0);
+				Translation2d deltaPos = futurePos.translateBy(currentPos.inverse());
+				Rotation2d angleToFuturePos = deltaPos.direction();
+				
+				
+				double fro = frFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
 			    double flo = flFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
 			    double blo = blFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
 			    double bro = brFollower.calculate(distanceTraveled/12 - distanceTraveledOffset/12);
-/**/
 			    double pathWheelAngle = (frFollower.getHeading() + flFollower.getHeading() + 
 			    		blFollower.getHeading() + brFollower.getHeading())/4;
+			    pathWheelAngle = angleToFuturePos.getRadians();
 			    double pidgeyAngle = Math.toRadians(pidgey.getAngle());
 			    double x = Math.sin(pathWheelAngle);
 			    double y = Math.cos(pathWheelAngle);
@@ -672,24 +694,17 @@ public class Swerve extends Subsystem{
 				yInput = tmp;	
 			    kinematics.calculate(xInput, yInput, rotationCorrection);
 			    
-/**/
 			    setKinematicsAngles();
-/*/
-			    
-			    frontRight.setFieldRelativeAngle(kinematics.frSteeringAngle());
-			    frontLeft.setFieldRelativeAngle(kinematics.flSteeringAngle());
-			    rearLeft.setFieldRelativeAngle(kinematics.rlSteeringAngle());
-			    rearRight.setFieldRelativeAngle(kinematics.rrSteeringAngle());
-/**/
-				frontRight.setDriveVoltage(fro*12);
-				frontLeft.setDriveVoltage(flo*12);
-				rearRight.setDriveVoltage(bro*12);
-				rearLeft.setDriveVoltage(blo*12);
+				frontRight.setDriveOpenLoop(fro);
+				frontLeft.setDriveOpenLoop(flo);
+				rearRight.setDriveOpenLoop(bro);
+				rearLeft.setDriveOpenLoop(blo);
 				
 				if(brFollower.isFinished()){
 					setState(ControlState.Neutral);
 				}
 				
+				currentSegment++;
 				break;
 			case PurePursuit:
 				double averageWheelHeading = -(frontRight.getModuleAngle() + frontLeft.getModuleAngle() + 
@@ -750,6 +765,9 @@ public class Swerve extends Subsystem{
 		}
 		dt = now - timestamp;
 		timestamp = now;
+		if(getState() == ControlState.PathFollowing){
+			System.out.println(dt);
+		}
 	}
 	
 	public void setTankOpenLoop(DriveSignal signal){

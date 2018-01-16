@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -65,6 +66,8 @@ public class Robot extends IterativeRobot {
 	
 	PathContainer container = new StartToBoilerGearBlue();
 	Path path;
+	
+	private boolean needsToIntake = true;
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -151,6 +154,7 @@ public class Robot extends IterativeRobot {
 		robot.sweeper.outputToSmartDashboard();
 		robotState.outputToSmartDashboard();
 		//visionServer.outputToSmartDashboard();
+		SmartDashboard.putBoolean("Banner Sensor", robot.getBanner());
 	}
 	public void stopAll(){
 		robot.swerve.stop();
@@ -164,7 +168,7 @@ public class Robot extends IterativeRobot {
 	public void coDriverStop(){
 		robot.intake.stop();
 		robot.hanger.stop();
-		robot.gearIntake.coDriverStop();
+		//robot.gearIntake.coDriverStop();
 		robot.shooter.stop();
 		robot.sweeper.stop();
 	}
@@ -292,20 +296,14 @@ public class Robot extends IterativeRobot {
 			robot.pidgey.setAngle(0);
 			robot.swerve.setTargetHeading(0.0);
 			robot.swerve.temporarilyDisable();
+			robot.swerve.zeroSensors();
 		}
 		if(driver.getAButton()){
 			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 180));
 		}else if(driver.getBButton()){
 			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 90));
 		}else if(driver.getXButton()){
-			//robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
-			if(robot.turret.isStationary()){
-				Optional<ShooterAimingParameters> params = robotState.getAimingParameters(Timer.getFPGATimestamp());
-				if(params.isPresent()){
-					robot.swerve.moveDistance(Util.boundAngle0to360Degrees(robot.turret.turretAngleToWheelAngle(-params.get().getTurretAngle().getDegrees())), params.get().getRange() - Constants.kOptimalShootingDistance);
-				}
-			}
-			robot.turret.enableVision();
+			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 270));
 		}else if(driver.getYButton()){
 			robot.swerve.rotate(Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
 		}else if(driver.rightBumper.wasPressed()){
@@ -321,7 +319,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getPOV() == 90){
 			robot.swerve.rotateAboutModule(false);
 		}else if(driver.getPOV() == 180){
-			//robot.swerve.followPath(robot.swerve.rightPegTrajectory, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), -60));
+			robot.swerve.followPath(robot.swerve.testTrajectory, Util.placeInAppropriate0To360Scope(robot.pidgey.getAngle(), 0));
 		}else if(driver.getPOV() == 270){
 			robot.swerve.rotateAboutModule(true);
 		}else if(driver.getPOV() == 0){
@@ -348,7 +346,7 @@ public class Robot extends IterativeRobot {
 		if(driver.getStartButton()){
 			robot.hanger.startHang();
 			robot.swerve.setLowPower(true);
-			robot.retractBallFlap();
+			//robot.retractBallFlap();
 		}
 	}
 	
@@ -361,15 +359,30 @@ public class Robot extends IterativeRobot {
 			robot.swerve.setLowPower(false);
 			//robot.extendBallFlap();
 			robot.turret.lock();
+			needsToIntake = true;
 		}
 		
 		//Ball Intake
-		if(coDriver.getBumper(Hand.kRight)){
-    		robot.intake.intakeForward();
-    		robot.hanger.startHang();
-    	}else if(coDriver.getBumper(Hand.kLeft)){
+		if(coDriver.rightBumper.wasPressed()){
+			if(robot.isBallFlapExtended() || needsToIntake){
+				robot.retractBallFlap();
+				robot.gearIntake.retractCylinder();
+				robot.intake.intakeForward();
+				robot.hanger.startHang();
+				needsToIntake = false;
+			}else{
+				robot.extendBallFlap();
+				robot.gearIntake.retractCylinder();
+				robot.intake.stop();
+				robot.hanger.stop();
+				needsToIntake = true;
+			}
+    	}else if(coDriver.leftBumper.wasPressed()){
+    		robot.retractBallFlap();
+    		robot.gearIntake.extendCylinder();
     		robot.intake.intakeReverse();
     		robot.hanger.reverse();
+    		needsToIntake = true;
     	}
 		
 		//Vision
@@ -475,7 +488,7 @@ public class Robot extends IterativeRobot {
 		if(coDriver.startButton.wasPressed()){
 			robot.hanger.startHang();
 			robot.swerve.setLowPower(true);
-			robot.retractBallFlap();
+			//robot.retractBallFlap();
 		}
 		if(coDriver.getPOV() == 180){
 			robot.hanger.setState(Hanger.State.WEAK_HANG);

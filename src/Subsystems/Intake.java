@@ -19,8 +19,10 @@ public class Intake extends Subsystem{
 		intakeMotor = new TalonSRX(Ports.INTAKE_MOTOR);
 		intakeMotor.setInverted(false);
 		intakeMotor.configOpenloopRamp(0.0, 10);
+		intakeMotor.configContinuousCurrentLimit(25, 10);
 		intakeMotor.configPeakCurrentLimit(30, 10);
-		intakeMotor.enableCurrentLimit(false);
+		intakeMotor.configPeakCurrentDuration(100, 10);
+		intakeMotor.enableCurrentLimit(true);
 	}
 	public static Intake getInstance(){
 		return instance;
@@ -31,7 +33,7 @@ public class Intake extends Subsystem{
 		isForward = true;
 	}
 	public void intakeReverse(){
-		intakeMotor.set(ControlMode.PercentOutput, 1.0);
+		intakeMotor.set(ControlMode.PercentOutput, -1.0);
 		isReversed = true;
 	}
 	public void toggleForward(){
@@ -60,7 +62,7 @@ public class Intake extends Subsystem{
 	}
 	@Override
 	public void outputToSmartDashboard(){
-		/*SmartDashboard.putNumber(" Intake Current ", intakeMotor.getOutputCurrent());
-		SmartDashboard.putNumber("Intake Voltage", intakeMotor.getMotorOutputVoltage());*/
+		SmartDashboard.putNumber(" Intake Current ", intakeMotor.getOutputCurrent());
+		SmartDashboard.putNumber("Intake Voltage", intakeMotor.getMotorOutputVoltage());
 	}
 }

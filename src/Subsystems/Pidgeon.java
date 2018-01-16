@@ -96,5 +96,6 @@ public class Pidgeon {
 		SmartDashboard.putNumber(" Pigeon Rate ", getAngularRate());
 		SmartDashboard.putBoolean(" Pigeon Good ", isGood());
 		SmartDashboard.putNumber("Pigeon Temp", pidgey.getTemp());
+		SmartDashboard.putNumber("Pigeon Compass", pidgey.getAbsoluteCompassHeading());
 	}
 }

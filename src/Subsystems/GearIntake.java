@@ -178,11 +178,11 @@ public class GearIntake extends Subsystem{
 		return gearIntakeLoop;
 	}
 	
-	private void extendCylinder(){
+	public void extendCylinder(){
 		cylinder.set(true);
 		extended = cylinder.get();
 	}
-	private void retractCylinder(){
+	public void retractCylinder(){
 		cylinder.set(false);
 		extended = cylinder.get();
 	}

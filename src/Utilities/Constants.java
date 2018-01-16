@@ -31,8 +31,11 @@ public class Constants {
     public static final double SWERVE_DRIVE_MAX_RPM = 3989.0;
     
     public static final double SWERVE_WHEEL_DIAMETER = 2.8;
+    public static final double DRIVE_ENCODER_RESOLUTION = 1440.0;
     public static final double SWERVE_ENCODER_REVS_PER_WHEEL_REV = 4.307692308;
     public static final double SWERVE_ENCODER_REVS_PER_INCH = SWERVE_ENCODER_REVS_PER_WHEEL_REV/(Math.PI*SWERVE_WHEEL_DIAMETER);
+    public static final double SWERVE_ENC_UNITS_PER_WHEEL_REV = DRIVE_ENCODER_RESOLUTION * SWERVE_ENCODER_REVS_PER_WHEEL_REV;
+    public static final double SWERVE_ENC_UNITS_PER_INCH = SWERVE_ENC_UNITS_PER_WHEEL_REV / (Math.PI * SWERVE_WHEEL_DIAMETER);
     
     public static double kSegmentCompletionTolerance = 0.1; // inches
     public static double kPathFollowingMaxAccel = 120.0; // inches per second^2

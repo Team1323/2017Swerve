@@ -142,8 +142,8 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	public void moveInches(double inches){
 		driveMotor.selectProfileSlot(0, 0);
-    	driveMotor.set(ControlMode.MotionMagic, driveMotor.getSelectedSensorPosition(0) + inchesToRotations(inches));
-    	driveSetpoint = driveMotor.getSelectedSensorPosition(0) + inchesToRotations(inches);
+    	driveMotor.set(ControlMode.MotionMagic, driveMotor.getSelectedSensorPosition(0) + inchesToEncUnits(inches));
+    	driveSetpoint = driveMotor.getSelectedSensorPosition(0) + inchesToEncUnits(inches);
 	}
 	public void lockPosition(){
 		driveMotor.selectProfileSlot(0, 0);
@@ -152,33 +152,31 @@ public class SwerveDriveModule extends Subsystem{
 	}
 	public void setDriveVelocity(double inchesPerSecond){
 		driveMotor.selectProfileSlot(1, 0);
-		driveMotor.set(ControlMode.Velocity, inchesPerSecondToRpm(inchesPerSecond));
-		driveSetpoint = inchesPerSecondToRpm(inchesPerSecond);
+		//driveMotor.set(ControlMode.Velocity, inchesPerSecondToRpm(inchesPerSecond));
+		//driveSetpoint = inchesPerSecondToRpm(inchesPerSecond);
 	}
 	public double getEncoderDistanceInches(){
-		return driveMotor.getSelectedSensorPosition(0)/Constants.SWERVE_ENCODER_REVS_PER_INCH;
+		double inches = driveMotor.getSelectedSensorPosition(0)/Constants.SWERVE_ENC_UNITS_PER_INCH;
+		return (moduleID == 1) ? -inches : inches;
 	}
 	public double getEncoderDistanceFeet(){
-		return (moduleID == 1) ? -getEncoderDistanceInches()/12 : getEncoderDistanceInches()/12;
+		return getEncoderDistanceInches()/12;
 	}
 	public double getModuleInchesPerSecond(){
-		return driveMotor.getSelectedSensorVelocity(0)/Constants.SWERVE_ENCODER_REVS_PER_INCH/60;
+		return driveMotor.getSelectedSensorVelocity(0)/Constants.SWERVE_ENC_UNITS_PER_INCH/60;
 	}
 	public double getModuleFeetPerSecond(){
 		return getModuleInchesPerSecond()/12;
 	}
-	public double inchesToRotations(double inches){
-		return inches*Constants.SWERVE_ENCODER_REVS_PER_INCH;
+	public double encUnitsToInches(int encUnits){
+		return encUnits/Constants.SWERVE_ENC_UNITS_PER_INCH;
 	}
-	public double rotationsToInches(double rotations){
-		return rotations/Constants.SWERVE_ENCODER_REVS_PER_INCH;
-	}
-	public double inchesPerSecondToRpm(double inchesPerSecond){
-		return inchesToRotations(inchesPerSecond)*60;
+	public int inchesToEncUnits(double inches){
+		return (int) (inches*Constants.SWERVE_ENC_UNITS_PER_INCH);
 	}
 	public boolean onDistanceTarget(){
 		return (driveMotor.getControlMode() == ControlMode.MotionMagic) && 
-				Math.abs(rotationsToInches(driveSetpoint) - rotationsToInches(driveMotor.getSelectedSensorPosition(0))) < 2.0;
+				Math.abs(encUnitsToInches((int)driveSetpoint) - encUnitsToInches(driveMotor.getSelectedSensorPosition(0))) < 2.0;
 	}
 	public void setOriginCoordinates(double x, double y){
 		currentX = x;
@@ -206,12 +204,12 @@ public class SwerveDriveModule extends Subsystem{
 		zeroSensors(90);
 	}
 	public synchronized void zeroSensors(double heading){
-		driveMotor.getSensorCollection().setQuadraturePosition(0, 10);
 		driveMotor.setSelectedSensorPosition(0, 0, 10);
 		RigidTransform2d robotPose = RigidTransform2d.fromRotation(Rotation2d.fromDegrees(heading));
 		RigidTransform2d modulePose = robotPose.transformBy(RigidTransform2d.fromTranslation(new Translation2d(defaultX, defaultY)));
 		currentX = modulePose.getTranslation().x();
 		currentY = modulePose.getTranslation().y();
+		currentDistance = 0;
 		lastDistance = 0;
 	}
 	@Override
@@ -220,7 +218,7 @@ public class SwerveDriveModule extends Subsystem{
 		String smallY = Float.toString((float)(Math.round(getY() * 100.0) / 100.0));
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Angle", getModuleAngle()/*rotationMotor.getSelectedSensorPosition(0)*/);
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Goal", rotationSetpoint);
-		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceFeet());
+		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Position", getEncoderDistanceInches());
 		SmartDashboard.putString("Module " + Integer.toString(moduleID) + " Coordinates ", "("+smallX+" , "+smallY+")");
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + "Speed", getModuleFeetPerSecond());
 		SmartDashboard.putNumber("Module " + Integer.toString(moduleID) + " Error", driveSetpoint - driveMotor.getSelectedSensorVelocity(0));
